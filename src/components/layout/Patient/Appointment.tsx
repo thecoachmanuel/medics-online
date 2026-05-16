@@ -10,7 +10,8 @@ import type { IPatientAppContext, IDoctorPatient, ApiResponse } from '@/models/p
 import { smartApi } from '@/utils/smartApi';
 
 const Appointment = () => {
-  const { docId } = useParams();
+  const params = useParams();
+  const docId = Array.isArray(params.docId) ? params.docId[0] : params.docId;
   const { doctors, currencySymbol, token, getDoctosData } = useContext(
     AppContext
   ) as IPatientAppContext;
@@ -344,7 +345,7 @@ const Appointment = () => {
       </div>
 
       {/* Listing Releated Doctors */}
-      <RelatedDoctors speciality={docInfo.speciality} docId={docId} />
+      <RelatedDoctors speciality={docInfo.speciality} docId={docId || undefined} />
     </div>
   ) : null;
 };
