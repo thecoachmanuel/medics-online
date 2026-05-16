@@ -2,7 +2,7 @@
 
 import { useContext, useState } from 'react';
 import { toast } from 'react-toastify';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 
 import { DoctorContext } from '@/context/DoctorContext';
@@ -14,6 +14,7 @@ import { smartApi } from '@/utils/smartApi';
 import type { ApiResponse } from '@/models/patient';
 
 const Login = () => {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const initialRole = searchParams?.get('role') === 'doctor' ? 'Doctor' : 'Admin';
   const [state, setState] = useState(initialRole);
@@ -35,6 +36,7 @@ const Login = () => {
         setAToken(data.token);
         localStorage.setItem('aToken', data.token);
         console.log('\u2705 Admin logged in via Smart API');
+        router.push('/admin-dashboard');
       } else {
         toast.error(data.message);
       }
@@ -45,6 +47,7 @@ const Login = () => {
         setDToken(data.token);
         localStorage.setItem('dToken', data.token);
         console.log('\u2705 Doctor logged in via Smart API');
+        router.push('/doctor-dashboard');
       } else {
         toast.error(data.message);
       }
