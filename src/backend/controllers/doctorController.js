@@ -244,6 +244,28 @@ const doctorDashboard = async (req, res) => {
   }
 };
 
+// API to save consultation notes and prescription
+const saveConsultation = async (req, res) => {
+  try {
+    const { docId, appointmentId, notes, prescription } = req.body;
+
+    const appointmentData = await appointmentModel.findById(appointmentId);
+    if (appointmentData && appointmentData.docId === docId) {
+      await appointmentModel.findByIdAndUpdate(appointmentId, { 
+        notes, 
+        prescription,
+        isCompleted: true 
+      });
+      return res.json({ success: true, message: 'Consultation saved successfully' });
+    }
+
+    res.json({ success: false, message: 'Appointment not found or unauthorized' });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
 export {
   loginDoctor,
   registerDoctor,
@@ -254,5 +276,6 @@ export {
   appointmentComplete,
   doctorDashboard,
   doctorProfile,
-  updateDoctorProfile
+  updateDoctorProfile,
+  saveConsultation
 };

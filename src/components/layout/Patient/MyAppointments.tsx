@@ -13,8 +13,9 @@ import { smartApi } from '@/utils/smartApi';
 const MyAppointments = () => {
   const { token, userData } = useContext(AppContext) as IPatientAppContext;
 
-   const [appointments, setAppointments] = useState<IAppointment[]>([]);
+  const [appointments, setAppointments] = useState<IAppointment[]>([]);
   const [payment, setPayment] = useState<string>('');
+  const [showRecords, setShowRecords] = useState<IAppointment | null>(null);
   const router = useRouter();
 
   const months = [
@@ -323,9 +324,17 @@ const MyAppointments = () => {
               )}
 
               {item.isCompleted && (
-                <button className="sm:min-w-48 py-2 border border-green-500 rounded text-green-500">
-                  Accepted
-                </button>
+                <div className="flex flex-col gap-2">
+                  <button className="sm:min-w-48 py-2 border border-green-500 rounded text-green-500 bg-green-50">
+                    Completed
+                  </button>
+                  <button 
+                    onClick={() => setShowRecords(item)}
+                    className="sm:min-w-48 py-2 border border-blue-500 rounded text-blue-500 hover:bg-blue-500 hover:text-white transition-all duration-300"
+                  >
+                    View Records
+                  </button>
+                </div>
               )}
 
               {!item.cancelled && !item.isCompleted && (
@@ -353,6 +362,62 @@ const MyAppointments = () => {
           </div>
         ))}
       </div>
+
+      {/* Records Modal */}
+      {showRecords && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="w-full max-w-2xl bg-white rounded-3xl overflow-hidden shadow-2xl">
+            <div className="p-8 space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-blue-100 flex items-center justify-center text-blue-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">Consultation Records</h2>
+                    <p className="text-gray-500 text-sm">Provided by Dr. {showRecords.docData.name}</p>
+                  </div>
+                </div>
+                <button onClick={() => setShowRecords(null)} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l18 18" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100 space-y-3">
+                  <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Clinical Notes</h3>
+                  <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                    {showRecords.notes || 'No notes provided for this session.'}
+                  </p>
+                </div>
+
+                <div className="p-6 bg-blue-50 rounded-2xl border border-blue-100 space-y-3">
+                  <h3 className="text-sm font-semibold text-blue-400 uppercase tracking-wider">Prescription & Advice</h3>
+                  <p className="text-gray-800 leading-relaxed whitespace-pre-wrap font-medium">
+                    {showRecords.prescription || 'No prescription provided.'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="pt-4">
+                <button 
+                  onClick={() => window.print()}
+                  className="w-full h-12 bg-gray-900 text-white rounded-2xl font-semibold hover:bg-gray-800 transition-all flex items-center justify-center gap-2"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                  </svg>
+                  Print Record
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

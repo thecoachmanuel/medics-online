@@ -17,7 +17,16 @@ const appointmentSchema = new mongoose.Schema({
     bpm: { type: String, default: '---' },
     spo2: { type: String, default: '---' },
     timestamp: { type: Number, default: Date.now }
-  }
+  },
+  notes: { type: String, default: '' },
+  prescription: { type: String, default: '' },
+  chatHistory: [
+    {
+      sender: { type: String },
+      message: { type: String },
+      timestamp: { type: Number, default: Date.now }
+    }
+  ]
 });
 
 const appointmentModel =

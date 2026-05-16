@@ -34,4 +34,6 @@ export interface IAppointment {
   isCompleted?: boolean;
   payment?: boolean;
   meetingId: string;
+  notes?: string;
+  prescription?: string;
 }
