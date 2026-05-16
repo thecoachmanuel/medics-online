@@ -10,6 +10,7 @@ export interface IDocAddress {
 }
 
 export interface IDocData {
+  _id: string;
   image: string;
   name: string;
   speciality: string;

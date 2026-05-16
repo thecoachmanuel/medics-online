@@ -343,7 +343,7 @@ const MyAppointments = () => {
               )}
               {item.cancelled && item.payment && !item.isCompleted && (
                 <button
-                  onClick={() => router.push(`/appointment/${item.docId}?rescheduleId=${item._id}`)}
+                  onClick={() => router.push(`/appointment/${item.docData._id}?rescheduleId=${item._id}`)}
                   className="sm:min-w-48 py-2 border border-orange-500 rounded text-orange-500 hover:bg-orange-500 hover:text-white transition-all duration-300 cursor-pointer"
                 >
                   Reschedule appointment
