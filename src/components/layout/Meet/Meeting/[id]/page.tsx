@@ -43,7 +43,7 @@ export default function MeetingPage() {
     if (doctorContext?.profileData?.name) {
       return doctorContext.profileData.name;
     }
-    return searchParams.get('name') || 'Guest';
+    return searchParams?.get('name') || 'Guest';
   };
 
   const userName = getUserName();
