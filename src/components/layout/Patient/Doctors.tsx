@@ -9,7 +9,8 @@ import EmptyState from '@/components/common/EmptyState';
 import type { IPatientAppContext, IDoctorPatient } from '@/models/patient';
 
 const Doctors = () => {
-  const { speciality } = useParams();
+  const params = useParams();
+  const speciality = Array.isArray(params.speciality) ? params.speciality[0] : params.speciality;
 
   const [filterDoc, setFilterDoc] = useState<IDoctorPatient[]>([]);
   const [showFilter, setShowFilter] = useState(false);
@@ -111,7 +112,7 @@ const Doctors = () => {
               title="No doctors found"
               description={
                 speciality 
-                  ? `Sorry, we couldn't find any ${speciality.toLowerCase()}s available at the moment.` 
+                  ? `Sorry, we couldn't find any ${speciality.toString().toLowerCase()}s available at the moment.` 
                   : "No doctors are currently available. Please try again later."
               }
               actionLabel="Browse All Doctors"
