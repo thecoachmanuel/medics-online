@@ -275,7 +275,8 @@ const MyAppointments = () => {
                   <button
                     onClick={() => {
                       if (joinStatus.canJoin) {
-                        window.location.href = `/meeting/${item.meetingId}?name=${encodeURIComponent(userData?.name || 'Patient')}`;
+                        console.log('🚀 Navigating to meeting:', item.meetingId);
+                        router.push(`/meeting/${item.meetingId}?name=${encodeURIComponent(userData?.name || 'Patient')}`);
                       }
                     }}
                     disabled={!joinStatus.canJoin}

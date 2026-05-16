@@ -1,6 +1,7 @@
 "use client";
 
 import { useContext, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 import { DoctorContext } from '@/context/DoctorContext';
 import { AppContext } from '@/context/AppContext';
@@ -19,6 +20,7 @@ const DoctorAppointments = () => {
     profileData,
     getProfileData
   } = useContext(DoctorContext) as IDoctorContext;
+  const router = useRouter();
   const { slotDateFormat, calculateAge, currencySymbol } = useContext(
     AppContext
   ) as IPatientAppContext;
@@ -241,7 +243,8 @@ const DoctorAppointments = () => {
                     <button
                       onClick={() => {
                         if (joinStatus.canJoin) {
-                          window.location.href = `/meeting/${item.meetingId}?name=${encodeURIComponent(profileData?.name || 'Doctor')}`;
+                          console.log('🚀 Doctor navigating to meeting:', item.meetingId);
+                          router.push(`/meeting/${item.meetingId}?name=${encodeURIComponent(profileData?.name || 'Doctor')}`);
                         }
                       }}
                       disabled={!joinStatus.canJoin}
