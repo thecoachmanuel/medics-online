@@ -2,7 +2,6 @@
 
 import { useContext, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getNigerianNow } from '@/utils/timeUtils';
 
 import { DoctorContext } from '@/context/DoctorContext';
 import { AppContext } from '@/context/AppContext';
@@ -50,7 +49,7 @@ const DoctorAppointments = () => {
     
     // Create appointment date
     const appointmentDate = new Date(year, month, day, hours, minutes);
-    const now = getNigerianNow();
+    const now = new Date();
     
     // Calculate difference in milliseconds
     const diffMs = appointmentDate.getTime() - now.getTime();
@@ -243,9 +242,11 @@ const DoctorAppointments = () => {
                   return (
                     <button
                       onClick={() => {
+                        console.log('🔘 Join button clicked. ID:', item.meetingId, 'canJoin:', joinStatus.canJoin, 'reason:', joinStatus.reason);
                         if (joinStatus.canJoin) {
-                          console.log('🚀 Doctor navigating to meeting:', item.meetingId);
                           router.push(`/meeting/${item.meetingId}?name=${encodeURIComponent(profileData?.name || 'Doctor')}`);
+                        } else {
+                          toast.warning(`Cannot join yet: ${joinStatus.reason}`);
                         }
                       }}
                       disabled={!joinStatus.canJoin}
@@ -331,9 +332,11 @@ const DoctorAppointments = () => {
                   return (
                     <button
                       onClick={() => {
+                        console.log('🔘 Join button clicked (occ 2). ID:', item.meetingId, 'canJoin:', joinStatus.canJoin, 'reason:', joinStatus.reason);
                         if (joinStatus.canJoin) {
-                          console.log('🚀 Doctor navigating to meeting (occ 2):', item.meetingId);
                           router.push(`/meeting/${item.meetingId}?name=${encodeURIComponent(profileData?.name || 'Doctor')}`);
+                        } else {
+                          toast.warning(`Cannot join yet: ${joinStatus.reason}`);
                         }
                       }}
                       disabled={!joinStatus.canJoin}

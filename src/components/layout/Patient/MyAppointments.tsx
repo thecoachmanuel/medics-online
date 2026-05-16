@@ -3,7 +3,6 @@
 import { useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
-import { getNigerianNow } from '@/utils/timeUtils';
 
 import { AppContext } from '@/context/AppContext';
 import type { IPatientAppContext } from '@/models/patient';
@@ -46,42 +45,42 @@ const MyAppointments = () => {
     const day = parseInt(dateArray[0]);
     const month = parseInt(dateArray[1]) - 1; // JavaScript months are 0-indexed
     const year = parseInt(dateArray[2]);
-    
+
     // Parse time (assuming format like "10:00 AM" or "2:30 PM")
     const timeMatch = slotTime.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
     if (!timeMatch) return { canJoin: false, reason: 'invalid' };
-    
+
     let hours = parseInt(timeMatch[1]);
     const minutes = parseInt(timeMatch[2]);
     const period = timeMatch[3].toUpperCase();
-    
+
     // Convert to 24-hour format
     if (period === 'AM' && hours === 12) {
       hours = 0;
     } else if (period === 'PM' && hours !== 12) {
       hours += 12;
     }
-    
+
     // Create appointment date
     const appointmentDate = new Date(year, month, day, hours, minutes);
-    const now = getNigerianNow();
-    
+    const now = new Date();
+
     // Calculate difference in milliseconds
     const diffMs = appointmentDate.getTime() - now.getTime();
-    
+
     // Convert to hours
     const diffHours = diffMs / (60 * 60 * 1000);
-    
+
     // Check if more than 24 hours in the future
     if (diffHours > 24) {
       return { canJoin: false, reason: 'future' };
     }
-    
+
     // Check if more than 2 hours in the past
     if (diffHours < -2) {
       return { canJoin: false, reason: 'past' };
     }
-    
+
     return { canJoin: true, reason: 'available' };
   };
 
@@ -92,7 +91,7 @@ const MyAppointments = () => {
       const data = await smartApi.get('/api/user/appointments', {
         headers: { token }
       }) as { appointments: IAppointment[] };
-      
+
       setAppointments(data.appointments.reverse());
       console.log('✅ Appointments loaded successfully via Smart API');
     } catch (error: unknown) {
@@ -215,19 +214,19 @@ const MyAppointments = () => {
                     const day = parseInt(dateArray[0]);
                     const month = parseInt(dateArray[1]) - 1;
                     const year = parseInt(dateArray[2]);
-                    
+
                     const timeMatch = item.slotTime.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
                     if (timeMatch) {
                       let hours = parseInt(timeMatch[1]);
                       const minutes = parseInt(timeMatch[2]);
                       const period = timeMatch[3].toUpperCase();
-                      
+
                       if (period === 'AM' && hours === 12) hours = 0;
                       else if (period === 'PM' && hours !== 12) hours += 12;
-                      
+
                       const appointmentDate = new Date(year, month, day, hours, minutes);
                       const availableDate = new Date(appointmentDate.getTime() - (24 * 60 * 60 * 1000));
-                      
+
                       // Format date as "11th June"
                       const dayWithSuffix = (day: number) => {
                         if (day > 3 && day < 21) return day + 'th';
@@ -238,13 +237,13 @@ const MyAppointments = () => {
                           default: return day + 'th';
                         }
                       };
-                      
-                      const months = ['January', 'February', 'March', 'April', 'May', 'June', 
-                                     'July', 'August', 'September', 'October', 'November', 'December'];
-                      
+
+                      const months = ['January', 'February', 'March', 'April', 'May', 'June',
+                        'July', 'August', 'September', 'October', 'November', 'December'];
+
                       const formattedDate = `${dayWithSuffix(availableDate.getDate())} ${months[availableDate.getMonth()]}`;
                       const formattedTime = availableDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                      
+
                       return `Available from ${formattedDate} at ${formattedTime}`;
                     }
                     return 'Meeting will be available closer to your appointment time';
@@ -275,9 +274,11 @@ const MyAppointments = () => {
                 return (
                   <button
                     onClick={() => {
+                      console.log('🔘 Join button clicked. ID:', item.meetingId, 'canJoin:', joinStatus.canJoin, 'reason:', joinStatus.reason);
                       if (joinStatus.canJoin) {
-                        console.log('🚀 Navigating to meeting:', item.meetingId);
                         router.push(`/meeting/${item.meetingId}?name=${encodeURIComponent(userData?.name || 'Patient')}`);
+                      } else {
+                        toast.warning(`Cannot join yet: ${joinStatus.reason}`);
                       }
                     }}
                     disabled={!joinStatus.canJoin}
@@ -331,7 +332,7 @@ const MyAppointments = () => {
                   <button className="sm:min-w-48 py-2 border border-green-500 rounded text-green-500 bg-green-50">
                     Completed
                   </button>
-                  <button 
+                  <button
                     onClick={() => setShowRecords(item)}
                     className="sm:min-w-48 py-2 border border-blue-500 rounded text-blue-500 hover:bg-blue-500 hover:text-white transition-all duration-300"
                   >
@@ -407,7 +408,7 @@ const MyAppointments = () => {
               </div>
 
               <div className="pt-4">
-                <button 
+                <button
                   onClick={() => window.print()}
                   className="w-full h-12 bg-gray-900 text-white rounded-2xl font-semibold hover:bg-gray-800 transition-all flex items-center justify-center gap-2"
                 >
