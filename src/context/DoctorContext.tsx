@@ -16,16 +16,32 @@ interface DoctorContextProviderProps {
 
 const DoctorContextProvider = (props: DoctorContextProviderProps) => {
   const [dToken, setDToken] = useState('');
+  const [appointments, setAppointments] = useState<IDoctorContext['appointments']>([]);
+  const [dashData, setDashData] = useState<IDoctorContext['dashData']>(null);
+  const [profileData, setProfileData] = useState<DoctorProfile | null>(null);
 
   useEffect(() => {
     const storedToken = localStorage.getItem('dToken');
     if (storedToken) {
       setDToken(storedToken);
     }
+    const storedProfileData = localStorage.getItem('doctorProfileData');
+    if (storedProfileData) {
+      try {
+        setProfileData(JSON.parse(storedProfileData));
+      } catch (e) {
+        localStorage.removeItem('doctorProfileData');
+      }
+    }
   }, []);
-  const [appointments, setAppointments] = useState<IDoctorContext['appointments']>([]);
-  const [dashData, setDashData] = useState<IDoctorContext['dashData']>(null);
-  const [profileData, setProfileData] = useState<DoctorProfile | null>(null);
+
+  useEffect(() => {
+    if (profileData) {
+      localStorage.setItem('doctorProfileData', JSON.stringify(profileData));
+    } else if (!dToken) {
+      localStorage.removeItem('doctorProfileData');
+    }
+  }, [profileData, dToken]);
 
   const loadDoctorData = async () => {
     if (dToken) {

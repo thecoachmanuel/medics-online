@@ -24,7 +24,7 @@ const Navbar = () => {
   };
 
   return (
-    <div className="flex items-center justify-between text-sm py-4 mb-5 border-b border-b-[#ADADAD]">
+    <div className="sticky top-0 bg-white z-40 flex items-center justify-between text-sm py-4 mb-5 border-b border-b-[#ADADAD]">
       <img 
         src="/MedicsOnline_logo.png" 
         alt="MedicsOnline Logo" 

@@ -49,13 +49,22 @@ const AppContextProvider = (props: AppContextProviderProps) => {
   const [doctors, setDoctors] = useState<IDoctorPatient[]>([]);
   const [token, setToken] = useState('');
 
+  const [userData, setUserData] = useState<IUserData | null>(null);
+
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
     if (storedToken) {
       setToken(storedToken);
     }
+    const storedUserData = localStorage.getItem('userData');
+    if (storedUserData) {
+      try {
+        setUserData(JSON.parse(storedUserData));
+      } catch (e) {
+        localStorage.removeItem('userData');
+      }
+    }
   }, []);
-  const [userData, setUserData] = useState<IUserData | null>(null);
 
   // Getting Doctors using API (NOW WITH SMART ENCRYPTION)
   const getDoctosData = async () => {
@@ -114,6 +123,16 @@ const AppContextProvider = (props: AppContextProviderProps) => {
   useEffect(() => {
     getDoctosData();
   }, []);
+
+
+
+  useEffect(() => {
+    if (userData) {
+      localStorage.setItem('userData', JSON.stringify(userData));
+    } else if (!token) {
+      localStorage.removeItem('userData');
+    }
+  }, [userData, token]);
 
   useEffect(() => {
     if (token) {

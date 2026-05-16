@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext } from 'react';
+import { useContext, useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -18,9 +18,22 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   const { aToken } = useContext(AdminContext);
   const pathname = usePathname() || '/';
 
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => setIsMounted(true), []);
+
   const isMeetingPage = pathname.startsWith('/meeting/') || pathname === '/join' || pathname === '/new';
   const isAdminLoginPage = pathname === '/admin-login';
   const hideNavbarAndFooter = isMeetingPage || isAdminLoginPage;
+
+  if (!isMounted) {
+    return (
+      <div className="mx-4 sm:mx-[6%]">
+        <ToastContainer />
+        <div className="h-20" /> {/* Skeleton for navbar */}
+        {children}
+      </div>
+    );
+  }
 
   if (aToken || dToken) {
     return (

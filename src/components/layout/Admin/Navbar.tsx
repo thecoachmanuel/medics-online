@@ -26,7 +26,7 @@ const Navbar = () => {
   };
 
   return (
-    <div className="flex justify-between items-center px-4 sm:px-10 py-3 border-b bg-white">
+    <div className="sticky top-0 z-40 flex justify-between items-center px-4 sm:px-10 py-3 border-b bg-white">
       <div className="flex items-center gap-2 text-xs">
         <img 
           src="/MedicsOnline_logo.png" 
