@@ -206,16 +206,17 @@ const AgoraContainer: React.FC<AgoraContainerProps> = ({
 
     setIsSaving(true);
     try {
-      const data = await smartApi.post('/api/doctor/save-consultation', 
+      const data = (await smartApi.post(
+        '/api/doctor/save-consultation',
         { appointmentId: meetingId, notes, prescription },
         { headers: { dtoken: token } }
-      );
+      )) as { success: boolean; message?: string };
 
       if (data.success) {
         toast.success('Consultation records saved');
         router.push('/doctor-dashboard');
       } else {
-        toast.error(data.message);
+        toast.error(data.message || 'Failed to save records');
       }
     } catch (err) {
       console.error(err);
