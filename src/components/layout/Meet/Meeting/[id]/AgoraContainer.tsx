@@ -182,6 +182,17 @@ const AgoraContainer: React.FC<AgoraContainerProps> = ({
     };
   }, [meetingId]);
 
+  // Re-play local video track when track, view mode, or video state changes
+  useEffect(() => {
+    if (localVideoTrack && localVideoRef.current && isVideoOn) {
+      try {
+        localVideoTrack.play(localVideoRef.current);
+      } catch (err) {
+        console.error("Error playing local video track:", err);
+      }
+    }
+  }, [localVideoTrack, remoteUsers.length, isVideoOn]);
+
   // Call Duration Timer
   useEffect(() => {
     if (!callStarted) return;
