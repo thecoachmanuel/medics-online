@@ -104,7 +104,7 @@ const Appointment = () => {
   };
 
   const bookAppointment = async () => {
-    if (!token) {
+    if (!token || !userData) {
       toast.warning('Login to book appointment');
       return router.push('/login');
     }
@@ -114,32 +114,21 @@ const Appointment = () => {
     const year = date.getFullYear();
     const slotDate = day + '_' + month + '_' + year;
     try {
-      console.log('🏥 Medical: Attempting encrypted appointment booking');
-      const data = await smartApi.post('/api/user/book-appointment', 
-        { docId, slotDate, slotTime, vitals },
+      console.log('🏥 Medical: Initiating appointment payment');
+      const data = await smartApi.post('/api/user/payment-paystack', 
+        { docId, slotDate, slotTime, vitals, userId: userData._id },
         { headers: { token } }
-      ) as ApiResponse<{ meetingId?: string }>;
+      ) as ApiResponse<{ authorization_url?: string }>;
 
-      if (data.success) {
-        toast.success(`${data.message}. Meeting ID: ${data.meetingId}`);
-        getDoctosData();
-        router.push('/my-appointments');
-        console.log('✅ Appointment booked successfully via Smart API');
+      if (data.success && data.authorization_url) {
+        // Redirect to Paystack payment page
+        window.location.href = data.authorization_url;
       } else {
-        toast.error(data.message || 'Booking failed');
+        toast.error(data.message || 'Payment initialization failed');
       }
     } catch (error: unknown) {
-      console.error('❌ Appointment booking error:', error);
-      if (
-        error &&
-        typeof error === 'object' &&
-        'message' in error &&
-        typeof (error as { message?: unknown }).message === 'string'
-      ) {
-        toast.error((error as { message: string }).message);
-      } else {
-        toast.error('An error occurred while booking appointment');
-      }
+      console.error('❌ Appointment payment error:', error);
+      toast.error('An error occurred while initiating payment');
     }
   };
 

@@ -294,26 +294,53 @@ const listAppointment = async (req, res) => {
 // API to make payment of appointment using Paystack
 const paymentPaystack = async (req, res) => {
   try {
-    const { appointmentId } = req.body;
-    const appointmentData = await appointmentModel.findById(appointmentId);
+    const { appointmentId, docId, slotDate, slotTime, vitals, userId } = req.body;
+    
+    const origin = req.headers.origin || 'http://localhost:3000';
+    let amount = 0;
+    let email = '';
+    let metadata = {};
 
-    if (!appointmentData || appointmentData.cancelled) {
-      return res.json({ success: false, message: 'Appointment Cancelled or not found' });
+    if (appointmentId) {
+      // Payment for an existing appointment (e.g., from my-appointments page)
+      const appointmentData = await appointmentModel.findById(appointmentId);
+      if (!appointmentData || appointmentData.cancelled) {
+        return res.json({ success: false, message: 'Appointment Cancelled or not found' });
+      }
+      amount = appointmentData.amount;
+      email = appointmentData.userData.email;
+      metadata = { appointmentId, userId: appointmentData.userId };
+    } else {
+      // Direct booking: Payment first, capture later
+      if (!docId || !slotDate || !slotTime) {
+        return res.json({ success: false, message: 'Missing Booking Details' });
+      }
+      
+      const docData = await doctorModel.findById(docId);
+      if (!docData || !docData.available) {
+        return res.json({ success: false, message: 'Doctor Not Available' });
+      }
+      
+      const userData = await userModel.findById(userId);
+      amount = docData.fees;
+      email = userData.email;
+      metadata = { 
+        isNewBooking: true,
+        docId, 
+        slotDate, 
+        slotTime, 
+        vitals, 
+        userId 
+      };
     }
-
-    const origin = req.headers.origin || 'http://localhost:5173';
 
     // creating options for paystack payment
     const options = {
-      amount: appointmentData.amount * 100, // Paystack amount is in kobo (smallest unit of NGN)
-      email: appointmentData.userData.email, // User's email
-      currency: 'NGN', // Paystack uses NGN for Nigerian Naira
+      amount: amount * 100, // Paystack amount is in kobo
+      email: email,
+      currency: 'NGN',
       callback_url: `${origin}/verify`,
-      metadata: {
-        appointmentId: appointmentId,
-        userId: appointmentData.userId,
-        doctorId: appointmentData.docId
-      }
+      metadata: metadata
     };
 
     // creation of a transaction
@@ -335,9 +362,58 @@ const verifyPaystack = async (req, res) => {
     const transaction = await paystackInstance.transaction.verify(reference);
 
     if (transaction.data.status === 'success') {
-      const appointmentId = transaction.data.metadata.appointmentId;
-      await appointmentModel.findByIdAndUpdate(appointmentId, { payment: true });
-      res.json({ success: true, message: 'Payment Successful' });
+      const metadata = transaction.data.metadata;
+      
+      if (metadata.isNewBooking) {
+        // CAPTURE ONLY AFTER PAYMENT: Create the appointment now
+        const { userId, docId, slotDate, slotTime, vitals } = metadata;
+        
+        const docData = await doctorModel.findById(docId).select('-password');
+        if (!docData.available) {
+           // This is a rare edge case where slot was taken during payment
+           return res.json({ success: false, message: 'Payment successful but doctor no longer available. Please contact support.' });
+        }
+
+        let slots_booked = docData.slots_booked;
+        if (slots_booked[slotDate] && slots_booked[slotDate].includes(slotTime)) {
+           return res.json({ success: false, message: 'Payment successful but slot was taken. Please contact support.' });
+        }
+
+        if (slots_booked[slotDate]) {
+          slots_booked[slotDate].push(slotTime);
+        } else {
+          slots_booked[slotDate] = [slotTime];
+        }
+
+        const userData = await userModel.findById(userId).select('-password');
+        const meetingId = generateMeetingId();
+        
+        const appointmentData = {
+          userId,
+          docId,
+          userData,
+          docData,
+          amount: docData.fees,
+          slotTime,
+          slotDate,
+          date: Date.now(),
+          meetingId,
+          vitals,
+          payment: true // Mark as paid immediately
+        };
+
+        const newAppointment = new appointmentModel(appointmentData);
+        await newAppointment.save();
+        
+        await doctorModel.findByIdAndUpdate(docId, { slots_booked });
+        
+        return res.json({ success: true, message: 'Appointment Booked and Paid', meetingId });
+      } else {
+        // Standard payment update for existing appointment
+        const appointmentId = metadata.appointmentId;
+        await appointmentModel.findByIdAndUpdate(appointmentId, { payment: true });
+        res.json({ success: true, message: 'Payment Successful' });
+      }
     } else {
       res.json({ success: false, message: 'Payment Failed' });
     }
