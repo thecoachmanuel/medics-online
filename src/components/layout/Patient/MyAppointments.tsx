@@ -278,10 +278,9 @@ const MyAppointments = () => {
                       if (joinStatus.canJoin) {
                         router.push(`/meeting/${item.meetingId}?name=${encodeURIComponent(userData?.name || 'Patient')}`);
                       } else {
-                        toast.warning(`Cannot join yet: ${joinStatus.reason}`);
+                        toast.info(`Meeting available later: ${joinStatus.reason}`);
                       }
                     }}
-                    disabled={!joinStatus.canJoin}
                     aria-label={getTooltipMessage()}
                     className={`sm:min-w-48 py-2.5 font-semibold rounded-lg transition-all duration-300 flex items-center justify-center gap-2 ${getButtonStyles()}`}
                     title={getTooltipMessage()}

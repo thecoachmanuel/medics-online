@@ -247,10 +247,9 @@ const DoctorAppointments = () => {
                         if (joinStatus.canJoin) {
                           router.push(`/meeting/${item.meetingId}?name=${encodeURIComponent(profileData?.name || 'Doctor')}`);
                         } else {
-                          toast.warning(`Cannot join yet: ${joinStatus.reason}`);
+                          toast.info(`Meeting available later: ${joinStatus.reason}`);
                         }
                       }}
-                      disabled={!joinStatus.canJoin}
                       aria-label={getTooltipMessage()}
                       className={`px-4 py-2 rounded-lg transition-all duration-300 flex items-center justify-center gap-2 text-sm ${getButtonStyles()}`}
                       title={getTooltipMessage()}
@@ -337,10 +336,9 @@ const DoctorAppointments = () => {
                         if (joinStatus.canJoin) {
                           router.push(`/meeting/${item.meetingId}?name=${encodeURIComponent(profileData?.name || 'Doctor')}`);
                         } else {
-                          toast.warning(`Cannot join yet: ${joinStatus.reason}`);
+                          toast.info(`Meeting available later: ${joinStatus.reason}`);
                         }
                       }}
-                      disabled={!joinStatus.canJoin}
                       aria-label={getTooltipMessage()}
                       className={`px-4 py-2 rounded-lg transition-all duration-300 flex items-center justify-center gap-2 text-sm ${getButtonStyles()}`}
                       title={getTooltipMessage()}
