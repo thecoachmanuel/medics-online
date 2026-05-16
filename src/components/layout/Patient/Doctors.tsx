@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useState, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 
 import { AppContext } from '@/context/AppContext';
@@ -12,25 +12,19 @@ const Doctors = () => {
   const params = useParams() as { speciality: string };
   const speciality = Array.isArray(params.speciality) ? params.speciality[0] : params.speciality;
 
-  const [filterDoc, setFilterDoc] = useState<IDoctorPatient[]>([]);
   const [showFilter, setShowFilter] = useState(false);
   const router = useRouter();
 
   const { doctors } = useContext(AppContext) as IPatientAppContext;
 
-  const applyFilter = () => {
+  const filterDoc = useMemo(() => {
     if (speciality) {
       const decodedSpeciality = decodeURIComponent(speciality).toLowerCase();
-      setFilterDoc(doctors.filter((doc: IDoctorPatient) => 
+      return doctors.filter((doc: IDoctorPatient) => 
         doc.speciality.toLowerCase() === decodedSpeciality
-      ));
-    } else {
-      setFilterDoc(doctors as IDoctorPatient[]);
+      );
     }
-  };
-
-  useEffect(() => {
-    applyFilter();
+    return doctors as IDoctorPatient[];
   }, [doctors, speciality]);
 
   // Helper to check if a speciality is selected (case-insensitive)
