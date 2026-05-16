@@ -275,7 +275,7 @@ const MyAppointments = () => {
                   <button
                     onClick={() => {
                       if (joinStatus.canJoin) {
-                        window.open(`/meeting/${item.meetingId}?name=${userData.name}`, '_blank');
+                        window.location.href = `/meeting/${item.meetingId}?name=${encodeURIComponent(userData?.name || 'Patient')}`;
                       }
                     }}
                     disabled={!joinStatus.canJoin}
