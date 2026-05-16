@@ -121,10 +121,10 @@ export default function MeetingPage() {
         }
 
         // Initialize Socket.IO connection
-        const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-        // Use port 3001 for socket server in development when using turbopack
-        const socketUrl = backendUrl.includes('localhost') ? 'http://localhost:3001' : backendUrl;
-        const socket = io(socketUrl);
+        // Connect to the integrated socket endpoint
+        const socket = io({
+          path: '/api/socket'
+        });
         socketRef.current = socket;
 
         socket.on('connect', () => {
@@ -258,9 +258,9 @@ export default function MeetingPage() {
 
         // Even if media fails, still try to connect to the meeting
         try {
-          const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-          const socketUrl = backendUrl.includes('localhost') ? 'http://localhost:3001' : backendUrl;
-          const socket = io(socketUrl);
+          const socket = io({
+            path: '/api/socket'
+          });
           socketRef.current = socket;
 
           socket.on('connect', () => {

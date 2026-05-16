@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/backend/config/mongodb';
 import { runExpressController } from '@/backend/utils/expressAdapter';
 import { withEncryption } from '@/backend/middleware/hybridCrypto';
@@ -18,8 +18,13 @@ import {
   verifyPaystack
 } from '@/backend/controllers/userController';
 
+type ActionConfig = {
+  controller: any;
+  auth?: any;
+};
+
 // Map actions to controllers, with necessary middlewares applied
-const actionMap = {
+const actionMap: Record<string, ActionConfig> = {
   'register': { controller: registerUser },
   'login': { controller: loginUser },
   'get-profile': { controller: getProfile, auth: withUserAuth },
@@ -32,13 +37,10 @@ const actionMap = {
   'verify-paystack': { controller: verifyPaystack, auth: withUserAuth }
 };
 
-async function handleAction(request, context) {
+async function handleAction(request: NextRequest, context: { params: Promise<{ action: string }> }) {
   await connectDB();
   
-  // App Router params logic (nextJS 15+ wait for params)
-  const params = await context.params;
-  const action = params.action;
-  
+  const { action } = await context.params;
   const routeConfig = actionMap[action];
   
   if (!routeConfig) {
@@ -46,7 +48,7 @@ async function handleAction(request, context) {
   }
 
   // Create the final handler
-  const finalHandler = async (req, ctx) => {
+  const finalHandler = async (req: any, ctx: any) => {
     return await runExpressController(routeConfig.controller, req, ctx);
   };
 
