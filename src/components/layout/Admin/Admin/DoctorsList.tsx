@@ -103,13 +103,13 @@ const DoctorsList = () => {
       {filteredDoctors && filteredDoctors.some((doc) => !doc.isApproved) && (
         <div className="mb-6">
           <h2 className="text-md font-semibold text-yellow-700 mb-3">Pending Approval</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <div className="grid-responsive">
             {filteredDoctors
               .filter((doc) => !doc.isApproved)
               .map((item: IDoctorAdmin, index: number) => (
                 <div
                   key={`pending-${index}`}
-                  className="border-2 border-yellow-300 rounded-xl max-w-56 overflow-hidden cursor-pointer group hover:shadow-lg transition-all duration-300"
+                  className="border-2 border-yellow-300 rounded-xl overflow-hidden cursor-pointer group hover:shadow-lg transition-all duration-300"
                   onClick={() => openDoctorModal(item)}
                 >
                   <div className="relative w-full h-48 bg-gray-100">
@@ -158,14 +158,14 @@ const DoctorsList = () => {
 
       {/* Approved Doctors Section */}
       <h2 className="text-md font-semibold text-gray-700 mb-3">Approved Doctors</h2>
-      <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 pt-5 gap-y-6">
+      <div className="grid-responsive pt-5">
         {filteredDoctors && filteredDoctors.length > 0 ? (
           filteredDoctors
             .filter((doc) => doc.isApproved)
             .map((item: IDoctorAdmin, index: number) => (
               <div
                 key={`approved-${index}`}
-                className="border border-[#C9D8FF] rounded-xl max-w-56 overflow-hidden cursor-pointer group hover:shadow-lg transition-all duration-300"
+                className="border border-[#C9D8FF] rounded-xl overflow-hidden cursor-pointer group hover:shadow-lg transition-all duration-300"
                 onClick={() => openDoctorModal(item)}
               >
                 <div className="relative w-full h-48 bg-gray-100">

@@ -199,3 +199,15 @@ img[loading="lazy"]:not([src]) {
 .aspect-doctor-card {
   aspect-ratio: 1 / 1.2;
 }
+
+@layer utilities {
+  .grid-responsive {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1.25rem;
+  }
+  
+  .mobile-container {
+    @apply px-4 sm:px-6 md:px-10;
+  }
+}
