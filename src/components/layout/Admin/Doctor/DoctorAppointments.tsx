@@ -331,17 +331,16 @@ const DoctorAppointments = () => {
                     <button
                       onClick={() => {
                         if (joinStatus.canJoin) {
-                          window.open(
-                            `/meeting/${item.meetingId}?name=${encodeURIComponent(profileData?.name || 'Doctor')}`,
-                            '_blank'
-                          );
+                          console.log('🚀 Doctor navigating to meeting (occ 2):', item.meetingId);
+                          router.push(`/meeting/${item.meetingId}?name=${encodeURIComponent(profileData?.name || 'Doctor')}`);
                         }
                       }}
                       disabled={!joinStatus.canJoin}
-                      className={`text-xs px-2 py-1 rounded transition-all duration-300 flex items-center justify-center gap-1 ${getButtonStyles()}`}
+                      aria-label={getTooltipMessage()}
+                      className={`px-4 py-2 rounded-lg transition-all duration-300 flex items-center justify-center gap-2 text-sm ${getButtonStyles()}`}
                       title={getTooltipMessage()}
                     >
-                      <Video className="w-3 h-3" />
+                      <Video className="w-4 h-4" />
                       {getButtonText()}
                     </button>
                   );
