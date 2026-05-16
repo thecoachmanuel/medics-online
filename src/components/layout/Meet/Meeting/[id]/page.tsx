@@ -62,6 +62,7 @@ export default function MeetingPage() {
   const socketRef = useRef<Socket | null>(null);
   const peerConnectionsRef = useRef<PeerConnection>({});
   const remoteVideoRefs = useRef<{ [userId: string]: HTMLVideoElement | null }>({});
+  const initializedRef = useRef(false);
 
   // WebRTC configuration
   const rtcConfig = {
@@ -73,249 +74,89 @@ export default function MeetingPage() {
 
   // Initialize media and socket connection
   useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+
     const initializeMedia = async () => {
       let stream: MediaStream | null = null;
-
       try {
-        // Try to get audio first, then video
-        const audioConstraints: MediaStreamConstraints = { audio: true, video: false };
-
-        try {
-          stream = await navigator.mediaDevices.getUserMedia(audioConstraints);
-          console.log('Audio access granted');
-
-          // If audio works, try to add video
-          if (isVideoOn) {
-            try {
-              const videoConstraints: MediaStreamConstraints = {
-                audio: true,
-                video: {
-                  width: { ideal: 1280 },
-                  height: { ideal: 720 },
-                  frameRate: { ideal: 30 }
-                }
-              };
-
-              // Stop audio-only stream and get audio+video
-              stream.getTracks().forEach((track) => track.stop());
-              stream = await navigator.mediaDevices.getUserMedia(videoConstraints);
-              console.log('Video access granted');
-            } catch (videoErr) {
-              console.warn('Video access failed, continuing with audio only:', videoErr);
-              // Keep audio-only stream
-              stream = await navigator.mediaDevices.getUserMedia(audioConstraints);
-              setIsVideoOn(false);
-            }
-          }
-        } catch (audioErr) {
-          console.warn('Audio access failed:', audioErr);
-          // Continue without any media, but still allow joining the meeting
-          stream = null;
-        }
-
+        const constraints = {
+          audio: true,
+          video: { width: { ideal: 1280 }, height: { ideal: 720 } }
+        };
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
         setLocalStream(stream);
-
-        if (localVideoRef.current && stream && isVideoOn) {
-          localVideoRef.current.srcObject = stream;
-          localVideoRef.current.play().catch(console.error);
-        }
-
-        // Initialize Socket.IO connection
-        // Connect to the integrated socket endpoint
-        const socket = io({
-          path: '/api/socket'
-        });
-        socketRef.current = socket;
-
-        socket.on('connect', () => {
-          console.log('Connected to server');
-          setIsConnected(true);
-
-          // Join the meeting room
-          socket.emit('join-room', { roomId: meetingId, userName });
-
-          // Add local participant (even without stream)
-          setParticipants([
-            { id: 'local', name: userName, isLocal: true, stream: stream || undefined }
-          ]);
-        });
-
-        socket.on('existing-users', (users: { id: string; name: string }[]) => {
-          console.log('Existing users:', users);
-          users.forEach((user) => {
-            if (stream) {
-              createPeerConnection(user.id, user.name, true, stream);
-            }
-          });
-        });
-
-        socket.on(
-          'user-joined',
-          ({ userId, userName: newUserName }: { userId: string; userName: string }) => {
-            console.log(`User joined: ${newUserName}`);
-            setParticipants((prev) => [...prev, { id: userId, name: newUserName }]);
-            if (stream) {
-              createPeerConnection(userId, newUserName, false, stream);
-            }
-          }
-        );
-
-        socket.on(
-          'user-left',
-          ({ userId, userName: leftUserName }: { userId: string; userName: string }) => {
-            console.log(`User left: ${leftUserName}`);
-            setParticipants((prev) => prev.filter((p) => p.id !== userId));
-
-            // Clean up peer connection
-            if (peerConnectionsRef.current[userId]) {
-              peerConnectionsRef.current[userId].close();
-              delete peerConnectionsRef.current[userId];
-            }
-
-            // Clean up video ref
-            if (remoteVideoRefs.current[userId]) {
-              delete remoteVideoRefs.current[userId];
-            }
-          }
-        );
-
-        // WebRTC signaling events
-        socket.on(
-          'webrtc-offer',
-          async ({
-            offer,
-            offerUserId
-          }: {
-            offer: RTCSessionDescriptionInit;
-            offerUserId: string;
-          }) => {
-            const pc = peerConnectionsRef.current[offerUserId];
-            if (pc) {
-              await pc.setRemoteDescription(offer);
-              const answer = await pc.createAnswer();
-              await pc.setLocalDescription(answer);
-              socket.emit('webrtc-answer', {
-                answer,
-                targetUserId: offerUserId,
-                roomId: meetingId
-              });
-            }
-          }
-        );
-
-        socket.on(
-          'webrtc-answer',
-          async ({
-            answer,
-            answerUserId
-          }: {
-            answer: RTCSessionDescriptionInit;
-            answerUserId: string;
-          }) => {
-            const pc = peerConnectionsRef.current[answerUserId];
-            if (pc) {
-              await pc.setRemoteDescription(answer);
-            }
-          }
-        );
-
-        socket.on(
-          'webrtc-ice-candidate',
-          async ({
-            candidate,
-            candidateUserId
-          }: {
-            candidate: RTCIceCandidateInit;
-            candidateUserId: string;
-          }) => {
-            const pc = peerConnectionsRef.current[candidateUserId];
-            if (pc) {
-              await pc.addIceCandidate(candidate);
-            }
-          }
-        );
-
-        setErrorMessage(null);
+        if (localVideoRef.current) localVideoRef.current.srcObject = stream;
       } catch (err) {
-        console.error('Error during initialization:', err);
-        const error = err as DOMException;
-
-        if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
-          setErrorMessage(
-            'Camera/microphone access denied. Please allow access and refresh the page.'
-          );
-        } else if (error.name === 'NotFoundError') {
-          setErrorMessage('No camera or microphone found. Please check your devices.');
-        } else if (error.name === 'NotReadableError') {
-          setErrorMessage(
-            'Camera/microphone is already in use by another application. Please close other video apps and refresh.'
-          );
-        } else {
-          setErrorMessage(
-            'Could not access your camera or microphone. Joining meeting without media...'
-          );
-        }
-
-        // Even if media fails, still try to connect to the meeting
-        try {
-          const socket = io({
-            path: '/api/socket'
-          });
-          socketRef.current = socket;
-
-          socket.on('connect', () => {
-            console.log('Connected to server (no media)');
-            setIsConnected(true);
-            socket.emit('join-room', { roomId: meetingId, userName });
-            setParticipants([{ id: 'local', name: userName, isLocal: true }]);
-          });
-
-          // Add the socket event handlers here too (for the no-media case)
-          socket.on('existing-users', (users: { id: string; name: string }[]) => {
-            console.log('Existing users:', users);
-            setParticipants((prev) => [
-              ...prev,
-              ...users.map((user) => ({ id: user.id, name: user.name }))
-            ]);
-          });
-
-          socket.on(
-            'user-joined',
-            ({ userId, userName: newUserName }: { userId: string; userName: string }) => {
-              console.log(`User joined: ${newUserName}`);
-              setParticipants((prev) => [...prev, { id: userId, name: newUserName }]);
-            }
-          );
-
-          socket.on('user-left', ({ userId }: { userId: string }) => {
-            setParticipants((prev) => prev.filter((p) => p.id !== userId));
-          });
-        } catch (socketErr) {
-          console.error('Failed to connect to meeting server:', socketErr);
-          setErrorMessage(
-            'Failed to connect to meeting server. Please check your internet connection.'
-          );
-        }
+        console.error('Media error:', err);
+        setErrorMessage('Failed to access camera/microphone.');
       }
+      
+      // Always initialize socket
+      const socket = io({ path: '/api/socket', transports: ['websocket', 'polling'] });
+      socketRef.current = socket;
+
+      socket.on('connect', () => {
+        setIsConnected(true);
+        socket.emit('join-room', { roomId: meetingId, userName });
+      });
+
+      socket.on('existing-users', (users) => {
+        users.forEach((user: any) => {
+          if (stream) createPeerConnection(user.id, user.name, true, stream);
+        });
+      });
+
+      socket.on('user-joined', ({ userId, userName: newName }) => {
+        setParticipants(prev => [...prev, { id: userId, name: newName }]);
+        if (stream) createPeerConnection(userId, newName, false, stream);
+      });
+
+      socket.on('webrtc-offer', async ({ offer, offerUserId, roomId }) => {
+        let pc = peerConnectionsRef.current[offerUserId];
+        if (!pc && stream) {
+          await createPeerConnection(offerUserId, 'Participant', false, stream);
+          pc = peerConnectionsRef.current[offerUserId];
+        }
+        if (pc) {
+          await pc.setRemoteDescription(new RTCSessionDescription(offer));
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          socket.emit('webrtc-answer', { answer, targetUserId: offerUserId, roomId });
+        }
+      });
+
+      socket.on('webrtc-answer', async ({ answer, answerUserId }) => {
+        const pc = peerConnectionsRef.current[answerUserId];
+        if (pc) await pc.setRemoteDescription(new RTCSessionDescription(answer));
+      });
+
+      socket.on('webrtc-ice-candidate', async ({ candidate, candidateUserId }) => {
+        const pc = peerConnectionsRef.current[candidateUserId];
+        if (pc) await pc.addIceCandidate(new RTCIceCandidate(candidate));
+      });
+      
+      socket.on('user-left', ({ userId }) => {
+        setParticipants(prev => prev.filter(p => p.id !== userId));
+        if (peerConnectionsRef.current[userId]) {
+          peerConnectionsRef.current[userId].close();
+          delete peerConnectionsRef.current[userId];
+        }
+      });
     };
 
     initializeMedia();
 
-    // Cleanup function
     return () => {
       if (socketRef.current) {
         socketRef.current.emit('leave-room', { roomId: meetingId, userName });
         socketRef.current.disconnect();
       }
-
-      if (localStream) {
-        localStream.getTracks().forEach((track) => track.stop());
-      }
-
-      // Close all peer connections
-      Object.values(peerConnectionsRef.current).forEach((pc) => pc.close());
+      if (localStream) localStream.getTracks().forEach(t => t.stop());
     };
-  }, [meetingId, userName, isVideoOn]);
+  }, [meetingId, userName]);
+
+  }, [meetingId, userName]);
 
   // Create peer connection for new user
   const createPeerConnection = async (
@@ -389,73 +230,16 @@ export default function MeetingPage() {
         audioTrack.enabled = !isMicOn;
         setIsMicOn(!isMicOn);
       }
-    } else {
-      // Try to get microphone access if we don't have it
-      navigator.mediaDevices
-        .getUserMedia({ audio: true, video: false })
-        .then((stream) => {
-          setLocalStream(stream);
-          setIsMicOn(true);
-        })
-        .catch((err) => {
-          console.error('Could not access microphone:', err);
-          setErrorMessage('Could not access microphone. Please check permissions.');
-        });
     }
   };
 
   // Toggle video
-  const toggleVideo = async () => {
+  const toggleVideo = () => {
     if (localStream) {
       const videoTrack = localStream.getVideoTracks()[0];
       if (videoTrack) {
         videoTrack.enabled = !isVideoOn;
         setIsVideoOn(!isVideoOn);
-
-        if (localVideoRef.current) {
-          if (!isVideoOn) {
-            localVideoRef.current.srcObject = localStream;
-            localVideoRef.current.play().catch(console.error);
-          }
-        }
-      } else if (!isVideoOn) {
-        // Try to add video if we only have audio
-        try {
-          const newStream = await navigator.mediaDevices.getUserMedia({
-            audio: true,
-            video: { width: { ideal: 1280 }, height: { ideal: 720 } }
-          });
-          localStream.getTracks().forEach((track) => track.stop());
-          setLocalStream(newStream);
-          setIsVideoOn(true);
-
-          if (localVideoRef.current) {
-            localVideoRef.current.srcObject = newStream;
-            localVideoRef.current.play().catch(console.error);
-          }
-        } catch (err) {
-          console.error('Could not access camera:', err);
-          setErrorMessage('Could not access camera. Please check permissions.');
-        }
-      }
-    } else {
-      // Try to get camera access if we don't have any stream
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: true,
-          video: { width: { ideal: 1280 }, height: { ideal: 720 } }
-        });
-        setLocalStream(stream);
-        setIsVideoOn(true);
-        setIsMicOn(true);
-
-        if (localVideoRef.current) {
-          localVideoRef.current.srcObject = stream;
-          localVideoRef.current.play().catch(console.error);
-        }
-      } catch (err) {
-        console.error('Could not access camera:', err);
-        setErrorMessage('Could not access camera/microphone. Please check permissions.');
       }
     }
   };
