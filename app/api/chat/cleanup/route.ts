@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import connectDB from '@/backend/config/mongodb';
 import appointmentModel from '@/backend/models/appointmentModel';
 
-// GET /api/chat/cleanup — Clears chat history older than 30 days
-// Can be triggered by a Vercel Cron Job or external scheduler
 export async function GET(req: NextRequest) {
   try {
-    // Verify cron secret to prevent unauthorized access
     const authHeader = req.headers.get('authorization');
     const cronSecret = process.env.CRON_SECRET;
 
@@ -13,20 +11,17 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
     }
 
+    await connectDB();
+
     const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
 
-    // Remove chat messages older than 30 days from all appointments
     const result = await appointmentModel.updateMany(
       { 'chatHistory.timestamp': { $lt: thirtyDaysAgo } },
       { $pull: { chatHistory: { timestamp: { $lt: thirtyDaysAgo } } } }
     );
 
-    // Also clear entire chatHistory for appointments completed more than 30 days ago
     const completedResult = await appointmentModel.updateMany(
-      { 
-        isCompleted: true, 
-        date: { $lt: thirtyDaysAgo } 
-      },
+      { isCompleted: true, date: { $lt: thirtyDaysAgo } },
       { $set: { chatHistory: [] } }
     );
 

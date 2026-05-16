@@ -7,7 +7,7 @@ import AgoraRTC, {
   IMicrophoneAudioTrack, 
   IAgoraRTCRemoteUser 
 } from 'agora-rtc-sdk-ng';
-import AgoraRTM from 'agora-rtm-sdk';
+import { Clock } from 'lucide-react';
 import { 
   Mic, MicOff, Video, VideoOff, Phone, 
   Send, MessageSquare, X, FileText, CheckCircle2 
@@ -60,7 +60,6 @@ const AgoraContainer: React.FC<AgoraContainerProps> = ({
   const [inputText, setInputText] = useState('');
   const [showSummaryModal, setShowSummaryModal] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [rtmClient, setRtmClient] = useState<any>(null);
   
   // Consultation Form State (for Doctor)
   const [notes, setNotes] = useState('');
@@ -68,6 +67,8 @@ const AgoraContainer: React.FC<AgoraContainerProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [partnerName, setPartnerName] = useState('Participant');
   const [isPipMode, setIsPipMode] = useState(true);
+  const [callDuration, setCallDuration] = useState(0);
+  const [callStarted, setCallStarted] = useState(false);
 
   // Refs
   const localVideoRef = useRef<HTMLDivElement>(null);
@@ -78,7 +79,6 @@ const AgoraContainer: React.FC<AgoraContainerProps> = ({
     let agoraClient: IAgoraRTCClient;
     let audioTrack: IMicrophoneAudioTrack;
     let videoTrack: ICameraVideoTrack;
-    let rtmInstance: any;
 
     const init = async () => {
       try {
@@ -118,43 +118,7 @@ const AgoraContainer: React.FC<AgoraContainerProps> = ({
           }
         }
 
-        // Initialize RTM
-        try {
-          const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
-          rtmInstance = new AgoraRTM.RTM(appId, uid.toString());
-          setRtmClient(rtmInstance);
-          
-          await rtmInstance.login();
-          await rtmInstance.subscribe(meetingId);
-          
-          rtmInstance.addEventListener('message', (event: any) => {
-            const { message, publisher } = event;
-            if (publisher !== uid.toString()) {
-              const msgData = JSON.parse(message);
-              const newMsg = {
-                sender: msgData.sender,
-                text: msgData.text,
-                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                isLocal: false,
-                timestamp: Date.now()
-              };
-              setMessages(prev => [...prev, newMsg]);
-              
-              // Notification for unread message
-              setMessages(currentMessages => {
-                // This is a trick to access showChat in the listener
-                return currentMessages;
-              });
-              
-              // We'll handle unreadCount using a ref or by checking state in a separate effect if needed
-              // but for now, simple increment:
-              setUnreadCount(prev => prev + 1);
-              toast.info(`New message from ${msgData.sender}`, { position: 'top-right', autoClose: 2000 });
-            }
-          });
-        } catch (rtmErr) {
-          console.error('RTM Init Error:', rtmErr);
-        }
+        setCallStarted(true);
 
         // Event Listeners
         agoraClient.on('user-published', async (user, mediaType) => {
@@ -213,13 +177,59 @@ const AgoraContainer: React.FC<AgoraContainerProps> = ({
         if (agoraClient) {
           await agoraClient.leave();
         }
-        if (rtmInstance) {
-          await rtmInstance.logout();
-        }
       };
       cleanup();
     };
   }, [meetingId]);
+
+  // Call Duration Timer
+  useEffect(() => {
+    if (!callStarted) return;
+    const interval = setInterval(() => {
+      setCallDuration(prev => prev + 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [callStarted]);
+
+  const formatDuration = (seconds: number) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  };
+
+  // Poll for new chat messages every 3 seconds
+  useEffect(() => {
+    if (!callStarted) return;
+    const poll = setInterval(async () => {
+      try {
+        const res = await fetch('/api/agora/token', {
+          method: 'POST',
+          body: JSON.stringify({ channelName: meetingId, uid: 0, role: 'subscriber' })
+        });
+        const data = await res.json();
+        if (data.appointment?.chatHistory) {
+          const history: ChatMessage[] = data.appointment.chatHistory.map((m: any) => ({
+            sender: m.sender,
+            text: m.message,
+            time: new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            isLocal: m.sender === userName,
+            timestamp: m.timestamp
+          }));
+          setMessages(prev => {
+            if (history.length > prev.length) {
+              const newCount = history.length - prev.length;
+              if (!showChat) setUnreadCount(c => c + newCount);
+              return history;
+            }
+            return prev;
+          });
+        }
+      } catch (e) { /* silent */ }
+    }, 3000);
+    return () => clearInterval(poll);
+  }, [callStarted, meetingId, userName, showChat]);
 
   // Handle Chat
   const sendMessage = async () => {
@@ -238,22 +248,9 @@ const AgoraContainer: React.FC<AgoraContainerProps> = ({
     setInputText('');
 
     try {
-      // 1. Send via RTM for real-time
-      if (rtmClient) {
-        await rtmClient.publish(meetingId, JSON.stringify({
-          sender: userName,
-          text: textToSend
-        }));
-      }
-
-      // 2. Persist to DB
       await fetch('/api/chat/send', {
         method: 'POST',
-        body: JSON.stringify({
-          meetingId,
-          sender: userName,
-          text: textToSend
-        })
+        body: JSON.stringify({ meetingId, sender: userName, text: textToSend })
       });
     } catch (err) {
       console.error('Send Error:', err);
@@ -320,10 +317,18 @@ const AgoraContainer: React.FC<AgoraContainerProps> = ({
       <div className={`relative flex-1 flex flex-col transition-all duration-500 ${showChat ? 'mr-80' : ''}`}>
         
         {/* Header / Info */}
-        <div className="absolute top-6 left-6 z-10 flex items-center gap-3 bg-black/30 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">
+        <div className="absolute top-6 left-6 z-10 flex items-center gap-3 bg-black/30 backdrop-blur-md px-5 py-2.5 rounded-full border border-white/10">
           <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-          <span className="text-sm font-medium opacity-90">{meetingId}</span>
+          <span className="text-sm font-semibold">{userName}</span>
+          <span className="text-xs text-white/40">•</span>
+          <span className="text-xs text-white/60">{isDoctor ? 'Doctor' : 'Patient'}</span>
         </div>
+        {callStarted && (
+          <div className="absolute top-6 right-6 z-10 flex items-center gap-2 bg-black/30 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">
+            <Clock size={14} className="text-red-400" />
+            <span className="text-sm font-mono font-medium text-red-300">{formatDuration(callDuration)}</span>
+          </div>
+        )}
 
         {/* Video Display Area */}
         <div className="flex-1 relative overflow-hidden group">

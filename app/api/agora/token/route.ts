@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pkg from 'agora-token';
+import connectDB from '@/backend/config/mongodb';
 import appointmentModel from '@/backend/models/appointmentModel';
 const { RtcTokenBuilder, RtcRole } = pkg;
 
@@ -33,15 +34,16 @@ export async function POST(req: NextRequest) {
       privilegeExpiredTs
     );
 
-    // Fetch appointment info to get names
+    // Connect to DB and fetch appointment info
+    await connectDB();
     const appointment = await appointmentModel.findOne({ meetingId: channelName });
 
     return NextResponse.json({ 
       success: true, 
       token,
       appointment: appointment ? {
-        patientName: appointment.userData?.name,
-        doctorName: appointment.docData?.name,
+        patientName: appointment.userData?.name || '',
+        doctorName: appointment.docData?.name || '',
         chatHistory: appointment.chatHistory || []
       } : null
     });

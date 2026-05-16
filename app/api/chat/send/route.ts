@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import connectDB from '@/backend/config/mongodb';
 import appointmentModel from '@/backend/models/appointmentModel';
 
 export async function POST(req: NextRequest) {
@@ -8,6 +9,8 @@ export async function POST(req: NextRequest) {
     if (!meetingId || !sender || !text) {
       return NextResponse.json({ success: false, message: 'Missing details' }, { status: 400 });
     }
+
+    await connectDB();
 
     const appointment = await appointmentModel.findOneAndUpdate(
       { meetingId },
