@@ -120,9 +120,11 @@ export default function MeetingPage() {
           localVideoRef.current.play().catch(console.error);
         }
 
-        // Initialize Socket.IO connection (even without media)
+        // Initialize Socket.IO connection
         const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-        const socket = io(backendUrl);
+        // Use port 3001 for socket server in development when using turbopack
+        const socketUrl = backendUrl.includes('localhost') ? 'http://localhost:3001' : backendUrl;
+        const socket = io(socketUrl);
         socketRef.current = socket;
 
         socket.on('connect', () => {
@@ -257,7 +259,8 @@ export default function MeetingPage() {
         // Even if media fails, still try to connect to the meeting
         try {
           const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-          const socket = io(backendUrl);
+          const socketUrl = backendUrl.includes('localhost') ? 'http://localhost:3001' : backendUrl;
+          const socket = io(socketUrl);
           socketRef.current = socket;
 
           socket.on('connect', () => {
