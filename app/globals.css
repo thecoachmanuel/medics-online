@@ -170,15 +170,15 @@
   }
   
   .doctor-card-image {
-    @apply bg-gradient-to-br from-blue-50 to-blue-100 object-contain;
+    @apply bg-blue-50 object-cover object-top;
   }
   
   .profile-image {
-    @apply object-cover;
+    @apply object-cover object-center;
   }
   
   .doctor-profile-image {
-    @apply bg-gradient-to-br from-blue-50 to-blue-100 object-contain;
+    @apply bg-blue-50 object-cover object-top;
   }
 }
 

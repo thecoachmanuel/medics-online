@@ -28,7 +28,7 @@ const TopDoctors = () => {
               className="border border-[#C9D8FF] rounded-xl overflow-hidden cursor-pointer hover:translate-y-[-10px] transition-all duration-500"
               key={index}
             >
-              <img className="doctor-card-image w-full h-48" src={item.image} alt={item.name} />
+              <img className="doctor-card-image w-full aspect-doctor-card" src={item.image} alt={item.name} />
               <div className="p-4">
                 <div
                   className={`flex items-center gap-2 text-sm text-center ${item.available ? 'text-green-500' : 'text-gray-500'}`}
