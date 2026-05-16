@@ -120,10 +120,10 @@ export const migrationConfig: ApiMigrationConfig = {
     migrated: true
   },
   '/api/doctor/register': {
-    encrypted: false,
+    encrypted: true, // MIGRATED! ✅
     priority: 'low',
-    description: 'Doctor registration - File upload (excluded from encryption)',
-    migrated: false
+    description: 'Doctor registration - Now using encrypted smartApi to handle multipart data',
+    migrated: true
   },
 
   // ADDITIONAL ENDPOINTS DISCOVERED - STEP 8: MIGRATED! ✅
