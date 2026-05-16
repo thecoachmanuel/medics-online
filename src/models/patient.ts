@@ -11,6 +11,7 @@ export interface IUserData {
   gender: string;
   dob: string;
   image: string;
+  _id: string;
 }
 
 export interface IDoctorPatient {
