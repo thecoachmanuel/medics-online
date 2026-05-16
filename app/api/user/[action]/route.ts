@@ -30,7 +30,6 @@ const actionMap: Record<string, ActionConfig> = {
   'login': { controller: loginUser },
   'get-profile': { controller: getProfile, auth: withUserAuth },
   'update-profile': { controller: updateProfile, auth: withUserAuth },
-  'book-appointment': { controller: bookAppointment, auth: withUserAuth },
   'appointments': { controller: listAppointment, auth: withUserAuth },
   'cancel-appointment': { controller: cancelAppointment, auth: withUserAuth },
   'reschedule-appointment': { controller: rescheduleAppointment, auth: withUserAuth },
