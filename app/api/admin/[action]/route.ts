@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/backend/config/mongodb';
+import connectCloudinary from '@/backend/config/cloudinary';
 import { runExpressController } from '@/backend/utils/expressAdapter';
 import { withEncryption } from '@/backend/middleware/hybridCrypto';
 import { withAdminAuth } from '@/backend/middleware/authAdmin';
@@ -48,6 +49,7 @@ const actionMap: Record<string, ActionConfig> = {
 
 async function handleAction(request: NextRequest, context: { params: Promise<{ action: string }> }) {
   await connectDB();
+  await connectCloudinary();
   
   const { action } = await context.params;
   const routeConfig = actionMap[action];
