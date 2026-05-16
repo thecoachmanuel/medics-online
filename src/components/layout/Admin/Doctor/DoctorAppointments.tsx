@@ -273,7 +273,7 @@ const DoctorAppointments = () => {
                     </button>
                   );
                 })()}
-                <p className="text-green-500 text-xs font-medium">Completed</p>
+                <p className="text-green-500 text-xs font-medium">Accepted</p>
               </div>
             ) : (
               <div className="flex flex-col gap-1">
@@ -367,7 +367,13 @@ const DoctorAppointments = () => {
                     onClick={() => cancelAppointment(item._id)}
                     className="w-10 cursor-pointer"
                     src={'/assets/cancel_icon.svg'}
-                    alt="Cancel"
+                    alt=""
+                  />
+                  <img
+                    onClick={() => completeAppointment(item._id)}
+                    className="w-10 cursor-pointer"
+                    src={'/assets/tick_icon.svg'}
+                    alt=""
                   />
                 </div>
               </div>
