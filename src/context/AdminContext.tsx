@@ -15,9 +15,14 @@ interface AdminContextProviderProps {
 }
 
 const AdminContextProvider = (props: AdminContextProviderProps) => {
-  const [aToken, setAToken] = useState<string>(
-    typeof window !== 'undefined' && localStorage.getItem('aToken') ? (localStorage.getItem('aToken') as string) : ''
-  );
+  const [aToken, setAToken] = useState('');
+
+  useEffect(() => {
+    const storedToken = localStorage.getItem('aToken');
+    if (storedToken) {
+      setAToken(storedToken);
+    }
+  }, []);
   const [appointments, setAppointments] = useState<IAdminContext['appointments']>([]);
   const [doctors, setDoctors] = useState<IAdminContext['doctors']>([]);
   const [patients, setPatients] = useState<IAdminContext['patients']>([]);

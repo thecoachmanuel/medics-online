@@ -47,9 +47,14 @@ const AppContextProvider = (props: AppContextProviderProps) => {
   };
 
   const [doctors, setDoctors] = useState<IDoctorPatient[]>([]);
-  const [token, setToken] = useState(
-    typeof window !== 'undefined' && localStorage.getItem('token') ? localStorage.getItem('token') : ''
-  );
+  const [token, setToken] = useState('');
+
+  useEffect(() => {
+    const storedToken = localStorage.getItem('token');
+    if (storedToken) {
+      setToken(storedToken);
+    }
+  }, []);
   const [userData, setUserData] = useState<IUserData | null>(null);
 
   // Getting Doctors using API (NOW WITH SMART ENCRYPTION)

@@ -15,9 +15,14 @@ interface DoctorContextProviderProps {
 }
 
 const DoctorContextProvider = (props: DoctorContextProviderProps) => {
-  const [dToken, setDToken] = useState<string>(
-    typeof window !== 'undefined' && localStorage.getItem('dToken') ? (localStorage.getItem('dToken') as string) : ''
-  );
+  const [dToken, setDToken] = useState('');
+
+  useEffect(() => {
+    const storedToken = localStorage.getItem('dToken');
+    if (storedToken) {
+      setDToken(storedToken);
+    }
+  }, []);
   const [appointments, setAppointments] = useState<IDoctorContext['appointments']>([]);
   const [dashData, setDashData] = useState<IDoctorContext['dashData']>(null);
   const [profileData, setProfileData] = useState<DoctorProfile | null>(null);
