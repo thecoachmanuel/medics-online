@@ -8,6 +8,7 @@ import { AppContext } from '@/context/AppContext';
 import RelatedDoctors from '@/components/layout/Patient/general/RelatedDoctors';
 import type { IPatientAppContext, IDoctorPatient, ApiResponse } from '@/models/patient';
 import { smartApi } from '@/utils/smartApi';
+import { getNigerianNow } from '@/utils/timeUtils';
 
 const Appointment = () => {
   const params = useParams() as { docId: string };
@@ -61,7 +62,7 @@ const Appointment = () => {
   const getAvailableSolts = () => {
     setDocSlots([]);
     if (!docInfo) return;
-    const today = new Date();
+    const today = getNigerianNow();
     for (let i = 0; i < 7; i++) {
       const currentDate = new Date(today);
       currentDate.setDate(today.getDate() + i);

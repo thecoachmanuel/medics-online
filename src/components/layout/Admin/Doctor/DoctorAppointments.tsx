@@ -2,6 +2,7 @@
 
 import { useContext, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { getNigerianNow } from '@/utils/timeUtils';
 
 import { DoctorContext } from '@/context/DoctorContext';
 import { AppContext } from '@/context/AppContext';
@@ -49,7 +50,7 @@ const DoctorAppointments = () => {
     
     // Create appointment date
     const appointmentDate = new Date(year, month, day, hours, minutes);
-    const now = new Date();
+    const now = getNigerianNow();
     
     // Calculate difference in milliseconds
     const diffMs = appointmentDate.getTime() - now.getTime();
