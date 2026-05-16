@@ -62,6 +62,8 @@ const AgoraContainer: React.FC<AgoraContainerProps> = ({
   const [notes, setNotes] = useState('');
   const [prescription, setPrescription] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [partnerName, setPartnerName] = useState('Participant');
+  const [isPipMode, setIsPipMode] = useState(true);
 
   // Refs
   const localVideoRef = useRef<HTMLDivElement>(null);
@@ -91,6 +93,13 @@ const AgoraContainer: React.FC<AgoraContainerProps> = ({
         const tokenData = await response.json();
 
         if (!tokenData.success) throw new Error('Failed to get Agora token');
+
+        if (tokenData.appointment) {
+          const otherName = isDoctor 
+            ? tokenData.appointment.patientName 
+            : tokenData.appointment.doctorName;
+          setPartnerName(otherName || 'Participant');
+        }
 
         // Event Listeners
         agoraClient.on('user-published', async (user, mediaType) => {
@@ -237,14 +246,14 @@ const AgoraContainer: React.FC<AgoraContainerProps> = ({
           <span className="text-sm font-medium opacity-90">{meetingId}</span>
         </div>
 
-        {/* Video Display */}
-        <div className="flex-1 grid gap-4 p-6 place-items-center h-full">
+        {/* Video Display Area */}
+        <div className="flex-1 relative overflow-hidden group">
           {remoteUsers.length === 0 ? (
-            // Full screen local video when alone
-            <Card className="relative w-full h-full max-w-5xl aspect-video overflow-hidden rounded-3xl border-none bg-slate-900/50 group">
-              <div ref={localVideoRef} className="w-full h-full object-cover scale-x-[-1]" />
+            // Full screen local video when alone (Waiting state)
+            <div className="w-full h-full relative bg-slate-900 flex items-center justify-center">
+              <div ref={localVideoRef} className="w-full h-full object-cover scale-x-[-1] absolute inset-0" />
               {!isVideoOn && (
-                <div className="absolute inset-0 flex items-center justify-center bg-slate-900">
+                <div className="absolute inset-0 flex items-center justify-center bg-slate-900 z-10">
                   <Avatar className="w-32 h-32 border-4 border-primary/20">
                     <AvatarFallback className="text-4xl bg-primary/10 text-primary uppercase">
                       {userName.charAt(0)}
@@ -252,41 +261,67 @@ const AgoraContainer: React.FC<AgoraContainerProps> = ({
                   </Avatar>
                 </div>
               )}
-              <div className="absolute bottom-6 left-6 px-4 py-2 bg-black/40 backdrop-blur-md rounded-xl border border-white/10 flex items-center gap-2">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+              <div className="z-20 text-center space-y-4">
+                <div className="bg-black/40 backdrop-blur-xl px-6 py-3 rounded-2xl border border-white/10 inline-block shadow-2xl">
+                  <p className="text-lg font-medium">Waiting for {isDoctor ? 'patient' : 'doctor'} to join...</p>
+                </div>
+              </div>
+              <div className="absolute bottom-10 left-10 z-20 px-4 py-2 bg-black/40 backdrop-blur-md rounded-xl border border-white/10 flex items-center gap-2">
                 <span className="text-sm font-medium">{userName} (You)</span>
                 {!isMicOn && <MicOff className="w-3 h-3 text-red-500" />}
               </div>
-            </Card>
+            </div>
           ) : (
-            // Grid when others are present
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full h-full max-w-7xl">
-              {/* Local Video */}
-              <Card className="relative aspect-video overflow-hidden rounded-3xl border-none bg-slate-900 group shadow-2xl">
-                <div ref={localVideoRef} className="w-full h-full object-cover scale-x-[-1]" />
-                {!isVideoOn && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-slate-800">
-                    <Avatar className="w-24 h-24">
-                      <AvatarFallback className="text-3xl">{userName.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                  </div>
-                )}
-                <div className="absolute bottom-4 left-4 px-3 py-1 bg-black/50 rounded-lg text-xs">
-                  {userName}
-                </div>
-              </Card>
-
-              {/* Remote Video */}
+            // SPEAKER MODE (Remote is Full, Local is PiP)
+            <div className="w-full h-full relative bg-slate-950">
+              {/* Remote Video (Full Screen) */}
               {remoteUsers.map(user => (
-                <Card key={user.uid} className="relative aspect-video overflow-hidden rounded-3xl border-none bg-slate-900 shadow-2xl">
+                <div key={user.uid} className="w-full h-full absolute inset-0 bg-slate-900">
                   <div 
                     ref={el => { if (el) user.videoTrack?.play(el) }} 
                     className="w-full h-full object-cover" 
                   />
-                  <div className="absolute bottom-4 left-4 px-3 py-1 bg-black/50 rounded-lg text-xs">
-                    Participant
+                  {!user.hasVideo && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-slate-900 z-10">
+                      <Avatar className="w-40 h-40 border-4 border-white/5">
+                        <AvatarFallback className="text-5xl bg-slate-800 text-slate-300">
+                          {partnerName.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                    </div>
+                  )}
+                  {/* Remote Name Label */}
+                  <div className="absolute top-10 left-1/2 -translate-x-1/2 z-20 px-6 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 flex items-center gap-3 shadow-2xl animate-in slide-in-from-top-4 duration-700">
+                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                    <span className="text-sm font-bold tracking-wide uppercase text-white/90">
+                      Consulting with {isDoctor ? 'Patient' : 'Dr.'} {partnerName}
+                    </span>
                   </div>
-                </Card>
+                </div>
               ))}
+
+              {/* Local Video (PiP) */}
+              <div className={`absolute transition-all duration-500 shadow-2xl overflow-hidden border-2 border-white/10 z-30 ${isPipMode ? 'bottom-28 right-8 w-64 aspect-video rounded-2xl cursor-pointer hover:scale-105' : 'inset-0 w-full h-full rounded-none'}`}
+                   onClick={() => setIsPipMode(!isPipMode)}>
+                <div ref={localVideoRef} className="w-full h-full object-cover scale-x-[-1]" />
+                {!isVideoOn && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-slate-800">
+                    <Avatar className={isPipMode ? "w-16 h-16" : "w-32 h-32"}>
+                      <AvatarFallback className="text-xl">{userName.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                  </div>
+                )}
+                <div className="absolute bottom-3 left-3 px-2 py-1 bg-black/60 backdrop-blur-md rounded-lg text-[10px] font-medium flex items-center gap-1">
+                  <span>{userName} (You)</span>
+                  {!isMicOn && <MicOff className="w-2.5 h-2.5 text-red-500" />}
+                </div>
+                {isPipMode && (
+                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 p-1 rounded-md">
+                    <X size={12} />
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>

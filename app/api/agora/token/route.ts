@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next';
 import pkg from 'agora-token';
+import appointmentModel from '@/backend/models/appointmentModel';
 const { RtcTokenBuilder, RtcRole } = pkg;
 
 export async function POST(req: NextRequest) {
@@ -32,7 +33,17 @@ export async function POST(req: NextRequest) {
       privilegeExpiredTs
     );
 
-    return NextResponse.json({ success: true, token });
+    // Fetch appointment info to get names
+    const appointment = await appointmentModel.findOne({ meetingId: channelName });
+
+    return NextResponse.json({ 
+      success: true, 
+      token,
+      appointment: appointment ? {
+        patientName: appointment.userData?.name,
+        doctorName: appointment.docData?.name,
+      } : null
+    });
   } catch (error: any) {
     console.error('Agora Token Error:', error);
     return NextResponse.json({ success: false, message: error.message }, { status: 500 });
