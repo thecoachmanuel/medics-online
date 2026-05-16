@@ -268,7 +268,7 @@ const MyAppointments = () => {
                   } else if (joinStatus.reason === 'future') {
                     return 'border-orange-300 text-orange-500 bg-orange-50 cursor-not-allowed';
                   }
-                  return 'border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white cursor-pointer';
+                  return 'bg-primary text-white hover:bg-primary/90 shadow-md hover:shadow-lg scale-100 hover:scale-[1.02] cursor-pointer border-none';
                 };
 
                 return (
@@ -279,12 +279,13 @@ const MyAppointments = () => {
                       }
                     }}
                     disabled={!joinStatus.canJoin}
-                    className={`sm:min-w-48 py-2 border rounded transition-all duration-300 flex items-center justify-center gap-2 ${getButtonStyles()}`}
+                    aria-label={getTooltipMessage()}
+                    className={`sm:min-w-48 py-2.5 font-semibold rounded-lg transition-all duration-300 flex items-center justify-center gap-2 ${getButtonStyles()}`}
                     title={getTooltipMessage()}
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="h-4 w-4"
+                      className="h-5 w-5"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"

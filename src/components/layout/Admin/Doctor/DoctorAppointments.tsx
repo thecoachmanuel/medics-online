@@ -234,7 +234,7 @@ const DoctorAppointments = () => {
                     } else if (joinStatus.reason === 'future') {
                       return 'bg-orange-200 text-orange-600 cursor-not-allowed';
                     }
-                    return 'bg-blue-500 text-white hover:bg-blue-600 cursor-pointer';
+                    return 'bg-primary text-white hover:bg-primary/90 shadow-md hover:shadow-lg scale-100 hover:scale-[1.05] cursor-pointer border-none font-bold';
                   };
 
                   return (
@@ -245,10 +245,11 @@ const DoctorAppointments = () => {
                         }
                       }}
                       disabled={!joinStatus.canJoin}
-                      className={`text-xs px-2 py-1 rounded transition-all duration-300 flex items-center justify-center gap-1 ${getButtonStyles()}`}
+                      aria-label={getTooltipMessage()}
+                      className={`px-4 py-2 rounded-lg transition-all duration-300 flex items-center justify-center gap-2 text-sm ${getButtonStyles()}`}
                       title={getTooltipMessage()}
                     >
-                      <Video className="w-3 h-3" />
+                      <Video className="w-4 h-4" />
                       {getButtonText()}
                     </button>
                   );
@@ -320,7 +321,7 @@ const DoctorAppointments = () => {
                     } else if (joinStatus.reason === 'future') {
                       return 'bg-orange-200 text-orange-600 cursor-not-allowed';
                     }
-                    return 'bg-blue-500 text-white hover:bg-blue-600 cursor-pointer';
+                    return 'bg-primary text-white hover:bg-primary/90 shadow-md hover:shadow-lg scale-100 hover:scale-[1.05] cursor-pointer border-none font-bold';
                   };
 
                   return (
