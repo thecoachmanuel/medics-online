@@ -152,10 +152,10 @@ export const migrationConfig: ApiMigrationConfig = {
     migrated: true
   },
   '/api/admin/add-doctor': {
-    encrypted: false,
+    encrypted: true, // MIGRATED! ✅
     priority: 'low',
-    description: 'Add new doctor - File upload (excluded from encryption)',
-    migrated: false
+    description: 'Add new doctor - sensitive data',
+    migrated: true
   },
   '/api/admin/delete-doctor': {
     encrypted: true,
@@ -164,10 +164,10 @@ export const migrationConfig: ApiMigrationConfig = {
     migrated: true
   },
   '/api/admin/edit-doctor': {
-    encrypted: false,
+    encrypted: true, // MIGRATED! ✅
     priority: 'low',
-    description: 'Edit doctor profile - File upload (excluded from encryption)',
-    migrated: false
+    description: 'Edit doctor profile - sensitive data',
+    migrated: true
   },
   '/api/admin/all-patients': {
     encrypted: true,
@@ -188,10 +188,10 @@ export const migrationConfig: ApiMigrationConfig = {
     migrated: true
   },
   '/api/admin/edit-patient': {
-    encrypted: false,
+    encrypted: true, // MIGRATED! ✅
     priority: 'low',
-    description: 'Edit patient profile - File upload (excluded from encryption)',
-    migrated: false
+    description: 'Edit patient profile - sensitive data',
+    migrated: true
   },
   '/api/admin/earnings': {
     encrypted: true,
