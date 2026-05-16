@@ -9,6 +9,7 @@ export interface SecureApiConfig {
 class SecureApiService {
   private baseURL: string;
   private sessionId: string;
+  private serverPublicKey: string | null = null;
 
   constructor(config: SecureApiConfig) {
     this.baseURL = config.baseURL;
@@ -23,9 +24,16 @@ class SecureApiService {
     try {
       // Always create fresh DH keys for each request
       const dh = new DiffieHellman();
+      
+      // If we already have the server's public key for this session, reuse it
+      if (this.serverPublicKey) {
+        const sharedSecret = dh.generateSharedSecret(this.serverPublicKey);
+        return { dh, sharedSecret, serverPublicKey: this.serverPublicKey };
+      }
+
       console.log('🔐 Frontend: DH initialized, client public key:', dh.getPublicKey());
 
-      // Get server's public key (always fresh)
+      // Get server's public key
       const response = await axios.get(`${this.baseURL}/api/secure/public-key`, {
         headers: {
           'session-id': this.sessionId,
@@ -33,16 +41,11 @@ class SecureApiService {
       });
 
       if (response.data.success) {
-        const serverPublicKey = response.data.serverPublicKey;
-        const sharedSecret = dh.generateSharedSecret(serverPublicKey!);
+        this.serverPublicKey = response.data.serverPublicKey;
+        const sharedSecret = dh.generateSharedSecret(this.serverPublicKey!);
         
         console.log('🔐 Frontend: Secure connection initialized successfully');
-        console.log('🔐 Frontend: Session ID:', this.sessionId);
-        console.log('🔐 Frontend: Client Public Key:', dh.getPublicKey());
-        console.log('🔐 Frontend: Server Public Key:', serverPublicKey);
-        console.log('🔐 Frontend: Shared Secret:', sharedSecret);
-        
-        return { dh, sharedSecret, serverPublicKey };
+        return { dh, sharedSecret, serverPublicKey: this.serverPublicKey! };
       } else {
         throw new Error('Failed to get server public key');
       }

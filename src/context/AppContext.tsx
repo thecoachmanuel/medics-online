@@ -64,6 +64,14 @@ const AppContextProvider = (props: AppContextProviderProps) => {
         localStorage.removeItem('userData');
       }
     }
+    const storedDoctors = localStorage.getItem('doctors');
+    if (storedDoctors) {
+      try {
+        setDoctors(JSON.parse(storedDoctors));
+      } catch (e) {
+        localStorage.removeItem('doctors');
+      }
+    }
   }, []);
 
   // Getting Doctors using API (NOW WITH SMART ENCRYPTION)
@@ -133,6 +141,12 @@ const AppContextProvider = (props: AppContextProviderProps) => {
       localStorage.removeItem('userData');
     }
   }, [userData, token]);
+
+  useEffect(() => {
+    if (doctors && doctors.length > 0) {
+      localStorage.setItem('doctors', JSON.stringify(doctors));
+    }
+  }, [doctors]);
 
   useEffect(() => {
     if (token) {
