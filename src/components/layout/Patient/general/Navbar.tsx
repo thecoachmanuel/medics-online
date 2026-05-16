@@ -36,19 +36,19 @@ const Navbar = () => {
         priority
       />
       <ul className="md:flex items-start gap-5 font-medium hidden">
-        <Link href="/" className={pathname === '/' ? 'active' : ''} >
+        <Link href="/" className={pathname === '/' ? 'active' : ''} prefetch={true}>
           <li className="py-1">HOME</li>
           <hr className="border-none outline-none h-0.5 bg-primary w-3/5 m-auto hidden" />
         </Link>
-        <Link href="/doctors" className={pathname === '/doctors' ? 'active' : ''} >
+        <Link href="/doctors" className={pathname === '/doctors' ? 'active' : ''} prefetch={true}>
           <li className="py-1">ALL DOCTORS</li>
           <hr className="border-none outline-none h-0.5 bg-primary w-3/5 m-auto hidden" />
         </Link>
-        <Link href="/about" className={pathname === '/about' ? 'active' : ''} >
+        <Link href="/about" className={pathname === '/about' ? 'active' : ''} prefetch={true}>
           <li className="py-1">ABOUT</li>
           <hr className="border-none outline-none h-0.5 bg-primary w-3/5 m-auto hidden" />
         </Link>
-        <Link href="/contact" className={pathname === '/contact' ? 'active' : ''} >
+        <Link href="/contact" className={pathname === '/contact' ? 'active' : ''} prefetch={true}>
           <li className="py-1">CONTACT</li>
           <hr className="border-none outline-none h-0.5 bg-primary w-3/5 m-auto hidden" />
         </Link>

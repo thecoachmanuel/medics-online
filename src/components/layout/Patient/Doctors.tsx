@@ -44,66 +44,37 @@ const Doctors = () => {
           Filters
         </button>
         <div
-          className={`flex-col gap-4 text-sm text-gray-600 ${showFilter ? 'flex' : 'hidden sm:flex'}`}
+          className={`flex-wrap gap-2 text-sm text-gray-600 ${showFilter ? 'flex' : 'hidden sm:flex'} sm:flex-col sm:min-w-64`}
         >
-          <p
-            onClick={() =>
-              isSelected('General physician')
-                ? router.push('/doctors')
-                : router.push('/doctors/General physician')
-            }
-            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer ${isSelected('General physician') ? 'bg-[#E2E5FF] text-black ' : ''}`}
-          >
-            General physician
-          </p>
-          <p
-            onClick={() =>
-              isSelected('Gynecologist')
-                ? router.push('/doctors')
-                : router.push('/doctors/Gynecologist')
-            }
-            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer ${isSelected('Gynecologist') ? 'bg-[#E2E5FF] text-black ' : ''}`}
-          >
-            Gynecologist
-          </p>
-          <p
-            onClick={() =>
-              isSelected('Dermatologist')
-                ? router.push('/doctors')
-                : router.push('/doctors/Dermatologist')
-            }
-            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer ${isSelected('Dermatologist') ? 'bg-[#E2E5FF] text-black ' : ''}`}
-          >
-            Dermatologist
-          </p>
-          <p
-            onClick={() =>
-              isSelected('Pediatricians')
-                ? router.push('/doctors')
-                : router.push('/doctors/Pediatricians')
-            }
-            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer ${isSelected('Pediatricians') ? 'bg-[#E2E5FF] text-black ' : ''}`}
-          >
-            Pediatricians
-          </p>
-          <p
-            onClick={() =>
-              isSelected('Neurologist') ? router.push('/doctors') : router.push('/doctors/Neurologist')
-            }
-            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer ${isSelected('Neurologist') ? 'bg-[#E2E5FF] text-black ' : ''}`}
-          >
-            Neurologist
-          </p>
-          <p
-            onClick={() =>
-              isSelected('Gastroenterologist')
-                ? router.push('/doctors')
-                : router.push('/doctors/Gastroenterologist')
-            }
-            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer ${isSelected('Gastroenterologist') ? 'bg-[#E2E5FF] text-black ' : ''}`}
-          >
-            Gastroenterologist
-          </p>
+          {[
+            'General physician',
+            'Gynecologist',
+            'Dermatologist',
+            'Pediatricians',
+            'Neurologist',
+            'Gastroenterologist'
+          ].map((cat) => (
+            <button
+              key={cat}
+              onClick={() =>
+                isSelected(cat)
+                  ? router.push('/doctors')
+                  : router.push(`/doctors/${cat}`)
+              }
+              className={`flex items-center justify-between px-4 py-2.5 border rounded-lg transition-all duration-300 cursor-pointer text-left ${
+                isSelected(cat)
+                  ? 'bg-primary text-white border-primary shadow-md'
+                  : 'bg-white hover:bg-gray-50 border-gray-200'
+              }`}
+            >
+              <span>{cat}</span>
+              {isSelected(cat) && (
+                <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+            </button>
+          ))}
         </div>
         <div className="w-full grid-responsive">
           {filterDoc.length > 0 ? (
