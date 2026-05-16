@@ -116,7 +116,7 @@ const AppContextProvider = (props: AppContextProviderProps) => {
     }
   }, [token]);
 
-  const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+  const backendUrl = process.env.NEXT_PUBLIC_API_URL || '';
   
   const value = {
     doctors,

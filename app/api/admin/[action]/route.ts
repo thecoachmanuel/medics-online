@@ -11,7 +11,14 @@ import {
   allDoctors,
   appointmentsAdmin,
   appointmentCancel,
-  adminDashboard
+  adminDashboard,
+  allPatients,
+  approveDoctor,
+  rejectDoctor,
+  deleteDoctor,
+  editDoctor,
+  editPatient,
+  adminEarnings
 } from '@/backend/controllers/adminController';
 
 import { changeAvailablity } from '@/backend/controllers/doctorController';
@@ -29,7 +36,14 @@ const actionMap: Record<string, ActionConfig> = {
   'appointments': { controller: appointmentsAdmin, auth: withAdminAuth },
   'cancel-appointment': { controller: appointmentCancel, auth: withAdminAuth },
   'dashboard': { controller: adminDashboard, auth: withAdminAuth },
-  'change-availability': { controller: changeAvailablity, auth: withAdminAuth }
+  'change-availability': { controller: changeAvailablity, auth: withAdminAuth },
+  'all-patients': { controller: allPatients, auth: withAdminAuth },
+  'approve-doctor': { controller: approveDoctor, auth: withAdminAuth },
+  'reject-doctor': { controller: rejectDoctor, auth: withAdminAuth },
+  'delete-doctor': { controller: deleteDoctor, auth: withAdminAuth },
+  'edit-doctor': { controller: editDoctor, auth: withAdminAuth },
+  'edit-patient': { controller: editPatient, auth: withAdminAuth },
+  'earnings': { controller: adminEarnings, auth: withAdminAuth }
 };
 
 async function handleAction(request: NextRequest, context: { params: Promise<{ action: string }> }) {

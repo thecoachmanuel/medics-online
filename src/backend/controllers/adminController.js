@@ -168,6 +168,25 @@ const adminDashboard = async (req, res) => {
   }
 };
 
+// API to get earnings for admin panel
+const adminEarnings = async (req, res) => {
+  try {
+    const appointments = await appointmentModel.find({});
+    let earnings = 0;
+
+    appointments.map((item) => {
+      if (item.isCompleted || item.payment) {
+        earnings += item.amount;
+      }
+    });
+
+    res.json({ success: true, earnings });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
 // API to approve doctor
 const approveDoctor = async (req, res) => {
   try {
@@ -319,5 +338,6 @@ export {
   rejectDoctor,
   deleteDoctor,
   editDoctor,
-  editPatient
+  editPatient,
+  adminEarnings
 };

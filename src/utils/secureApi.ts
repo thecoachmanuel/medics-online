@@ -114,7 +114,7 @@ class SecureApiService {
 }
 
 // Create a singleton instance
-const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+const backendUrl = process.env.NEXT_PUBLIC_API_URL || '';
 export const secureApi = new SecureApiService({ baseURL: backendUrl });
 
 // Export the class for creating custom instances if needed

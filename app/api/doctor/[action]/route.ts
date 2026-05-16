@@ -7,13 +7,15 @@ import { withDoctorAuth } from '@/backend/middleware/authDoctor';
 // Import all doctor controllers
 import {
   loginDoctor,
+  registerDoctor,
   appointmentsDoctor,
   appointmentCancel,
   appointmentComplete,
   doctorDashboard,
   doctorProfile,
   updateDoctorProfile,
-  doctorList
+  doctorList,
+  changeAvailablity
 } from '@/backend/controllers/doctorController';
 
 type ActionConfig = {
@@ -24,13 +26,15 @@ type ActionConfig = {
 // Map actions to controllers, with necessary middlewares applied
 const actionMap: Record<string, ActionConfig> = {
   'login': { controller: loginDoctor },
+  'register': { controller: registerDoctor },
   'appointments': { controller: appointmentsDoctor, auth: withDoctorAuth },
   'cancel-appointment': { controller: appointmentCancel, auth: withDoctorAuth },
   'complete-appointment': { controller: appointmentComplete, auth: withDoctorAuth },
   'dashboard': { controller: doctorDashboard, auth: withDoctorAuth },
   'profile': { controller: doctorProfile, auth: withDoctorAuth },
   'update-profile': { controller: updateDoctorProfile, auth: withDoctorAuth },
-  'list': { controller: doctorList }
+  'list': { controller: doctorList },
+  'change-availability': { controller: changeAvailablity, auth: withDoctorAuth }
 };
 
 async function handleAction(request: NextRequest, context: { params: Promise<{ action: string }> }) {

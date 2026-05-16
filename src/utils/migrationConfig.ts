@@ -169,6 +169,36 @@ export const migrationConfig: ApiMigrationConfig = {
     description: 'Edit doctor profile - File upload (excluded from encryption)',
     migrated: false
   },
+  '/api/admin/all-patients': {
+    encrypted: true,
+    priority: 'medium',
+    description: 'All patients list',
+    migrated: true
+  },
+  '/api/admin/approve-doctor': {
+    encrypted: true,
+    priority: 'medium',
+    description: 'Approve doctor registration',
+    migrated: true
+  },
+  '/api/admin/reject-doctor': {
+    encrypted: true,
+    priority: 'medium',
+    description: 'Reject doctor registration',
+    migrated: true
+  },
+  '/api/admin/edit-patient': {
+    encrypted: false,
+    priority: 'low',
+    description: 'Edit patient profile - File upload (excluded from encryption)',
+    migrated: false
+  },
+  '/api/admin/earnings': {
+    encrypted: true,
+    priority: 'medium',
+    description: 'Admin earnings statistics',
+    migrated: true
+  },
   '/api/user/payment-paystack': {
     encrypted: false,
     priority: 'low',
