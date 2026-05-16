@@ -27,7 +27,8 @@ const EditDoctor = () => {
 
   useEffect(() => {
     if (doctors && docId) {
-      const doctor = doctors.find(d => d._id === docId) as unknown as DoctorProfile;
+      const stringDocId = Array.isArray(docId) ? docId[0] : docId;
+      const doctor = doctors.find(d => d._id === stringDocId) as unknown as DoctorProfile;
       if (doctor) {
         setName(doctor.name);
         setEmail(doctor.email);
@@ -48,7 +49,8 @@ const EditDoctor = () => {
 
     try {
       const formData = new FormData();
-      formData.append('docId', docId || '');
+      const stringDocId = Array.isArray(docId) ? docId[0] : docId;
+      formData.append('docId', stringDocId || '');
       formData.append('name', name);
       formData.append('email', email);
       formData.append('experience', experience);
