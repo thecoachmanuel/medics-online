@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next';
+import { NextRequest, NextResponse } from 'next/server';
 import pkg from 'agora-token';
 import appointmentModel from '@/backend/models/appointmentModel';
 const { RtcTokenBuilder, RtcRole } = pkg;
@@ -42,6 +42,7 @@ export async function POST(req: NextRequest) {
       appointment: appointment ? {
         patientName: appointment.userData?.name,
         doctorName: appointment.docData?.name,
+        chatHistory: appointment.chatHistory || []
       } : null
     });
   } catch (error: any) {

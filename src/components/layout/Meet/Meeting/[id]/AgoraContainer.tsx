@@ -7,6 +7,7 @@ import AgoraRTC, {
   IMicrophoneAudioTrack, 
   IAgoraRTCRemoteUser 
 } from 'agora-rtc-sdk-ng';
+import AgoraRTM from 'agora-rtm-sdk';
 import { 
   Mic, MicOff, Video, VideoOff, Phone, 
   Send, MessageSquare, X, FileText, CheckCircle2 
@@ -27,6 +28,7 @@ interface ChatMessage {
   text: string;
   time: string;
   isLocal: boolean;
+  timestamp?: number;
 }
 
 interface AgoraContainerProps {
@@ -57,6 +59,8 @@ const AgoraContainer: React.FC<AgoraContainerProps> = ({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [showSummaryModal, setShowSummaryModal] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [rtmClient, setRtmClient] = useState<any>(null);
   
   // Consultation Form State (for Doctor)
   const [notes, setNotes] = useState('');
@@ -74,6 +78,7 @@ const AgoraContainer: React.FC<AgoraContainerProps> = ({
     let agoraClient: IAgoraRTCClient;
     let audioTrack: IMicrophoneAudioTrack;
     let videoTrack: ICameraVideoTrack;
+    let rtmInstance: any;
 
     const init = async () => {
       try {
@@ -99,6 +104,56 @@ const AgoraContainer: React.FC<AgoraContainerProps> = ({
             ? tokenData.appointment.patientName 
             : tokenData.appointment.doctorName;
           setPartnerName(otherName || 'Participant');
+          
+          // Load Chat History
+          if (tokenData.appointment.chatHistory) {
+            const history = tokenData.appointment.chatHistory.map((m: any) => ({
+              sender: m.sender,
+              text: m.message,
+              time: new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              isLocal: m.sender === userName,
+              timestamp: m.timestamp
+            }));
+            setMessages(history);
+          }
+        }
+
+        // Initialize RTM
+        try {
+          const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID!;
+          rtmInstance = new AgoraRTM.RTM(appId, uid.toString());
+          setRtmClient(rtmInstance);
+          
+          await rtmInstance.login();
+          await rtmInstance.subscribe(meetingId);
+          
+          rtmInstance.addEventListener('message', (event: any) => {
+            const { message, publisher } = event;
+            if (publisher !== uid.toString()) {
+              const msgData = JSON.parse(message);
+              const newMsg = {
+                sender: msgData.sender,
+                text: msgData.text,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                isLocal: false,
+                timestamp: Date.now()
+              };
+              setMessages(prev => [...prev, newMsg]);
+              
+              // Notification for unread message
+              setMessages(currentMessages => {
+                // This is a trick to access showChat in the listener
+                return currentMessages;
+              });
+              
+              // We'll handle unreadCount using a ref or by checking state in a separate effect if needed
+              // but for now, simple increment:
+              setUnreadCount(prev => prev + 1);
+              toast.info(`New message from ${msgData.sender}`, { position: 'top-right', autoClose: 2000 });
+            }
+          });
+        } catch (rtmErr) {
+          console.error('RTM Init Error:', rtmErr);
         }
 
         // Event Listeners
@@ -158,27 +213,51 @@ const AgoraContainer: React.FC<AgoraContainerProps> = ({
         if (agoraClient) {
           await agoraClient.leave();
         }
+        if (rtmInstance) {
+          await rtmInstance.logout();
+        }
       };
       cleanup();
     };
   }, [meetingId]);
 
   // Handle Chat
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (!inputText.trim()) return;
-    
+
     const newMessage: ChatMessage = {
       sender: userName,
       text: inputText,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      isLocal: true
+      isLocal: true,
+      timestamp: Date.now()
     };
-    
+
     setMessages(prev => [...prev, newMessage]);
+    const textToSend = inputText;
     setInputText('');
-    
-    // In a real app, we would use Agora RTM or Socket.io for chat
-    // For now, let's assume we use Socket.io which is already integrated
+
+    try {
+      // 1. Send via RTM for real-time
+      if (rtmClient) {
+        await rtmClient.publish(meetingId, JSON.stringify({
+          sender: userName,
+          text: textToSend
+        }));
+      }
+
+      // 2. Persist to DB
+      await fetch('/api/chat/send', {
+        method: 'POST',
+        body: JSON.stringify({
+          meetingId,
+          sender: userName,
+          text: textToSend
+        })
+      });
+    } catch (err) {
+      console.error('Send Error:', err);
+    }
   };
 
   useEffect(() => {
@@ -358,10 +437,18 @@ const AgoraContainer: React.FC<AgoraContainerProps> = ({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button 
-                  onClick={() => setShowChat(!showChat)}
-                  className={`w-12 h-12 rounded-full border-none transition-all ${showChat ? 'bg-primary text-white' : 'bg-slate-800 hover:bg-slate-700'}`}
+                  onClick={() => {
+                    setShowChat(!showChat);
+                    if (!showChat) setUnreadCount(0);
+                  }}
+                  className={`w-12 h-12 rounded-full border-none transition-all relative ${showChat ? 'bg-primary text-white' : 'bg-slate-800 hover:bg-slate-700'}`}
                 >
                   <MessageSquare size={20} />
+                  {unreadCount > 0 && !showChat && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold animate-bounce shadow-lg border-2 border-slate-900">
+                      {unreadCount}
+                    </span>
+                  )}
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Chat</TooltipContent>
