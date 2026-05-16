@@ -10,7 +10,7 @@ import type { IPatientAppContext } from '@/models/patient';
 import { smartApi } from '@/utils/smartApi';
 
 const Login = () => {
-  const [state, setState] = useState('Sign Up');
+  const [state, setState] = useState('Login');
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
