@@ -69,7 +69,7 @@ app.prepare().then(() => {
   });
 
   // Pass all other requests to Next.js
-  server.all('*', (req, res) => {
+  server.all(':path*', (req, res) => {
     return handle(req, res);
   });
 
