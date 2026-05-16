@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/backend/config/mongodb';
 import { runExpressController } from '@/backend/utils/expressAdapter';
 import { withEncryption } from '@/backend/middleware/hybridCrypto';
-import { authDoctor } from '@/backend/middleware/authDoctor';
+import { withDoctorAuth } from '@/backend/middleware/authDoctor';
 
 // Import all doctor controllers
 import {
@@ -24,12 +24,12 @@ type ActionConfig = {
 // Map actions to controllers, with necessary middlewares applied
 const actionMap: Record<string, ActionConfig> = {
   'login': { controller: loginDoctor },
-  'appointments': { controller: appointmentsDoctor, auth: authDoctor },
-  'cancel-appointment': { controller: appointmentCancel, auth: authDoctor },
-  'complete-appointment': { controller: appointmentComplete, auth: authDoctor },
-  'dashboard': { controller: doctorDashboard, auth: authDoctor },
-  'profile': { controller: doctorProfile, auth: authDoctor },
-  'update-profile': { controller: updateDoctorProfile, auth: authDoctor },
+  'appointments': { controller: appointmentsDoctor, auth: withDoctorAuth },
+  'cancel-appointment': { controller: appointmentCancel, auth: withDoctorAuth },
+  'complete-appointment': { controller: appointmentComplete, auth: withDoctorAuth },
+  'dashboard': { controller: doctorDashboard, auth: withDoctorAuth },
+  'profile': { controller: doctorProfile, auth: withDoctorAuth },
+  'update-profile': { controller: updateDoctorProfile, auth: withDoctorAuth },
   'list': { controller: doctorList }
 };
 

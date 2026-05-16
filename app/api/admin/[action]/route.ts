@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/backend/config/mongodb';
 import { runExpressController } from '@/backend/utils/expressAdapter';
 import { withEncryption } from '@/backend/middleware/hybridCrypto';
-import { authAdmin } from '@/backend/middleware/authAdmin';
+import { withAdminAuth } from '@/backend/middleware/authAdmin';
 
 // Import all admin controllers
 import {
@@ -24,12 +24,12 @@ type ActionConfig = {
 // Map actions to controllers, with necessary middlewares applied
 const actionMap: Record<string, ActionConfig> = {
   'login': { controller: loginAdmin },
-  'add-doctor': { controller: addDoctor, auth: authAdmin },
-  'all-doctors': { controller: allDoctors, auth: authAdmin },
-  'appointments': { controller: appointmentsAdmin, auth: authAdmin },
-  'cancel-appointment': { controller: appointmentCancel, auth: authAdmin },
-  'dashboard': { controller: adminDashboard, auth: authAdmin },
-  'change-availability': { controller: changeAvailablity, auth: authAdmin }
+  'add-doctor': { controller: addDoctor, auth: withAdminAuth },
+  'all-doctors': { controller: allDoctors, auth: withAdminAuth },
+  'appointments': { controller: appointmentsAdmin, auth: withAdminAuth },
+  'cancel-appointment': { controller: appointmentCancel, auth: withAdminAuth },
+  'dashboard': { controller: adminDashboard, auth: withAdminAuth },
+  'change-availability': { controller: changeAvailablity, auth: withAdminAuth }
 };
 
 async function handleAction(request: NextRequest, context: { params: Promise<{ action: string }> }) {
