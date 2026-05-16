@@ -20,7 +20,10 @@ const Doctors = () => {
 
   const applyFilter = () => {
     if (speciality) {
-      setFilterDoc(doctors.filter((doc: IDoctorPatient) => doc.speciality === speciality));
+      const decodedSpeciality = decodeURIComponent(speciality).toLowerCase();
+      setFilterDoc(doctors.filter((doc: IDoctorPatient) => 
+        doc.speciality.toLowerCase() === decodedSpeciality
+      ));
     } else {
       setFilterDoc(doctors as IDoctorPatient[]);
     }
@@ -29,6 +32,12 @@ const Doctors = () => {
   useEffect(() => {
     applyFilter();
   }, [doctors, speciality]);
+
+  // Helper to check if a speciality is selected (case-insensitive)
+  const isSelected = (name: string) => {
+    if (!speciality) return false;
+    return decodeURIComponent(speciality).toLowerCase() === name.toLowerCase();
+  };
 
   return (
     <div>
@@ -45,64 +54,64 @@ const Doctors = () => {
         >
           <p
             onClick={() =>
-              speciality === 'General physician'
+              isSelected('General physician')
                 ? router.push('/doctors')
                 : router.push('/doctors/General physician')
             }
-            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer ${speciality === 'General physician' ? 'bg-[#E2E5FF] text-black ' : ''}`}
+            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer ${isSelected('General physician') ? 'bg-[#E2E5FF] text-black ' : ''}`}
           >
             General physician
           </p>
           <p
             onClick={() =>
-              speciality === 'Gynecologist'
+              isSelected('Gynecologist')
                 ? router.push('/doctors')
                 : router.push('/doctors/Gynecologist')
             }
-            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer ${speciality === 'Gynecologist' ? 'bg-[#E2E5FF] text-black ' : ''}`}
+            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer ${isSelected('Gynecologist') ? 'bg-[#E2E5FF] text-black ' : ''}`}
           >
             Gynecologist
           </p>
           <p
             onClick={() =>
-              speciality === 'Dermatologist'
+              isSelected('Dermatologist')
                 ? router.push('/doctors')
                 : router.push('/doctors/Dermatologist')
             }
-            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer ${speciality === 'Dermatologist' ? 'bg-[#E2E5FF] text-black ' : ''}`}
+            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer ${isSelected('Dermatologist') ? 'bg-[#E2E5FF] text-black ' : ''}`}
           >
             Dermatologist
           </p>
           <p
             onClick={() =>
-              speciality === 'Pediatricians'
+              isSelected('Pediatricians')
                 ? router.push('/doctors')
                 : router.push('/doctors/Pediatricians')
             }
-            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer ${speciality === 'Pediatricians' ? 'bg-[#E2E5FF] text-black ' : ''}`}
+            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer ${isSelected('Pediatricians') ? 'bg-[#E2E5FF] text-black ' : ''}`}
           >
             Pediatricians
           </p>
           <p
             onClick={() =>
-              speciality === 'Neurologist' ? router.push('/doctors') : router.push('/doctors/Neurologist')
+              isSelected('Neurologist') ? router.push('/doctors') : router.push('/doctors/Neurologist')
             }
-            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer ${speciality === 'Neurologist' ? 'bg-[#E2E5FF] text-black ' : ''}`}
+            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer ${isSelected('Neurologist') ? 'bg-[#E2E5FF] text-black ' : ''}`}
           >
             Neurologist
           </p>
           <p
             onClick={() =>
-              speciality === 'Gastroenterologist'
+              isSelected('Gastroenterologist')
                 ? router.push('/doctors')
                 : router.push('/doctors/Gastroenterologist')
             }
-            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer ${speciality === 'Gastroenterologist' ? 'bg-[#E2E5FF] text-black ' : ''}`}
+            className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer ${isSelected('Gastroenterologist') ? 'bg-[#E2E5FF] text-black ' : ''}`}
           >
             Gastroenterologist
           </p>
         </div>
-        <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 gap-y-6">
+        <div className="w-full grid-responsive">
           {filterDoc.length > 0 ? (
             filterDoc.map((item: IDoctorPatient, index: number) => (
               <DoctorCard key={index} doctor={item} />
