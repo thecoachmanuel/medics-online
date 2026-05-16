@@ -57,6 +57,14 @@ const DoctorAppointments = () => {
     
     // Convert to hours
     const diffHours = diffMs / (60 * 60 * 1000);
+
+    console.log('🕒 Time Check:', {
+      appointmentDate: appointmentDate.toLocaleString(),
+      now: now.toLocaleString(),
+      diffHours,
+      slotDate,
+      slotTime
+    });
     
     // Check if more than 24 hours in the future
     if (diffHours > 24) {
