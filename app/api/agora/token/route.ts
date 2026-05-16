@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { RtcTokenBuilder, RtcRole } from 'agora-token';
+import pkg from 'agora-token';
+const { RtcTokenBuilder, RtcRole } = pkg;
 
 export async function POST(req: NextRequest) {
   try {
