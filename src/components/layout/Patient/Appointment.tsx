@@ -22,6 +22,7 @@ const Appointment = () => {
   const [docSlots, setDocSlots] = useState<Slot[][]>([]);
   const [slotIndex, setSlotIndex] = useState(0);
   const [slotTime, setSlotTime] = useState('');
+  const [isBooking, setIsBooking] = useState(false);
   const [vitals, setVitals] = useState<{ bpm: string | number; spo2: string | number }>({
     bpm: '---',
     spo2: '---'
@@ -102,12 +103,17 @@ const Appointment = () => {
       setDocSlots((prev) => [...prev, timeSlots]);
     }
   };
-
   const bookAppointment = async () => {
     if (!token || !userData) {
       toast.warning('Login to book appointment');
       return router.push('/login');
     }
+
+    if (!slotTime) {
+      return toast.warning('Please select a time slot');
+    }
+
+    setIsBooking(true);
     const date = docSlots[slotIndex][0].datetime;
     const day = date.getDate();
     const month = date.getMonth() + 1;
@@ -125,10 +131,12 @@ const Appointment = () => {
         window.location.href = data.authorization_url;
       } else {
         toast.error(data.message || 'Payment initialization failed');
+        setIsBooking(false);
       }
     } catch (error: unknown) {
       console.error('❌ Appointment payment error:', error);
       toast.error('An error occurred while initiating payment');
+      setIsBooking(false);
     }
   };
 
@@ -326,10 +334,18 @@ const Appointment = () => {
         </div>
 
         <button
+          disabled={isBooking}
           onClick={rescheduleId ? rescheduleAppointment : bookAppointment}
-          className="bg-primary text-white text-sm font-light px-20 py-3 rounded-full my-6 cursor-pointer"
+          className={`bg-primary text-white text-sm font-light px-20 py-3 rounded-full my-6 cursor-pointer flex items-center gap-2 ${isBooking ? 'opacity-70 cursor-not-allowed' : ''}`}
         >
-          {rescheduleId ? 'Reschedule appointment' : 'Book an appointment'}
+          {isBooking ? (
+            <>
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+              Redirecting to Payment...
+            </>
+          ) : (
+            rescheduleId ? 'Reschedule appointment' : 'Pay & Book Appointment'
+          )}
         </button>
       </div>
 
