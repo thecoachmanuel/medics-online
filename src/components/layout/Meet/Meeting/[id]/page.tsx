@@ -477,22 +477,41 @@ export default function MeetingPage() {
 
   return (
     <div className="flex h-screen flex-col bg-slate-900">
-      <header className="flex items-center justify-between border-b border-slate-800 bg-slate-950 px-4 py-2">
-        <div className="flex items-center gap-2">
-          <Video className="h-5 w-5 text-white" />
-          <span className="font-medium text-white">Meeting: {meetingId}</span>
-          <span className="text-sm text-gray-400">
-            ({isConnected ? 'Connected' : 'Connecting...'})
-          </span>
+      <header className="flex items-center justify-between border-b border-slate-800/50 bg-slate-950/80 backdrop-blur-md px-6 py-4 sticky top-0 z-50">
+        <div className="flex items-center gap-3">
+          <div className="bg-primary/20 p-2 rounded-lg">
+            <Video className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <span className="font-semibold text-white block leading-tight">Meeting Session</span>
+            <span className="text-xs text-gray-400">
+              ID: {meetingId} • {isConnected ? <span className="text-green-500">Live</span> : <span className="text-yellow-500">Connecting...</span>}
+            </span>
+          </div>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={copyMeetingLink}
-          className="bg-white border-gray-500 text-black hover:bg-gray-700 hover:border-gray-900 hover:text-white cursor-pointer"
-        >
-          Copy Invite Link
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={copyMeetingLink}
+            className="hidden sm:flex bg-slate-900 border-slate-700 text-gray-300 hover:bg-slate-800 hover:text-white transition-all cursor-pointer rounded-full px-5"
+          >
+            Invite Member
+          </Button>
+          <div className="h-8 w-[1px] bg-slate-800 mx-2 hidden sm:block"></div>
+          <div className="flex -space-x-2">
+            {participants.slice(0, 3).map((p, i) => (
+              <div key={p.id} className="w-8 h-8 rounded-full border-2 border-slate-950 bg-slate-800 flex items-center justify-center text-[10px] text-white overflow-hidden">
+                {p.name.charAt(0)}
+              </div>
+            ))}
+            {participants.length > 3 && (
+              <div className="w-8 h-8 rounded-full border-2 border-slate-950 bg-primary flex items-center justify-center text-[10px] text-white">
+                +{participants.length - 3}
+              </div>
+            )}
+          </div>
+        </div>
       </header>
 
       <main className="flex flex-1 flex-col overflow-hidden">
@@ -582,20 +601,20 @@ export default function MeetingPage() {
           </div>
         </div>
 
-        <div className="flex justify-center gap-2 bg-slate-950 p-4">
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex justify-center items-center gap-4 bg-slate-950/60 backdrop-blur-xl p-4 px-8 rounded-full border border-white/10 shadow-2xl z-50">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   size="icon"
                   onClick={toggleMic}
-                  className={`rounded-full border-none ${!isMicOn ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-white text-black hover:bg-gray-200'} cursor-pointer`}
+                  className={`w-12 h-12 rounded-full border-none transition-all duration-300 ${!isMicOn ? 'bg-red-500/80 text-white hover:bg-red-600' : 'bg-slate-800/80 text-white hover:bg-slate-700'} cursor-pointer`}
                 >
                   {isMicOn ? <Mic className="h-5 w-5" /> : <MicOff className="h-5 w-5" />}
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>
-                {isMicOn ? 'Turn off microphone' : 'Turn on microphone'}
+              <TooltipContent className="bg-slate-900 border-slate-800 text-white">
+                {isMicOn ? 'Mute' : 'Unmute'}
               </TooltipContent>
             </Tooltip>
 
@@ -604,25 +623,31 @@ export default function MeetingPage() {
                 <Button
                   size="icon"
                   onClick={toggleVideo}
-                  className={`rounded-full border-none ${!isVideoOn ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-white text-black hover:bg-gray-200'} cursor-pointer`}
+                  className={`w-12 h-12 rounded-full border-none transition-all duration-300 ${!isVideoOn ? 'bg-red-500/80 text-white hover:bg-red-600' : 'bg-slate-800/80 text-white hover:bg-slate-700'} cursor-pointer`}
                 >
                   {isVideoOn ? <Video className="h-5 w-5" /> : <VideoOff className="h-5 w-5" />}
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>{isVideoOn ? 'Turn off camera' : 'Turn on camera'}</TooltipContent>
+              <TooltipContent className="bg-slate-900 border-slate-800 text-white">
+                {isVideoOn ? 'Stop Video' : 'Start Video'}
+              </TooltipContent>
             </Tooltip>
+
+            <div className="w-[1px] h-8 bg-white/10 mx-2"></div>
 
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   size="icon"
                   onClick={endCall}
-                  className="rounded-full border-none bg-red-500 text-white hover:bg-red-600 cursor-pointer"
+                  className="w-14 h-14 rounded-full border-none bg-red-600 text-white hover:bg-red-700 hover:scale-110 transition-all duration-300 shadow-lg shadow-red-900/20 cursor-pointer"
                 >
-                  <Phone className="h-5 w-5 rotate-[135deg]" />
+                  <Phone className="h-6 w-6 rotate-[135deg]" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>End call</TooltipContent>
+              <TooltipContent className="bg-red-900 border-red-800 text-white">
+                Leave Call
+              </TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </div>
