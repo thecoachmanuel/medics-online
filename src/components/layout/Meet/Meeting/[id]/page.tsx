@@ -86,65 +86,116 @@ export default function MeetingPage() {
         };
         stream = await navigator.mediaDevices.getUserMedia(constraints);
         setLocalStream(stream);
+        
+        // Update local participant in state
+        setParticipants(prev => prev.map(p => p.isLocal ? { ...p, stream } : p));
+        
         if (localVideoRef.current) localVideoRef.current.srcObject = stream;
       } catch (err) {
         console.error('Media error:', err);
         setErrorMessage('Failed to access camera/microphone.');
       }
       
-      // Always initialize socket
-      const socket = io({ path: '/api/socket', transports: ['websocket', 'polling'] });
+      // Always initialize socket after media (even if failed)
+      const socket = io({ 
+        path: '/api/socket', 
+        transports: ['websocket', 'polling'],
+        reconnection: true,
+        reconnectionAttempts: 10
+      });
       socketRef.current = socket;
 
       socket.on('connect', () => {
+        console.log('✅ Socket connected:', socket.id);
         setIsConnected(true);
         socket.emit('join-room', { roomId: meetingId, userName });
       });
 
       socket.on('existing-users', (users) => {
+        console.log('👥 Existing users:', users);
         users.forEach((user: any) => {
+          // Add to participants if not already there
+          setParticipants(prev => {
+            if (prev.find(p => p.id === user.id)) return prev;
+            return [...prev, { id: user.id, name: user.name }];
+          });
+          
+          // Start WebRTC as initiator
           if (stream) createPeerConnection(user.id, user.name, true, stream);
         });
       });
 
       socket.on('user-joined', ({ userId, userName: newName }) => {
-        setParticipants(prev => [...prev, { id: userId, name: newName }]);
+        console.log('👋 User joined:', newName);
+        setParticipants(prev => {
+          if (prev.find(p => p.id === userId)) return prev;
+          return [...prev, { id: userId, name: newName }];
+        });
+        
+        // Wait for them to send us an offer (they are initiator)
         if (stream) createPeerConnection(userId, newName, false, stream);
       });
 
       socket.on('webrtc-offer', async ({ offer, offerUserId, roomId }) => {
+        console.log('📨 Received WebRTC offer from:', offerUserId);
         let pc = peerConnectionsRef.current[offerUserId];
         if (!pc && stream) {
           await createPeerConnection(offerUserId, 'Participant', false, stream);
           pc = peerConnectionsRef.current[offerUserId];
         }
         if (pc) {
-          await pc.setRemoteDescription(new RTCSessionDescription(offer));
-          const answer = await pc.createAnswer();
-          await pc.setLocalDescription(answer);
-          socket.emit('webrtc-answer', { answer, targetUserId: offerUserId, roomId });
+          try {
+            await pc.setRemoteDescription(new RTCSessionDescription(offer));
+            const answer = await pc.createAnswer();
+            await pc.setLocalDescription(answer);
+            socket.emit('webrtc-answer', { answer, targetUserId: offerUserId, roomId });
+          } catch (err) {
+            console.error('Error handling offer:', err);
+          }
         }
       });
 
       socket.on('webrtc-answer', async ({ answer, answerUserId }) => {
+        console.log('📩 Received WebRTC answer from:', answerUserId);
         const pc = peerConnectionsRef.current[answerUserId];
-        if (pc) await pc.setRemoteDescription(new RTCSessionDescription(answer));
+        if (pc) {
+          try {
+            await pc.setRemoteDescription(new RTCSessionDescription(answer));
+          } catch (err) {
+            console.error('Error handling answer:', err);
+          }
+        }
       });
 
       socket.on('webrtc-ice-candidate', async ({ candidate, candidateUserId }) => {
         const pc = peerConnectionsRef.current[candidateUserId];
-        if (pc) await pc.addIceCandidate(new RTCIceCandidate(candidate));
+        if (pc) {
+          try {
+            await pc.addIceCandidate(new RTCIceCandidate(candidate));
+          } catch (err) {
+            console.error('Error adding ICE candidate:', err);
+          }
+        }
       });
       
       socket.on('user-left', ({ userId }) => {
+        console.log('🚶 User left:', userId);
         setParticipants(prev => prev.filter(p => p.id !== userId));
         if (peerConnectionsRef.current[userId]) {
           peerConnectionsRef.current[userId].close();
           delete peerConnectionsRef.current[userId];
         }
       });
+
+      socket.on('connect_error', (err) => {
+        console.error('❌ Socket connection error:', err);
+        setIsConnected(false);
+      });
     };
 
+    // Initialize participants with local user
+    setParticipants([{ id: 'local', name: userName, isLocal: true }]);
+    
     initializeMedia();
     
     return () => {
@@ -173,21 +224,12 @@ export default function MeetingPage() {
 
     // Handle remote stream
     pc.ontrack = (event) => {
-      console.log('Received remote stream from:', participantName);
+      console.log('📡 Received remote stream from:', participantName);
       const [remoteStream] = event.streams;
 
       setParticipants((prev) =>
         prev.map((p) => (p.id === userId ? { ...p, stream: remoteStream } : p))
       );
-
-      // Set remote stream to video element
-      setTimeout(() => {
-        const videoElement = remoteVideoRefs.current[userId];
-        if (videoElement && remoteStream) {
-          videoElement.srcObject = remoteStream;
-          videoElement.play().catch(console.error);
-        }
-      }, 100);
     };
 
     // Handle ICE candidates
@@ -340,11 +382,13 @@ export default function MeetingPage() {
                 {participant.isLocal ? (
                   isVideoOn ? (
                     <video
-                      ref={localVideoRef}
+                      ref={(el) => {
+                        if (el && localStream) el.srcObject = localStream;
+                      }}
                       autoPlay
                       muted
                       playsInline
-                      className="h-full w-full object-cover"
+                      className="h-full w-full object-cover mirror-video"
                     />
                   ) : (
                     <div className="grid h-full w-full place-items-center bg-slate-700">
@@ -358,7 +402,10 @@ export default function MeetingPage() {
                 ) : participant.stream ? (
                   <video
                     ref={(el) => {
-                      remoteVideoRefs.current[participant.id] = el;
+                      if (el && participant.stream) {
+                        el.srcObject = participant.stream;
+                        el.play().catch(console.error);
+                      }
                     }}
                     autoPlay
                     playsInline

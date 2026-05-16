@@ -200,6 +200,10 @@ img[loading="lazy"]:not([src]) {
   aspect-ratio: 1 / 1.2;
 }
 
+.mirror-video {
+  transform: scaleX(-1);
+}
+
 @layer utilities {
   .grid-responsive {
     display: grid;
