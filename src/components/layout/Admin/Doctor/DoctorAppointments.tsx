@@ -33,19 +33,25 @@ const DoctorAppointments = () => {
     const month = parseInt(dateArray[1]) - 1; // JavaScript months are 0-indexed
     const year = parseInt(dateArray[2]);
     
-    // Parse time (assuming format like "10:00 AM" or "2:30 PM")
-    const timeMatch = slotTime.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
-    if (!timeMatch) return { canJoin: false, reason: 'invalid' };
+    // Parse time (robustly handling 12h and 24h formats)
+    let hours = 0;
+    let minutes = 0;
     
-    let hours = parseInt(timeMatch[1]);
-    const minutes = parseInt(timeMatch[2]);
-    const period = timeMatch[3].toUpperCase();
+    const ampmMatch = slotTime.match(/(AM|PM)/i);
+    const timeParts = slotTime.replace(/(AM|PM)/i, '').trim().split(':');
     
-    // Convert to 24-hour format
-    if (period === 'AM' && hours === 12) {
-      hours = 0;
-    } else if (period === 'PM' && hours !== 12) {
-      hours += 12;
+    if (timeParts.length >= 2) {
+      hours = parseInt(timeParts[0]);
+      minutes = parseInt(timeParts[1]);
+      
+      if (ampmMatch) {
+        const period = ampmMatch[0].toUpperCase();
+        if (period === 'PM' && hours < 12) hours += 12;
+        if (period === 'AM' && hours === 12) hours = 0;
+      }
+    } else {
+      console.error('❌ Failed to parse slotTime:', slotTime);
+      return { canJoin: false, reason: 'invalid_format' };
     }
     
     // Create appointment date
