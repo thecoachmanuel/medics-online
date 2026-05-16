@@ -28,7 +28,7 @@ const Appointment = () => {
   });
 
   const searchParams = useSearchParams();
-  const rescheduleId = searchParams.get('rescheduleId');
+  const rescheduleId = searchParams?.get('rescheduleId');
   const router = useRouter();
 
   const fetchDocInfo = () => {

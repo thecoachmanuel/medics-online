@@ -15,7 +15,7 @@ import type { ApiResponse } from '@/models/patient';
 
 const Login = () => {
   const searchParams = useSearchParams();
-  const initialRole = searchParams.get('role') === 'doctor' ? 'Doctor' : 'Admin';
+  const initialRole = searchParams?.get('role') === 'doctor' ? 'Doctor' : 'Admin';
   const [state, setState] = useState(initialRole);
 
   const [email, setEmail] = useState('');

@@ -19,7 +19,7 @@ const Verify = () => {
   const verifyPaystack = async () => {
     try {
       // Get the reference from URL parameters
-      const reference = searchParams.get('reference');
+      const reference = searchParams?.get('reference');
       
       if (!reference) {
         toast.error('Payment reference not found');
