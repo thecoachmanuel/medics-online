@@ -128,6 +128,11 @@ const Navbar = () => {
             <Link href="/admin-login?role=doctor" className={pathname === '/admin-login?role=doctor' ? 'active' : ''} onClick={() => setShowMenu(false)}>
               <p className="px-4 py-2 rounded full inline-block">DOCTOR LOGIN</p>
             </Link>
+            {!token && (
+              <Link href="/login" className={pathname === '/login' ? 'active' : ''} onClick={() => setShowMenu(false)}>
+                <p className="px-4 py-2 rounded full inline-block">PATIENT LOGIN</p>
+              </Link>
+            )}
           </ul>
         </div>
       </div>
