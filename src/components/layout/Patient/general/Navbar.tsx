@@ -17,6 +17,15 @@ const Navbar = () => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const { token, setToken, userData } = useContext(AppContext) as IPatientAppContext;
 
+  useEffect(() => {
+    // Speed of light: Prefetch common routes
+    router.prefetch('/');
+    router.prefetch('/doctors');
+    router.prefetch('/my-appointments');
+    router.prefetch('/my-profile');
+    router.prefetch('/login');
+  }, [router]);
+
   const logout = () => {
     localStorage.removeItem('token');
     setToken('');
@@ -26,15 +35,16 @@ const Navbar = () => {
 
   return (
     <div className="sticky top-0 bg-white z-40 flex items-center justify-between text-sm py-4 mb-5 border-b border-b-[#ADADAD]">
-      <Image 
-        src="/MedicsOnline_logo.png" 
-        alt="MedicsOnline Logo" 
-        className="h-10 w-auto cursor-pointer"
-        onClick={() => router.push('/')}
-        width={144}
-        height={40}
-        priority
-      />
+      <Link href="/" prefetch={true} className="cursor-pointer">
+        <Image 
+          src="/MedicsOnline_logo.png" 
+          alt="MedicsOnline Logo" 
+          className="h-10 w-auto"
+          width={144}
+          height={40}
+          priority
+        />
+      </Link>
       <ul className="md:flex items-start gap-5 font-medium hidden">
         <Link href="/" className={pathname === '/' ? 'active' : ''} prefetch={true}>
           <li className="py-1">HOME</li>
@@ -80,18 +90,22 @@ const Navbar = () => {
             />
             <div className={`absolute top-0 right-0 pt-14 text-base font-medium text-gray-600 z-20 ${showProfileMenu ? 'block' : 'hidden'} group-hover:block`}>
               <div className="min-w-48 bg-gray-50 rounded flex flex-col gap-4 p-4">
-                <p
-                  onClick={() => { router.push('/my-profile'); setShowProfileMenu(false); }}
+                <Link
+                  href="/my-profile"
+                  onClick={() => setShowProfileMenu(false)}
                   className="hover:text-black cursor-pointer"
+                  prefetch={true}
                 >
                   My Profile
-                </p>
-                <p
-                  onClick={() => { router.push('/my-appointments'); setShowProfileMenu(false); }}
+                </Link>
+                <Link
+                  href="/my-appointments"
+                  onClick={() => setShowProfileMenu(false)}
                   className="hover:text-black cursor-pointer"
+                  prefetch={true}
                 >
                   My Appointments
-                </p>
+                </Link>
                 <p onClick={logout} className="hover:text-black cursor-pointer">
                   Logout
                 </p>
@@ -99,12 +113,13 @@ const Navbar = () => {
             </div>
           </div>
         ) : (
-          <button
-            onClick={() => router.push('/login')}
-            className="bg-primary text-white px-8 py-3 rounded-full font-light hidden md:block cursor-pointer"
+          <Link
+            href="/login"
+            className="bg-primary text-white px-8 py-3 rounded-full font-light hidden md:block cursor-pointer text-center"
+            prefetch={true}
           >
             Create account
-          </button>
+          </Link>
         )}
         <img
           onClick={() => setShowMenu(true)}
@@ -129,23 +144,23 @@ const Navbar = () => {
             />
           </div>
           <ul className="flex flex-col items-center gap-2 mt-5 px-5 text-lg font-medium">
-            <Link href="/" className={pathname === '/' ? 'active' : ''} onClick={() => setShowMenu(false)}>
+            <Link href="/" className={pathname === '/' ? 'active' : ''} onClick={() => setShowMenu(false)} prefetch={true}>
               <p className="px-4 py-2 rounded full inline-block">HOME</p>
             </Link>
-            <Link href="/doctors" className={pathname === '/doctors' ? 'active' : ''} onClick={() => setShowMenu(false)}>
+            <Link href="/doctors" className={pathname === '/doctors' ? 'active' : ''} onClick={() => setShowMenu(false)} prefetch={true}>
               <p className="px-4 py-2 rounded full inline-block">ALL DOCTORS</p>
             </Link>
-            <Link href="/about" className={pathname === '/about' ? 'active' : ''} onClick={() => setShowMenu(false)}>
+            <Link href="/about" className={pathname === '/about' ? 'active' : ''} onClick={() => setShowMenu(false)} prefetch={true}>
               <p className="px-4 py-2 rounded full inline-block">ABOUT</p>
             </Link>
-            <Link href="/contact" className={pathname === '/contact' ? 'active' : ''} onClick={() => setShowMenu(false)}>
+            <Link href="/contact" className={pathname === '/contact' ? 'active' : ''} onClick={() => setShowMenu(false)} prefetch={true}>
               <p className="px-4 py-2 rounded full inline-block">CONTACT</p>
             </Link>
-            <Link href="/admin-login?role=doctor" className={pathname === '/admin-login?role=doctor' ? 'active' : ''} onClick={() => setShowMenu(false)}>
+            <Link href="/admin-login?role=doctor" className={pathname === '/admin-login?role=doctor' ? 'active' : ''} onClick={() => setShowMenu(false)} prefetch={true}>
               <p className="px-4 py-2 rounded full inline-block">DOCTOR LOGIN</p>
             </Link>
             {!token && (
-              <Link href="/login?state=login" className={pathname === '/login' ? 'active' : ''} onClick={() => setShowMenu(false)}>
+              <Link href="/login?state=login" className={pathname === '/login' ? 'active' : ''} onClick={() => setShowMenu(false)} prefetch={true}>
                 <p className="px-4 py-2 rounded full inline-block">PATIENT LOGIN</p>
               </Link>
             )}

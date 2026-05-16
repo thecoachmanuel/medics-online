@@ -58,10 +58,15 @@ const Login = () => {
   };
 
   useEffect(() => {
+    // Speed of light: Prefetch common post-login routes
+    router.prefetch('/');
+    router.prefetch('/my-appointments');
+    router.prefetch('/my-profile');
+
     if (token) {
       router.push('/');
     }
-  }, [token]);
+  }, [token, router]);
 
   return (
     <form onSubmit={onSubmitHandler} className="min-h-[80vh] flex items-center">
