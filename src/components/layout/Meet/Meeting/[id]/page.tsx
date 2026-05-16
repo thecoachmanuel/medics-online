@@ -19,7 +19,7 @@ interface Participant {
   id: string;
   name: string;
   isLocal?: boolean;
-  stream?: MediaStream;
+  stream?: MediaStream | null;
 }
 
 interface PeerConnection {
