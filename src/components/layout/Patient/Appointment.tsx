@@ -10,7 +10,7 @@ import type { IPatientAppContext, IDoctorPatient, ApiResponse } from '@/models/p
 import { smartApi } from '@/utils/smartApi';
 
 const Appointment = () => {
-  const params = useParams();
+  const params = useParams() as { docId: string };
   const docId = Array.isArray(params.docId) ? params.docId[0] : params.docId;
   const { doctors, currencySymbol, token, getDoctosData } = useContext(
     AppContext

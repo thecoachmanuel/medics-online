@@ -9,7 +9,7 @@ import EmptyState from '@/components/common/EmptyState';
 import type { IPatientAppContext, IDoctorPatient } from '@/models/patient';
 
 const Doctors = () => {
-  const params = useParams();
+  const params = useParams() as { speciality: string };
   const speciality = Array.isArray(params.speciality) ? params.speciality[0] : params.speciality;
 
   const [filterDoc, setFilterDoc] = useState<IDoctorPatient[]>([]);

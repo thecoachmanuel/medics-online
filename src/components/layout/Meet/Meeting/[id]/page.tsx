@@ -27,7 +27,7 @@ interface PeerConnection {
 }
 
 export default function MeetingPage() {
-  const params = useParams();
+  const params = useParams() as { id: string };
   const searchParams = useSearchParams();
   const meetingId = params.id as string;
 

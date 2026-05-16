@@ -8,7 +8,7 @@ import { AdminContext } from '@/context/AdminContext';
 import type { IAdminContext, DoctorProfile } from '@/models/doctor';
 
 const EditDoctor = () => {
-  const { docId } = useParams();
+  const { docId } = useParams() as { docId: string };
   const router = useRouter();
   
   const [docImg, setDocImg] = useState<File | null>(null);
