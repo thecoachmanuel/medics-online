@@ -17,17 +17,32 @@ interface AdminContextProviderProps {
 const AdminContextProvider = (props: AdminContextProviderProps) => {
   const [aToken, setAToken] = useState('');
 
-  useEffect(() => {
-    const storedToken = localStorage.getItem('aToken');
-    if (storedToken) {
-      setAToken(storedToken);
-    }
-  }, []);
   const [appointments, setAppointments] = useState<IAdminContext['appointments']>([]);
   const [doctors, setDoctors] = useState<IAdminContext['doctors']>([]);
   const [patients, setPatients] = useState<IAdminContext['patients']>([]);
   const [dashData, setDashData] = useState<IAdminContext['dashData']>(null);
   const [earnings, setEarnings] = useState<IAdminContext['earnings']>(null);
+
+  useEffect(() => {
+    const storedToken = localStorage.getItem('aToken');
+    if (storedToken) {
+      setAToken(storedToken);
+    }
+    const storedDashData = localStorage.getItem('adminDashData');
+    if (storedDashData) {
+      try {
+        setDashData(JSON.parse(storedDashData));
+      } catch (e) {
+        localStorage.removeItem('adminDashData');
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (dashData) {
+      localStorage.setItem('adminDashData', JSON.stringify(dashData));
+    }
+  }, [dashData]);
 
   const loadAdminData = async () => {
     if (aToken) {

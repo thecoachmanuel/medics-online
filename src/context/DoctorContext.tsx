@@ -33,6 +33,22 @@ const DoctorContextProvider = (props: DoctorContextProviderProps) => {
         localStorage.removeItem('doctorProfileData');
       }
     }
+    const storedDashData = localStorage.getItem('doctorDashData');
+    if (storedDashData) {
+      try {
+        setDashData(JSON.parse(storedDashData));
+      } catch (e) {
+        localStorage.removeItem('doctorDashData');
+      }
+    }
+    const storedAppointments = localStorage.getItem('doctorAppointments');
+    if (storedAppointments) {
+      try {
+        setAppointments(JSON.parse(storedAppointments));
+      } catch (e) {
+        localStorage.removeItem('doctorAppointments');
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -41,7 +57,19 @@ const DoctorContextProvider = (props: DoctorContextProviderProps) => {
     } else if (!dToken) {
       localStorage.removeItem('doctorProfileData');
     }
-  }, [profileData, dToken]);
+    
+    if (dashData) {
+      localStorage.setItem('doctorDashData', JSON.stringify(dashData));
+    } else if (!dToken) {
+      localStorage.removeItem('doctorDashData');
+    }
+
+    if (appointments && appointments.length > 0) {
+      localStorage.setItem('doctorAppointments', JSON.stringify(appointments));
+    } else if (!dToken) {
+      localStorage.removeItem('doctorAppointments');
+    }
+  }, [profileData, dashData, appointments, dToken]);
 
   const loadDoctorData = async () => {
     if (dToken) {
