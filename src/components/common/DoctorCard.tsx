@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import type { IDoctorPatient } from '@/models/patient';
 
@@ -24,12 +25,13 @@ const DoctorCard = ({ doctor, showAvailability = true, className = '' }: DoctorC
       onClick={handleClick}
       className={`border border-[#C9D8FF] rounded-xl overflow-hidden cursor-pointer hover:translate-y-[-10px] transition-all duration-500 ${className}`}
     >
-      <div className="relative w-full h-48 bg-gray-100">
-        <img 
-          className="doctor-card-image w-full h-full object-cover" 
+      <div className="relative w-full aspect-doctor-card bg-gray-100">
+        <Image 
+          className="doctor-card-image" 
           src={imageError || !doctor.image ? '/assets/profile_pic.png' : doctor.image} 
           alt={doctor.name}
-          loading="lazy"
+          fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           onError={() => setImageError(true)}
         />
       </div>

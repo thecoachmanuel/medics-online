@@ -1,6 +1,7 @@
 "use client";
 
 import { useContext, useState } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -25,11 +26,14 @@ const Navbar = () => {
 
   return (
     <div className="sticky top-0 bg-white z-40 flex items-center justify-between text-sm py-4 mb-5 border-b border-b-[#ADADAD]">
-      <img 
+      <Image 
         src="/MedicsOnline_logo.png" 
         alt="MedicsOnline Logo" 
-        className="h-10 cursor-pointer"
+        className="h-10 w-auto cursor-pointer"
         onClick={() => router.push('/')}
+        width={144}
+        height={40}
+        priority
       />
       <ul className="md:flex items-start gap-5 font-medium hidden">
         <Link href="/" className={pathname === '/' ? 'active' : ''} >
@@ -60,8 +64,20 @@ const Navbar = () => {
             onClick={() => setShowProfileMenu(!showProfileMenu)}
             className="flex items-center gap-2 cursor-pointer group relative"
           >
-            <img className="w-8 h-8 rounded-full object-cover" src={userData.image} alt="" />
-            <img className="w-2.5" src={'/assets/dropdown_icon.svg'} alt="" />
+            <Image 
+              className="w-8 h-8 rounded-full object-cover" 
+              src={userData.image} 
+              alt="Profile" 
+              width={32} 
+              height={32} 
+            />
+            <Image 
+              className="w-2.5 h-auto" 
+              src={'/assets/dropdown_icon.svg'} 
+              alt="" 
+              width={10} 
+              height={6} 
+            />
             <div className={`absolute top-0 right-0 pt-14 text-base font-medium text-gray-600 z-20 ${showProfileMenu ? 'block' : 'hidden'} group-hover:block`}>
               <div className="min-w-48 bg-gray-50 rounded flex flex-col gap-4 p-4">
                 <p
