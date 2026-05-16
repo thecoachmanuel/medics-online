@@ -2,6 +2,7 @@
 
 import { useContext, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'react-toastify';
 
 import { DoctorContext } from '@/context/DoctorContext';
 import { AppContext } from '@/context/AppContext';
