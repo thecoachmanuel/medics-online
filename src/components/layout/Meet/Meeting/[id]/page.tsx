@@ -146,7 +146,7 @@ export default function MeetingPage() {
     };
 
     initializeMedia();
-
+    
     return () => {
       if (socketRef.current) {
         socketRef.current.emit('leave-room', { roomId: meetingId, userName });
