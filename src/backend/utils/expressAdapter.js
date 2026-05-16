@@ -27,6 +27,14 @@ export const runExpressController = async (controller, request, context) => {
         docId: request.docId,
       };
 
+      // Inject userId/docId into body for legacy controller compatibility
+      if (request.userId && !req.body.userId) {
+        req.body.userId = request.userId;
+      }
+      if (request.docId && !req.body.docId) {
+        req.body.docId = request.docId;
+      }
+
       // Populate headers
       if (request.headers) {
         request.headers.forEach((value, key) => {

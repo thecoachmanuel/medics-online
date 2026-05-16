@@ -113,6 +113,8 @@ const AppContextProvider = (props: AppContextProviderProps) => {
   useEffect(() => {
     if (token) {
       loadUserProfileData();
+    } else {
+      setUserData(null);
     }
   }, [token]);
 

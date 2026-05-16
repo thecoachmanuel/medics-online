@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useState } from 'react';
+import { createContext, useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import type { ReactNode } from 'react';
 
@@ -23,6 +23,29 @@ const AdminContextProvider = (props: AdminContextProviderProps) => {
   const [patients, setPatients] = useState<IAdminContext['patients']>([]);
   const [dashData, setDashData] = useState<IAdminContext['dashData']>(null);
   const [earnings, setEarnings] = useState<IAdminContext['earnings']>(null);
+
+  const loadAdminData = async () => {
+    if (aToken) {
+      await Promise.all([
+        getAllDoctors(),
+        getAllPatients(),
+        getAllAppointments(),
+        getDashData(),
+        getEarnings()
+      ]);
+    } else {
+      setDoctors([]);
+      setPatients([]);
+      setAppointments([]);
+      setDashData(null);
+      setEarnings(null);
+    }
+  };
+
+  // Trigger data loading when aToken changes
+  useEffect(() => {
+    loadAdminData();
+  }, [aToken]);
 
   // Getting all Doctors data from Database using API
   const getAllDoctors = async () => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useState } from 'react';
+import { createContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { toast } from 'react-toastify';
 
@@ -21,6 +21,25 @@ const DoctorContextProvider = (props: DoctorContextProviderProps) => {
   const [appointments, setAppointments] = useState<IDoctorContext['appointments']>([]);
   const [dashData, setDashData] = useState<IDoctorContext['dashData']>(null);
   const [profileData, setProfileData] = useState<DoctorProfile | null>(null);
+
+  const loadDoctorData = async () => {
+    if (dToken) {
+      await Promise.all([
+        getProfileData(),
+        getAppointments(),
+        getDashData()
+      ]);
+    } else {
+      setProfileData(null);
+      setAppointments([]);
+      setDashData(null);
+    }
+  };
+
+  // Trigger data loading when dToken changes
+  useEffect(() => {
+    loadDoctorData();
+  }, [dToken]);
 
   // Getting Doctor appointment data from Database using API
   const getAppointments = async () => {
