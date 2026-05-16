@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
@@ -23,34 +23,55 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  const { setDToken } = useContext(DoctorContext) as IDoctorContext;
-  const { setAToken } = useContext(AdminContext) as IAdminContext;
+  const { dToken, setDToken } = useContext(DoctorContext) as IDoctorContext;
+  const { aToken, setAToken } = useContext(AdminContext) as IAdminContext;
+
+  useEffect(() => {
+    // Speed of light: Prefetch dashboards
+    router.prefetch('/admin-dashboard');
+    router.prefetch('/doctor-dashboard');
+
+    if (aToken) {
+      router.push('/admin-dashboard');
+    } else if (dToken) {
+      router.push('/doctor-dashboard');
+    }
+  }, [aToken, dToken, router]);
 
   const onSubmitHandler = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (state === 'Admin') {
-      console.log('🏥 Admin Login: Using encrypted authentication');
-      const data = await smartApi.post('/api/admin/login', { email, password }) as ApiResponse<{ token: string }>;
-      if (data.success) {
-        setAToken(data.token);
-        localStorage.setItem('aToken', data.token);
-        console.log('\u2705 Admin logged in via Smart API');
-        router.push('/admin-dashboard');
+    try {
+      if (state === 'Admin') {
+        console.log('🏥 Admin Login: Using encrypted authentication');
+        const data = await smartApi.post('/api/admin/login', { email, password }) as ApiResponse<{ token: string }>;
+        if (data.success) {
+          setAToken(data.token);
+          localStorage.setItem('aToken', data.token);
+          console.log('\u2705 Admin logged in via Smart API');
+          setEmail('');
+          setPassword('');
+          router.push('/admin-dashboard');
+        } else {
+          toast.error(data.message);
+        }
       } else {
-        toast.error(data.message);
+        console.log('🩺 Doctor Login: Using encrypted authentication');
+        const data = await smartApi.post('/api/doctor/login', { email, password }) as ApiResponse<{ token: string }>;
+        if (data.success) {
+          setDToken(data.token);
+          localStorage.setItem('dToken', data.token);
+          console.log('\u2705 Doctor logged in via Smart API');
+          setEmail('');
+          setPassword('');
+          router.push('/doctor-dashboard');
+        } else {
+          toast.error(data.message);
+        }
       }
-    } else {
-      console.log('🩺 Doctor Login: Using encrypted authentication');
-      const data = await smartApi.post('/api/doctor/login', { email, password }) as ApiResponse<{ token: string }>;
-      if (data.success) {
-        setDToken(data.token);
-        localStorage.setItem('dToken', data.token);
-        console.log('\u2705 Doctor logged in via Smart API');
-        router.push('/doctor-dashboard');
-      } else {
-        toast.error(data.message);
-      }
+    } catch (error) {
+      console.error('❌ Login error:', error);
+      toast.error('Authentication failed');
     }
   };
 
