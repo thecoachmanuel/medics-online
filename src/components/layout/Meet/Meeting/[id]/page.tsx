@@ -156,8 +156,6 @@ export default function MeetingPage() {
     };
   }, [meetingId, userName]);
 
-  }, [meetingId, userName]);
-
   // Create peer connection for new user
   const createPeerConnection = async (
     userId: string,
