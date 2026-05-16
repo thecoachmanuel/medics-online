@@ -8,16 +8,10 @@ if (!global.dhSessions) {
 
 export async function GET(request: NextRequest) {
   const sessionId = request.headers.get('session-id') || 'default';
-  console.log(`Providing public key for session: ${sessionId}`);
+  console.log(`Providing deterministic public key for session: ${sessionId}`);
   
-  if (!global.dhSessions.has(sessionId)) {
-    const dh = new DiffieHellman();
-    global.dhSessions.set(sessionId, dh);
-    console.log(`🔑 Created new DH session: ${sessionId}`);
-  }
-  
-  const dh = global.dhSessions.get(sessionId);
-  console.log(`🔑 Using DH session: ${sessionId}`);
+  // Deterministic DH based on sessionId - works across serverless instances
+  const dh = new DiffieHellman(sessionId);
   
   return NextResponse.json({
     success: true,

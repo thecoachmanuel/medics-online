@@ -44,11 +44,8 @@ export const withEncryption = (handler) => async (request, context) => {
         return NextResponse.json({ success: false, message: 'Session ID required for encrypted requests' }, { status: 400 });
       }
 
-      const dh = global.dhSessions.get(sessionId);
-      if (!dh) {
-        console.error(`❌ No DH session found for: ${sessionId}`);
-        return NextResponse.json({ success: false, message: 'Session not found' }, { status: 400 });
-      }
+      // Reconstruct the SAME DH instance using the sessionId as seed
+      const dh = new DiffieHellman(sessionId);
 
       console.log(`🔓 Server public key: ${dh.getPublicKey()}`);
       sharedSecret = dh.generateSharedSecret(body.clientPublicKey);

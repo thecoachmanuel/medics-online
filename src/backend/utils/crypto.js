@@ -5,14 +5,24 @@ const prime = 23n;
 const generator = 5n;
 
 class DiffieHellman {
-  constructor() {
-    this.privateKey = this.generatePrivateKey();
+  constructor(seed) {
+    this.privateKey = this.generatePrivateKey(seed);
     this.publicKey = this.generatePublicKey();
-    console.log('🔐 Backend Crypto: Private key:', this.privateKey);
+    console.log('🔐 Backend Crypto: Using ' + (seed ? 'deterministic' : 'random') + ' keys');
     console.log('🔐 Backend Crypto: Public key:', this.publicKey);
   }
 
-  generatePrivateKey() {
+  generatePrivateKey(seed) {
+    if (seed) {
+      // Deterministic key generation from seed (for serverless persistence)
+      let hash = 0;
+      const seedStr = String(seed);
+      for (let i = 0; i < seedStr.length; i++) {
+        hash = (hash << 5) - hash + seedStr.charCodeAt(i);
+        hash |= 0;
+      }
+      return BigInt(Math.abs(hash) % Number(prime - 1n)) + 1n;
+    }
     // Generate a random private key (1 to prime-1)
     return BigInt(Math.floor(Math.random() * (Number(prime) - 1)) + 1);
   }

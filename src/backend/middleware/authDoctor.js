@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 // doctor authentication middleware wrapper
 export const withDoctorAuth = (handler) => async (request, context) => {
   try {
-    const dToken = request.headers.get('dtoken') || request.dToken;
+    const dToken = request.headers.get('dtoken') || request.dtoken || request.dToken;
     
     if (!dToken) {
       return NextResponse.json({ success: false, message: 'Not Authorized Login Again' });
