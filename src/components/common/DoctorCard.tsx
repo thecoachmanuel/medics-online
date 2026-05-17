@@ -50,7 +50,12 @@ const DoctorCard = ({ doctor, showAvailability = true, className = '' }: DoctorC
             <p>{doctor.available ? 'Available' : 'Not Available'}</p>
           </div>
         )}
-        <p className="text-[#262626] text-lg font-medium mb-1">{doctor.name}</p>
+        <div className="flex items-center gap-1.5 mb-1">
+          <p className="text-[#262626] text-lg font-medium truncate">{doctor.name}</p>
+          {doctor.isVerified && (
+            <img className="w-4 h-4 shrink-0" src="/assets/verified_icon.svg" alt="Verified Badge" />
+          )}
+        </div>
         <p className="text-[#5C5C5C] text-sm">{doctor.speciality}</p>
         {doctor.experience && (
           <p className="text-[#5C5C5C] text-xs mt-1">{doctor.experience} experience</p>

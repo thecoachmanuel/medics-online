@@ -30,7 +30,16 @@ const doctorSchema = new mongoose.Schema(
         }
       ],
       default: []
-    }
+    },
+    kycStatus: {
+      type: String,
+      enum: ['not_submitted', 'pending', 'approved', 'rejected'],
+      default: 'not_submitted'
+    },
+    kycIdDocument: { type: String },
+    kycLicenseDocument: { type: String },
+    kycRejectionReason: { type: String, default: '' },
+    isVerified: { type: Boolean, default: false }
   },
   { minimize: false }
 );

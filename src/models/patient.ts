@@ -35,6 +35,11 @@ export interface IDoctorPatient {
     comment: string;
     date: number;
   }>;
+  isVerified?: boolean;
+  kycStatus?: 'not_submitted' | 'pending' | 'approved' | 'rejected';
+  kycIdDocument?: string;
+  kycLicenseDocument?: string;
+  kycRejectionReason?: string;
 }
 
 export interface IPatientAppContext {

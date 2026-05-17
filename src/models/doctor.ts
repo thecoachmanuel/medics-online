@@ -7,6 +7,11 @@ export interface IDoctorAdmin {
   speciality: string;
   available: boolean;
   isApproved: boolean;
+  isVerified?: boolean;
+  kycStatus?: 'not_submitted' | 'pending' | 'approved' | 'rejected';
+  kycIdDocument?: string;
+  kycLicenseDocument?: string;
+  kycRejectionReason?: string;
 }
 
 export interface IPatientAdmin {
@@ -77,6 +82,11 @@ export interface DoctorProfile {
   phone?: string;
   slots_booked?: Record<string, string[]>;
   isApproved?: boolean;
+  isVerified?: boolean;
+  kycStatus?: 'not_submitted' | 'pending' | 'approved' | 'rejected';
+  kycIdDocument?: string;
+  kycLicenseDocument?: string;
+  kycRejectionReason?: string;
 }
 
 export interface IDoctorContext {

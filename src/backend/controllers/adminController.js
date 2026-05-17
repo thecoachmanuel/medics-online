@@ -326,6 +326,41 @@ const allPatients = async (req, res) => {
   }
 };
 
+// API to review and approve/reject doctor KYC documents
+const reviewKyc = async (req, res) => {
+  try {
+    const { docId, action, reason } = req.body;
+
+    if (!docId || !action) {
+      return res.json({ success: false, message: 'Missing doctor ID or action' });
+    }
+
+    if (action === 'approve') {
+      await doctorModel.findByIdAndUpdate(docId, {
+        kycStatus: 'approved',
+        isVerified: true,
+        kycRejectionReason: ''
+      });
+      res.json({ success: true, message: 'Doctor KYC approved and verified badge granted' });
+    } else if (action === 'reject') {
+      if (!reason) {
+        return res.json({ success: false, message: 'Reason is required for rejection' });
+      }
+      await doctorModel.findByIdAndUpdate(docId, {
+        kycStatus: 'rejected',
+        isVerified: false,
+        kycRejectionReason: reason
+      });
+      res.json({ success: true, message: 'Doctor KYC rejected with reason' });
+    } else {
+      res.json({ success: false, message: 'Invalid action' });
+    }
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
 export {
   loginAdmin,
   appointmentsAdmin,
@@ -339,5 +374,6 @@ export {
   deleteDoctor,
   editDoctor,
   editPatient,
-  adminEarnings
+  adminEarnings,
+  reviewKyc
 };

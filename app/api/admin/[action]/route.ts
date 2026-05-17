@@ -19,7 +19,8 @@ import {
   deleteDoctor,
   editDoctor,
   editPatient,
-  adminEarnings
+  adminEarnings,
+  reviewKyc
 } from '@/backend/controllers/adminController';
 
 import { changeAvailablity } from '@/backend/controllers/doctorController';
@@ -44,7 +45,8 @@ const actionMap: Record<string, ActionConfig> = {
   'delete-doctor': { controller: deleteDoctor, auth: withAdminAuth },
   'edit-doctor': { controller: editDoctor, auth: withAdminAuth },
   'edit-patient': { controller: editPatient, auth: withAdminAuth },
-  'earnings': { controller: adminEarnings, auth: withAdminAuth }
+  'earnings': { controller: adminEarnings, auth: withAdminAuth },
+  'review-kyc': { controller: reviewKyc, auth: withAdminAuth }
 };
 
 async function handleAction(request: NextRequest, context: { params: Promise<{ action: string }> }) {

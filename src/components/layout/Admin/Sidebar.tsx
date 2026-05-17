@@ -66,6 +66,13 @@ const Sidebar = () => {
             <img className="min-w-5" src={'/assets/people_icon.svg'} alt="" />
             <p className="hidden md:block">Patients List</p>
           </Link>
+          <Link
+            href={'/kyc-review'}
+            className={`flex items-center gap-3 py-3.5 px-3 md:px-9 md:min-w-72 cursor-pointer ${pathname === '/kyc-review' ? 'bg-[#F2F3FF] border-r-4 border-primary font-semibold text-primary' : ''}`}
+          >
+            <img className="min-w-5" src={'/assets/appointment_icon.svg'} alt="" />
+            <p className="hidden md:block">KYC Approvals</p>
+          </Link>
         </ul>
       )}
 
@@ -98,6 +105,13 @@ const Sidebar = () => {
           >
             <img className="min-w-5" src={'/assets/people_icon.svg'} alt="" />
             <p className="hidden md:block">Profile</p>
+          </Link>
+          <Link
+            href={'/doctor-kyc'}
+            className={`flex items-center gap-3 py-3.5 px-3 md:px-9 md:min-w-72 cursor-pointer ${pathname === '/doctor-kyc' ? 'bg-[#F2F3FF] border-r-4 border-primary font-semibold text-primary' : ''}`}
+          >
+            <img className="min-w-5" src={'/assets/appointment_icon.svg'} alt="" />
+            <p className="hidden md:block">KYC Verification</p>
           </Link>
         </ul>
       )}

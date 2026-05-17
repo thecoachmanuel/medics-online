@@ -299,6 +299,45 @@ const saveConsultation = async (req, res) => {
   }
 };
 
+// API to submit KYC documents for doctor panel
+const submitKycDoctor = async (req, res) => {
+  try {
+    const { docId } = req.body;
+    const kycIdDocumentObj = req.body.kycIdDocument;
+    const kycLicenseDocumentObj = req.body.kycLicenseDocument;
+
+    if (!kycIdDocumentObj || !kycLicenseDocumentObj) {
+      return res.json({ success: false, message: 'Both ID and License documents are required' });
+    }
+
+    console.log('🩺 Submitting KYC for doctor:', docId);
+    
+    // Upload both to Cloudinary with auto resource type so PDF and JPG both work perfectly
+    const idUpload = await cloudinary.uploader.upload(
+      `data:${kycIdDocumentObj.mimeType};base64,${kycIdDocumentObj.data}`,
+      { resource_type: 'auto' }
+    );
+    const licenseUpload = await cloudinary.uploader.upload(
+      `data:${kycLicenseDocumentObj.mimeType};base64,${kycLicenseDocumentObj.data}`,
+      { resource_type: 'auto' }
+    );
+
+    console.log('✅ KYC Documents uploaded to Cloudinary');
+
+    await doctorModel.findByIdAndUpdate(docId, {
+      kycStatus: 'pending',
+      kycIdDocument: idUpload.secure_url,
+      kycLicenseDocument: licenseUpload.secure_url,
+      kycRejectionReason: ''
+    });
+
+    res.json({ success: true, message: 'KYC documents submitted successfully' });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
 export {
   loginDoctor,
   registerDoctor,
@@ -310,5 +349,6 @@ export {
   doctorDashboard,
   doctorProfile,
   updateDoctorProfile,
-  saveConsultation
+  saveConsultation,
+  submitKycDoctor
 };

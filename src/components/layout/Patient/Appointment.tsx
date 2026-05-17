@@ -223,7 +223,7 @@ const Appointment = () => {
             {/* ----- Doc Info : name, degree, experience ----- */}
 
             <p className="flex items-center gap-2 text-3xl font-medium text-gray-700">
-              {docInfo.name} <img className="w-5" src={'/assets/verified_icon.svg'} alt="" />
+              {docInfo.name} {docInfo.isVerified && <img className="w-5" src={'/assets/verified_icon.svg'} alt="" />}
             </p>
             <div className="flex items-center gap-2 mt-1 text-gray-600">
               <p>
