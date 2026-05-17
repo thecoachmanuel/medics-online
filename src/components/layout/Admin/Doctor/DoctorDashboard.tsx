@@ -49,42 +49,80 @@ const DoctorDashboard = () => {
           </div>
         </div>
 
-        <div className="bg-white">
-          <div className="flex items-center gap-2.5 px-4 py-4 mt-10 rounded-t border">
-            <img src={'/assets/list_icon.svg'} alt="" />
-            <p className="font-semibold">Latest Bookings</p>
+        <div className="bg-white rounded-xl border border-gray-200 mt-10 overflow-hidden shadow-sm">
+          <div className="flex items-center gap-2.5 px-6 py-4 bg-gray-50 border-b border-gray-200">
+            <img src={'/assets/list_icon.svg'} className="w-5 h-5" alt="" />
+            <p className="font-bold text-gray-800">Latest Bookings</p>
           </div>
 
-          <div className="pt-4 border border-t-0">
-            {dashData.latestAppointments.slice(0, 5).map((item: IAppointment, index: number) => (
-              <div className="flex items-center px-6 py-3 gap-3 hover:bg-gray-100" key={index}>
-                <img className="rounded-full w-10 h-10 object-cover border" src={item.userData.image} alt="" />
-                <div className="flex-1 text-sm">
-                  <p className="text-gray-800 font-medium">{item.userData.name}</p>
-                  <p className="text-gray-600 ">Booking on {slotDateFormat(item.slotDate)} at {item.slotTime}</p>
-                </div>
-                {item.cancelled ? (
-                  <p className="text-red-400 text-xs font-medium">Cancelled</p>
-                ) : item.isCompleted ? (
-                  <p className="text-green-500 text-xs font-medium">Accepted</p>
-                ) : (
-                  <div className="flex">
-                    <img
-                      onClick={() => cancelAppointment(item._id)}
-                      className="w-10 cursor-pointer"
-                      src={'/assets/cancel_icon.svg'}
-                      alt=""
-                    />
-                    <img
-                      onClick={() => completeAppointment(item._id)}
-                      className="w-10 cursor-pointer"
-                      src={'/assets/tick_icon.svg'}
-                      alt=""
-                    />
-                  </div>
-                )}
+          <div className="overflow-x-auto">
+            <div className="min-w-[700px]">
+              {/* Table Header */}
+              <div className="grid grid-cols-[0.5fr_3fr_3fr_2.5fr] gap-4 py-3 px-6 bg-gray-50/50 border-b border-gray-100 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                <p>#</p>
+                <p>Patient</p>
+                <p>Date & Time</p>
+                <p className="text-right">Action</p>
               </div>
-            ))}
+              
+              {/* Table Body */}
+              <div className="divide-y divide-gray-100">
+                {dashData.latestAppointments.slice(0, 5).map((item: IAppointment, index: number) => (
+                  <div className="grid grid-cols-[0.5fr_3fr_3fr_2.5fr] gap-4 items-center px-6 py-4 hover:bg-gray-50 transition-colors text-sm text-gray-600" key={index}>
+                    <p className="font-semibold text-gray-400">{index + 1}</p>
+                    
+                    {/* Patient info */}
+                    <div className="flex items-center gap-3">
+                      <img className="rounded-full w-9 h-9 object-cover border border-gray-200" src={item.userData.image} alt={item.userData.name} />
+                      <div>
+                        <p className="text-gray-800 font-bold">{item.userData.name}</p>
+                        <p className="text-xs text-gray-400">Patient</p>
+                      </div>
+                    </div>
+
+                    {/* Date Time */}
+                    <div>
+                      <p className="font-semibold text-gray-700">{slotDateFormat(item.slotDate)}</p>
+                      <p className="text-xs text-gray-400">{item.slotTime}</p>
+                    </div>
+
+                    {/* Action / Status */}
+                    <div className="flex items-center justify-end gap-3">
+                      {item.cancelled ? (
+                        <span className="px-3 py-1 bg-red-50 text-red-600 rounded-full text-xs font-semibold border border-red-100">
+                          Cancelled
+                        </span>
+                      ) : item.isCompleted ? (
+                        <span className="px-3 py-1 bg-green-50 text-green-600 rounded-full text-xs font-semibold border border-green-100">
+                          Accepted
+                        </span>
+                      ) : (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => cancelAppointment(item._id)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-100 rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            Cancel
+                          </button>
+                          <button
+                            onClick={() => completeAppointment(item._id)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 hover:bg-green-100 text-green-600 border border-green-100 rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+                            </svg>
+                            Accept
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>
