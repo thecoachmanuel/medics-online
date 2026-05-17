@@ -768,6 +768,20 @@ const getAdmins = async (req, res) => {
     if (!req.admin || req.admin.role !== 'master') {
       return res.json({ success: false, message: 'Forbidden: Master Admin access required' });
     }
+
+    // Self-healing database cleanup of duplicate Master Admins
+    const masterEmail = process.env.ADMIN_EMAIL ? process.env.ADMIN_EMAIL.toLowerCase() : 'admin@medicsonline.ng';
+    const masterCount = await adminModel.countDocuments({ email: masterEmail, role: 'master' });
+    if (masterCount > 1) {
+      console.log(`⚠️ Found ${masterCount} duplicate Master Admins. Running self-healing cleanup...`);
+      const masterList = await adminModel.find({ email: masterEmail, role: 'master' }).sort({ createdAt: 1 });
+      const [primaryMaster, ...duplicates] = masterList;
+      for (const dup of duplicates) {
+        await adminModel.findByIdAndDelete(dup._id);
+        console.log(`🧹 Deleted duplicate Master Admin with ID: ${dup._id}`);
+      }
+    }
+
     const admins = await adminModel.find({}).select('-password');
     res.json({ success: true, admins });
   } catch (error) {
