@@ -111,6 +111,12 @@ export const migrationConfig: ApiMigrationConfig = {
     description: 'Admin dashboard statistics',
     migrated: true
   },
+  '/api/admin/clear-data': {
+    encrypted: true,
+    priority: 'medium',
+    description: 'Admin clear site collections data',
+    migrated: true
+  },
 
   // LOW PRIORITY: Public and less sensitive data - STEP 7: MIGRATED! ✅
   '/api/doctor/list': {

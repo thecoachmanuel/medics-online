@@ -25,7 +25,8 @@ import {
   setCommissionRate,
   doctorLeaderboard,
   getPayoutsAdmin,
-  reviewPayout
+  reviewPayout,
+  clearDataAdmin
 } from '@/backend/controllers/adminController';
 
 import { changeAvailablity } from '@/backend/controllers/doctorController';
@@ -56,7 +57,8 @@ const actionMap: Record<string, ActionConfig> = {
   'set-commission-rate': { controller: setCommissionRate, auth: withAdminAuth },
   'doctor-leaderboard': { controller: doctorLeaderboard, auth: withAdminAuth },
   'get-payouts': { controller: getPayoutsAdmin, auth: withAdminAuth },
-  'review-payout': { controller: reviewPayout, auth: withAdminAuth }
+  'review-payout': { controller: reviewPayout, auth: withAdminAuth },
+  'clear-data': { controller: clearDataAdmin, auth: withAdminAuth }
 };
 
 async function handleAction(request: NextRequest, context: { params: Promise<{ action: string }> }) {

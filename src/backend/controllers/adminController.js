@@ -483,6 +483,32 @@ const reviewPayout = async (req, res) => {
   }
 };
 
+const clearDataAdmin = async (req, res) => {
+  try {
+    const { target } = req.body;
+    if (!['doctors', 'appointments', 'patients'].includes(target)) {
+      return res.json({ success: false, message: 'Invalid clear target' });
+    }
+
+    if (target === 'doctors') {
+      await doctorModel.deleteMany({});
+      await payoutModel.deleteMany({});
+      await appointmentModel.deleteMany({});
+      res.json({ success: true, message: 'All doctors, associated payouts, and appointments cleared successfully' });
+    } else if (target === 'appointments') {
+      await appointmentModel.deleteMany({});
+      res.json({ success: true, message: 'All appointments cleared successfully' });
+    } else if (target === 'patients') {
+      await userModel.deleteMany({});
+      await appointmentModel.deleteMany({});
+      res.json({ success: true, message: 'All patients and associated appointments cleared successfully' });
+    }
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
 export {
   loginAdmin,
   appointmentsAdmin,
@@ -502,5 +528,6 @@ export {
   setCommissionRate,
   doctorLeaderboard,
   getPayoutsAdmin,
-  reviewPayout
+  reviewPayout,
+  clearDataAdmin
 };
