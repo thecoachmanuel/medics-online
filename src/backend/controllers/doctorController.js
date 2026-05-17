@@ -122,15 +122,36 @@ const appointmentsDoctor = async (req, res) => {
 // API to cancel appointment for doctor panel
 const appointmentCancel = async (req, res) => {
   try {
-    const { docId, appointmentId } = req.body;
+    const { docId, appointmentId, cancellationReason, suggestedRebookTime } = req.body;
+
+    if (!cancellationReason || !suggestedRebookTime) {
+      return res.json({ success: false, message: 'Cancellation reason and suggested rebook time are required' });
+    }
 
     const appointmentData = await appointmentModel.findById(appointmentId);
     if (appointmentData && appointmentData.docId === docId) {
-      await appointmentModel.findByIdAndUpdate(appointmentId, { cancelled: true });
+      // release doctor slot
+      const { slotDate, slotTime } = appointmentData;
+      const doctorData = await doctorModel.findById(docId);
+      
+      if (doctorData) {
+        let slots_booked = doctorData.slots_booked || {};
+        if (slots_booked[slotDate]) {
+          slots_booked[slotDate] = slots_booked[slotDate].filter((e) => e !== slotTime);
+          await doctorModel.findByIdAndUpdate(docId, { slots_booked });
+        }
+      }
+
+      await appointmentModel.findByIdAndUpdate(appointmentId, { 
+        cancelled: true,
+        cancellationReason,
+        suggestedRebookTime,
+        cancelledBy: 'doctor'
+      });
       return res.json({ success: true, message: 'Appointment Cancelled' });
     }
 
-    res.json({ success: false, message: 'Appointment Cancelled' });
+    res.json({ success: false, message: 'Appointment not found or unauthorized' });
   } catch (error) {
     console.log(error);
     res.json({ success: false, message: error.message });

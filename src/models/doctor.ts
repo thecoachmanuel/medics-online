@@ -84,7 +84,7 @@ export interface IDoctorContext {
   setDToken: React.Dispatch<React.SetStateAction<string>>;
   appointments: IAppointment[];
   getAppointments: () => Promise<void>;
-  cancelAppointment: (appointmentId: string) => Promise<void>;
+  cancelAppointment: (appointmentId: string, cancellationReason?: string, suggestedRebookTime?: string) => Promise<void>;
   completeAppointment: (appointmentId: string) => Promise<void>;
   dashData: IDoctorDashData | null;
   getDashData: () => Promise<void>;

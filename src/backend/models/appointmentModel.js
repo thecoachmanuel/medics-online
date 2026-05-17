@@ -20,6 +20,9 @@ const appointmentSchema = new mongoose.Schema({
   },
   notes: { type: String, default: '' },
   prescription: { type: String, default: '' },
+  cancellationReason: { type: String, default: '' },
+  suggestedRebookTime: { type: String, default: '' },
+  cancelledBy: { type: String, default: '' },
   chatHistory: [
     {
       sender: { type: String },

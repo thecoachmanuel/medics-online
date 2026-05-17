@@ -36,4 +36,7 @@ export interface IAppointment {
   meetingId: string;
   notes?: string;
   prescription?: string;
+  cancellationReason?: string;
+  suggestedRebookTime?: string;
+  cancelledBy?: string;
 }

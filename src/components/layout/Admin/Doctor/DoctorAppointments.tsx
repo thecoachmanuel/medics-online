@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext, useEffect } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 
@@ -9,7 +9,7 @@ import { AppContext } from '@/context/AppContext';
 import type { IDoctorContext } from '@/models/doctor';
 import type { IPatientAppContext } from '@/models/patient';
 import type { IAppointment } from '@/models/appointment';
-import { Video } from 'lucide-react';
+import { Video, Calendar, AlertTriangle } from 'lucide-react';
 
 const DoctorAppointments = () => {
   const {
@@ -22,6 +22,32 @@ const DoctorAppointments = () => {
     getProfileData
   } = useContext(DoctorContext) as IDoctorContext;
   const router = useRouter();
+  
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [cancellationReason, setCancellationReason] = useState('');
+  const [suggestedRebookTime, setSuggestedRebookTime] = useState('');
+
+  const handleCancelSubmit = async () => {
+    if (!cancellingId) return;
+    if (!cancellationReason.trim()) {
+      toast.warning('Please enter a cancellation reason');
+      return;
+    }
+    if (!suggestedRebookTime.trim()) {
+      toast.warning('Please enter a suggested rebook time');
+      return;
+    }
+
+    try {
+      await cancelAppointment(cancellingId, cancellationReason, suggestedRebookTime);
+      setCancellingId(null);
+      setCancellationReason('');
+      setSuggestedRebookTime('');
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const { slotDateFormat, calculateAge, currencySymbol } = useContext(
     AppContext
   ) as IPatientAppContext;
@@ -364,7 +390,7 @@ const DoctorAppointments = () => {
                 })()}
                 <div className="flex">
                   <img
-                    onClick={() => cancelAppointment(item._id)}
+                    onClick={() => setCancellingId(item._id)}
                     className="w-10 cursor-pointer"
                     src={'/assets/cancel_icon.svg'}
                     alt=""
@@ -381,6 +407,68 @@ const DoctorAppointments = () => {
           </div>
         ))}
       </div>
+
+      {/* Cancellation Reason Modal */}
+      {cancellingId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-white border border-gray-100 rounded-2xl shadow-2xl p-6 space-y-6 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center gap-3 border-b border-gray-100 pb-4">
+              <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-red-500 animate-pulse">
+                <AlertTriangle size={20} />
+              </div>
+              <div>
+                <h3 className="font-semibold text-gray-900 text-lg">Cancel Appointment</h3>
+                <p className="text-xs text-gray-500">Provide reason and suggested rebook time</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-gray-700">Cancellation Reason *</label>
+                <textarea
+                  value={cancellationReason}
+                  onChange={(e) => setCancellationReason(e.target.value)}
+                  placeholder="e.g., Unforeseen schedule conflict, medical emergency..."
+                  className="w-full min-h-[90px] border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none text-gray-800 placeholder-gray-400"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-gray-700 flex items-center gap-1.5">
+                  <Calendar size={13} className="text-gray-400" />
+                  Suggested Rebook Time *
+                </label>
+                <input
+                  type="text"
+                  value={suggestedRebookTime}
+                  onChange={(e) => setSuggestedRebookTime(e.target.value)}
+                  placeholder="e.g., Tomorrow at 2:00 PM, or next Monday morning"
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-gray-800 placeholder-gray-400"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={() => {
+                  setCancellingId(null);
+                  setCancellationReason('');
+                  setSuggestedRebookTime('');
+                }}
+                className="flex-1 rounded-xl py-2.5 text-sm font-semibold border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors"
+              >
+                Go Back
+              </button>
+              <button
+                onClick={handleCancelSubmit}
+                className="flex-1 rounded-xl py-2.5 text-sm font-semibold bg-red-500 text-white hover:bg-red-600 transition-colors shadow-md shadow-red-500/10"
+              >
+                Confirm Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

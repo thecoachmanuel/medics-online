@@ -145,11 +145,11 @@ const DoctorContextProvider = (props: DoctorContextProviderProps) => {
   };
 
   // Function to cancel doctor appointment using API (NOW WITH SMART ENCRYPTION)
-  const cancelAppointment = async (appointmentId: string) => {
+  const cancelAppointment = async (appointmentId: string, cancellationReason?: string, suggestedRebookTime?: string) => {
     try {
       console.log('🩺 Doctor: Cancelling appointment with encryption');
       const data = await smartApi.post('/api/doctor/cancel-appointment', 
-        { appointmentId },
+        { appointmentId, cancellationReason, suggestedRebookTime },
         { headers: { dToken } }
       ) as ApiResponse<object>;
 
