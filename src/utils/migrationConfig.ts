@@ -225,6 +225,70 @@ export const migrationConfig: ApiMigrationConfig = {
     migrated: true
   },
 
+  // NEW DOCTOR ENDPOINTS
+  '/api/doctor/submit-kyc': {
+    encrypted: true,
+    priority: 'medium',
+    description: 'Doctor submit KYC documents',
+    migrated: true
+  },
+  '/api/doctor/update-bank-details': {
+    encrypted: true,
+    priority: 'medium',
+    description: 'Doctor update bank details',
+    migrated: true
+  },
+  '/api/doctor/request-payout': {
+    encrypted: true,
+    priority: 'medium',
+    description: 'Doctor request payout',
+    migrated: true
+  },
+  '/api/doctor/get-payouts': {
+    encrypted: true,
+    priority: 'medium',
+    description: 'Doctor fetch payouts history',
+    migrated: true
+  },
+
+  // NEW ADMIN ENDPOINTS
+  '/api/admin/review-kyc': {
+    encrypted: true,
+    priority: 'medium',
+    description: 'Admin review doctor KYC documents',
+    migrated: true
+  },
+  '/api/admin/get-commission-rate': {
+    encrypted: true,
+    priority: 'medium',
+    description: 'Admin fetch global commission rate',
+    migrated: true
+  },
+  '/api/admin/set-commission-rate': {
+    encrypted: true,
+    priority: 'medium',
+    description: 'Admin edit global commission rate',
+    migrated: true
+  },
+  '/api/admin/doctor-leaderboard': {
+    encrypted: true,
+    priority: 'medium',
+    description: 'Admin view ranked earnings leaderboard',
+    migrated: true
+  },
+  '/api/admin/get-payouts': {
+    encrypted: true,
+    priority: 'medium',
+    description: 'Admin fetch all payout requests',
+    migrated: true
+  },
+  '/api/admin/review-payout': {
+    encrypted: true,
+    priority: 'medium',
+    description: 'Admin approve or reject payout request',
+    migrated: true
+  },
+
   // ALREADY ENCRYPTED: Test endpoints
   '/api/secure/dummy-data': {
     encrypted: true,
