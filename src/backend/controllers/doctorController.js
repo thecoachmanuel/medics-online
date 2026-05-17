@@ -270,9 +270,21 @@ const saveConsultation = async (req, res) => {
   try {
     const { docId, appointmentId, notes, prescription } = req.body;
 
-    const appointmentData = await appointmentModel.findById(appointmentId);
+    let appointmentData = null;
+    if (appointmentId && appointmentId.length === 24) {
+      try {
+        appointmentData = await appointmentModel.findById(appointmentId);
+      } catch (e) {
+        // Suppress cast errors if they happen
+      }
+    }
+    
+    if (!appointmentData && appointmentId) {
+      appointmentData = await appointmentModel.findOne({ meetingId: appointmentId });
+    }
+
     if (appointmentData && appointmentData.docId === docId) {
-      await appointmentModel.findByIdAndUpdate(appointmentId, { 
+      await appointmentModel.findByIdAndUpdate(appointmentData._id, { 
         notes, 
         prescription,
         isCompleted: true 
