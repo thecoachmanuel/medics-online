@@ -4,6 +4,8 @@ import doctorModel from '../models/doctorModel.js';
 import appointmentModel from '../models/appointmentModel.js';
 import validator from 'validator';
 import { v2 as cloudinary } from 'cloudinary';
+import settingsModel from '../models/settingsModel.js';
+import payoutModel from '../models/payoutModel.js';
 
 // API for doctor Login
 const loginDoctor = async (req, res) => {
@@ -253,7 +255,7 @@ const doctorDashboard = async (req, res) => {
 
     const appointments = await appointmentModel.find({ docId });
 
-    let earnings = 0;
+    let earnings = 0; // Gross earnings
 
     appointments.map((item) => {
       if (item.isCompleted || item.payment) {
@@ -269,8 +271,27 @@ const doctorDashboard = async (req, res) => {
       }
     });
 
+    // Commission Calculations
+    let setting = await settingsModel.findOne({ key: 'commissionRate' });
+    const commissionRate = setting ? parseInt(setting.value, 10) : 20;
+    const adminCommission = (earnings * commissionRate) / 100;
+    const netShare = earnings - adminCommission;
+
+    // Deduct approved and pending payouts
+    const payouts = await payoutModel.find({ docId, status: { $in: ['approved', 'pending'] } });
+    let totalDeductions = 0;
+    payouts.forEach((p) => {
+      totalDeductions += p.amount;
+    });
+
+    const availableBalance = netShare - totalDeductions;
+
     const dashData = {
-      earnings,
+      earnings, // Gross earnings
+      commissionRate,
+      adminCommission,
+      netShare,
+      availableBalance,
       appointments: appointments.length,
       patients: patients.length,
       latestAppointments: appointments.reverse()
@@ -356,6 +377,90 @@ const submitKycDoctor = async (req, res) => {
   }
 };
 
+const updateBankDetails = async (req, res) => {
+  try {
+    const { docId, bankName, accountNumber, accountName } = req.body;
+    if (!bankName || !accountNumber || !accountName) {
+      return res.json({ success: false, message: 'All bank coordinates are required' });
+    }
+
+    await doctorModel.findByIdAndUpdate(docId, { bankName, accountNumber, accountName });
+    res.json({ success: true, message: 'Bank details updated successfully' });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
+const requestPayout = async (req, res) => {
+  try {
+    const { docId, amount } = req.body;
+    const payoutAmount = parseFloat(amount);
+    if (isNaN(payoutAmount) || payoutAmount <= 0) {
+      return res.json({ success: false, message: 'Please enter a valid payout amount' });
+    }
+
+    const doc = await doctorModel.findById(docId);
+    if (!doc.bankName || !doc.accountNumber || !doc.accountName) {
+      return res.json({ success: false, message: 'Please set your permanent bank details in profile first' });
+    }
+
+    // Calculate gross earnings
+    const appointments = await appointmentModel.find({ docId });
+    let grossEarnings = 0;
+    appointments.forEach((appt) => {
+      if (appt.isCompleted || appt.payment) {
+        grossEarnings += appt.amount;
+      }
+    });
+
+    // Fetch global commission percentage setting
+    let setting = await settingsModel.findOne({ key: 'commissionRate' });
+    const commRate = setting ? parseInt(setting.value, 10) : 20;
+
+    const adminCommission = (grossEarnings * commRate) / 100;
+    const netShare = grossEarnings - adminCommission;
+
+    // Fetch total approved & pending payouts
+    const payouts = await payoutModel.find({ docId, status: { $in: ['approved', 'pending'] } });
+    let totalDeductions = 0;
+    payouts.forEach((p) => {
+      totalDeductions += p.amount;
+    });
+
+    const availableBalance = netShare - totalDeductions;
+    if (payoutAmount > availableBalance) {
+      return res.json({ success: false, message: `Insufficient funds. Your available balance to withdraw is ₦${availableBalance.toFixed(2)}` });
+    }
+
+    const newPayout = new payoutModel({
+      docId,
+      amount: payoutAmount,
+      bankName: doc.bankName,
+      accountNumber: doc.accountNumber,
+      accountName: doc.accountName,
+      status: 'pending'
+    });
+    await newPayout.save();
+
+    res.json({ success: true, message: 'Payout requested successfully. Awaiting admin processing.' });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
+const getPayoutsDoctor = async (req, res) => {
+  try {
+    const { docId } = req.body;
+    const payouts = await payoutModel.find({ docId }).sort({ createdAt: -1 });
+    res.json({ success: true, payouts });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
 export {
   loginDoctor,
   registerDoctor,
@@ -368,5 +473,8 @@ export {
   doctorProfile,
   updateDoctorProfile,
   saveConsultation,
-  submitKycDoctor
+  submitKycDoctor,
+  updateBankDetails,
+  requestPayout,
+  getPayoutsDoctor
 };

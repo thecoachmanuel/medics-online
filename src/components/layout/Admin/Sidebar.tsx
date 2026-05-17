@@ -9,7 +9,10 @@ import {
   Users, 
   UserSquare2, 
   ShieldCheck, 
-  UserCircle 
+  UserCircle,
+  TrendingUp,
+  Wallet,
+  Banknote
 } from 'lucide-react';
 
 import { DoctorContext } from '@/context/DoctorContext';
@@ -83,6 +86,20 @@ const Sidebar = () => {
             <ShieldCheck className={`w-5 h-5 shrink-0 ${pathname === '/kyc-review' ? 'text-primary' : 'text-[#515151]'}`} />
             <p className="hidden md:block">KYC Approvals</p>
           </Link>
+          <Link
+            href={'/admin-commission'}
+            className={`flex items-center gap-3 py-3.5 px-3 md:px-9 md:min-w-72 cursor-pointer transition-all duration-200 ${pathname === '/admin-commission' ? 'bg-[#F2F3FF] border-r-4 border-primary font-semibold text-primary' : 'hover:bg-gray-50'}`}
+          >
+            <TrendingUp className={`w-5 h-5 shrink-0 ${pathname === '/admin-commission' ? 'text-primary' : 'text-[#515151]'}`} />
+            <p className="hidden md:block">Commission & Leaderboard</p>
+          </Link>
+          <Link
+            href={'/admin-payouts'}
+            className={`flex items-center gap-3 py-3.5 px-3 md:px-9 md:min-w-72 cursor-pointer transition-all duration-200 ${pathname === '/admin-payouts' ? 'bg-[#F2F3FF] border-r-4 border-primary font-semibold text-primary' : 'hover:bg-gray-50'}`}
+          >
+            <Banknote className={`w-5 h-5 shrink-0 ${pathname === '/admin-payouts' ? 'text-primary' : 'text-[#515151]'}`} />
+            <p className="hidden md:block">Payouts</p>
+          </Link>
         </ul>
       )}
 
@@ -122,6 +139,13 @@ const Sidebar = () => {
           >
             <ShieldCheck className={`w-5 h-5 shrink-0 ${pathname === '/doctor-kyc' ? 'text-primary' : 'text-[#515151]'}`} />
             <p className="hidden md:block">KYC Verification</p>
+          </Link>
+          <Link
+            href={'/doctor-payouts'}
+            className={`flex items-center gap-3 py-3.5 px-3 md:px-9 md:min-w-72 cursor-pointer transition-all duration-200 ${pathname === '/doctor-payouts' ? 'bg-[#F2F3FF] border-r-4 border-primary font-semibold text-primary' : 'hover:bg-gray-50'}`}
+          >
+            <Wallet className={`w-5 h-5 shrink-0 ${pathname === '/doctor-payouts' ? 'text-primary' : 'text-[#515151]'}`} />
+            <p className="hidden md:block">Payouts</p>
           </Link>
         </ul>
       )}

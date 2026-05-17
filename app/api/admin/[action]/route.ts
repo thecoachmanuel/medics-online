@@ -20,7 +20,12 @@ import {
   editDoctor,
   editPatient,
   adminEarnings,
-  reviewKyc
+  reviewKyc,
+  getCommissionRate,
+  setCommissionRate,
+  doctorLeaderboard,
+  getPayoutsAdmin,
+  reviewPayout
 } from '@/backend/controllers/adminController';
 
 import { changeAvailablity } from '@/backend/controllers/doctorController';
@@ -46,7 +51,12 @@ const actionMap: Record<string, ActionConfig> = {
   'edit-doctor': { controller: editDoctor, auth: withAdminAuth },
   'edit-patient': { controller: editPatient, auth: withAdminAuth },
   'earnings': { controller: adminEarnings, auth: withAdminAuth },
-  'review-kyc': { controller: reviewKyc, auth: withAdminAuth }
+  'review-kyc': { controller: reviewKyc, auth: withAdminAuth },
+  'get-commission-rate': { controller: getCommissionRate, auth: withAdminAuth },
+  'set-commission-rate': { controller: setCommissionRate, auth: withAdminAuth },
+  'doctor-leaderboard': { controller: doctorLeaderboard, auth: withAdminAuth },
+  'get-payouts': { controller: getPayoutsAdmin, auth: withAdminAuth },
+  'review-payout': { controller: reviewPayout, auth: withAdminAuth }
 };
 
 async function handleAction(request: NextRequest, context: { params: Promise<{ action: string }> }) {

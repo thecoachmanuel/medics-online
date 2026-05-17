@@ -18,7 +18,10 @@ import {
   doctorList,
   changeAvailablity,
   saveConsultation,
-  submitKycDoctor
+  submitKycDoctor,
+  updateBankDetails,
+  requestPayout,
+  getPayoutsDoctor
 } from '@/backend/controllers/doctorController';
 
 type ActionConfig = {
@@ -39,7 +42,10 @@ const actionMap: Record<string, ActionConfig> = {
   'list': { controller: doctorList },
   'change-availability': { controller: changeAvailablity, auth: withDoctorAuth },
   'save-consultation': { controller: saveConsultation, auth: withDoctorAuth },
-  'submit-kyc': { controller: submitKycDoctor, auth: withDoctorAuth }
+  'submit-kyc': { controller: submitKycDoctor, auth: withDoctorAuth },
+  'update-bank-details': { controller: updateBankDetails, auth: withDoctorAuth },
+  'request-payout': { controller: requestPayout, auth: withDoctorAuth },
+  'get-payouts': { controller: getPayoutsDoctor, auth: withDoctorAuth }
 };
 
 async function handleAction(request: NextRequest, context: { params: Promise<{ action: string }> }) {

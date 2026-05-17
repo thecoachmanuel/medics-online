@@ -5,6 +5,8 @@ import bcrypt from 'bcrypt';
 import validator from 'validator';
 import { v2 as cloudinary } from 'cloudinary';
 import userModel from '../models/userModel.js';
+import settingsModel from '../models/settingsModel.js';
+import payoutModel from '../models/payoutModel.js';
 
 // API for admin login
 const loginAdmin = async (req, res) => {
@@ -361,6 +363,120 @@ const reviewKyc = async (req, res) => {
   }
 };
 
+const getCommissionRate = async (req, res) => {
+  try {
+    let setting = await settingsModel.findOne({ key: 'commissionRate' });
+    if (!setting) {
+      setting = new settingsModel({ key: 'commissionRate', value: '20' });
+      await setting.save();
+    }
+    res.json({ success: true, commissionRate: parseInt(setting.value, 10) });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
+const setCommissionRate = async (req, res) => {
+  try {
+    const { commissionRate } = req.body;
+    if (commissionRate === undefined || isNaN(commissionRate) || commissionRate < 0 || commissionRate > 100) {
+      return res.json({ success: false, message: 'Please enter a valid commission rate percentage (0-100)' });
+    }
+    let setting = await settingsModel.findOne({ key: 'commissionRate' });
+    if (!setting) {
+      setting = new settingsModel({ key: 'commissionRate', value: String(commissionRate) });
+    } else {
+      setting.value = String(commissionRate);
+    }
+    await setting.save();
+    res.json({ success: true, message: 'Commission rate updated successfully' });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
+const doctorLeaderboard = async (req, res) => {
+  try {
+    let setting = await settingsModel.findOne({ key: 'commissionRate' });
+    const commRate = setting ? parseInt(setting.value, 10) : 20;
+
+    const doctors = await doctorModel.find({ isApproved: true });
+
+    const leaderboardData = [];
+    for (const doc of doctors) {
+      const appointments = await appointmentModel.find({ docId: doc._id });
+      let grossEarnings = 0;
+      appointments.forEach((appt) => {
+        if (appt.isCompleted || appt.payment) {
+          grossEarnings += appt.amount;
+        }
+      });
+      const adminCommission = (grossEarnings * commRate) / 100;
+      const netShare = grossEarnings - adminCommission;
+
+      leaderboardData.push({
+        _id: doc._id,
+        name: doc.name,
+        image: doc.image,
+        speciality: doc.speciality,
+        isVerified: doc.isVerified,
+        grossEarnings,
+        adminCommission,
+        netShare,
+        bookingsCount: appointments.filter(a => a.isCompleted || a.payment).length
+      });
+    }
+
+    leaderboardData.sort((a, b) => b.grossEarnings - a.grossEarnings);
+
+    res.json({ success: true, leaderboard: leaderboardData });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
+const getPayoutsAdmin = async (req, res) => {
+  try {
+    const payouts = await payoutModel.find({}).populate('docId', 'name image speciality isVerified').sort({ createdAt: -1 });
+    res.json({ success: true, payouts });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
+const reviewPayout = async (req, res) => {
+  try {
+    const { payoutId, status, rejectionReason } = req.body;
+    if (!['approved', 'rejected'].includes(status)) {
+      return res.json({ success: false, message: 'Invalid payout status' });
+    }
+
+    const payout = await payoutModel.findById(payoutId);
+    if (!payout) {
+      return res.json({ success: false, message: 'Payout request not found' });
+    }
+
+    if (payout.status !== 'pending') {
+      return res.json({ success: false, message: 'Payout has already been processed' });
+    }
+
+    payout.status = status;
+    if (status === 'rejected') {
+      payout.rejectionReason = rejectionReason || 'Rejected by Admin';
+    }
+    await payout.save();
+
+    res.json({ success: true, message: `Payout request ${status} successfully` });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
 export {
   loginAdmin,
   appointmentsAdmin,
@@ -375,5 +491,10 @@ export {
   editDoctor,
   editPatient,
   adminEarnings,
-  reviewKyc
+  reviewKyc,
+  getCommissionRate,
+  setCommissionRate,
+  doctorLeaderboard,
+  getPayoutsAdmin,
+  reviewPayout
 };

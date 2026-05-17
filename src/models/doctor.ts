@@ -15,6 +15,9 @@ export interface IDoctorAdmin {
   workingHoursStart?: string;
   workingHoursEnd?: string;
   excludedDays?: number[];
+  bankName?: string;
+  accountNumber?: string;
+  accountName?: string;
 }
 
 export interface IPatientAdmin {
@@ -62,6 +65,10 @@ export interface IAdminContext {
 
 export interface IDoctorDashData {
   earnings: number;
+  commissionRate: number;
+  adminCommission: number;
+  netShare: number;
+  availableBalance: number;
   appointments: number;
   patients: number;
   latestAppointments: IAppointment[];
@@ -93,6 +100,9 @@ export interface DoctorProfile {
   workingHoursStart?: string;
   workingHoursEnd?: string;
   excludedDays?: number[];
+  bankName?: string;
+  accountNumber?: string;
+  accountName?: string;
 }
 
 export interface IDoctorContext {
