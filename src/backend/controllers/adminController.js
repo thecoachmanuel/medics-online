@@ -8,7 +8,7 @@ import userModel from '../models/userModel.js';
 import settingsModel from '../models/settingsModel.js';
 import payoutModel from '../models/payoutModel.js';
 import emailTemplateModel from '../models/emailTemplateModel.js';
-import { seedEmailTemplates, sendNotificationEmail } from '../services/emailService.js';
+import { seedEmailTemplates, sendNotificationEmail, sendCustomHtmlEmail } from '../services/emailService.js';
 
 // API for admin login
 const loginAdmin = async (req, res) => {
@@ -585,6 +585,56 @@ const sendAppointmentReminders = async (req, res) => {
   }
 };
 
+// API to send bulk or individual email to patients or doctors
+const sendBulkEmailAdmin = async (req, res) => {
+  try {
+    const { recipientType, selectedEmails, customEmails, subject, body } = req.body;
+    if (!subject || !body) {
+      return res.json({ success: false, message: 'Subject and body content are required' });
+    }
+
+    let emails = [];
+
+    if (recipientType === 'all-patients') {
+      const patients = await userModel.find({}).select('email');
+      emails = patients.map(p => p.email).filter(Boolean);
+    } else if (recipientType === 'all-doctors') {
+      const doctors = await doctorModel.find({}).select('email');
+      emails = doctors.map(d => d.email).filter(Boolean);
+    } else if (recipientType === 'custom-emails') {
+      if (!customEmails) {
+        return res.json({ success: false, message: 'Please provide at least one custom email address' });
+      }
+      emails = customEmails.split(',').map(e => e.trim()).filter(Boolean);
+    } else if (recipientType === 'selected-users') {
+      if (!selectedEmails || !Array.isArray(selectedEmails)) {
+        return res.json({ success: false, message: 'Please select recipients to send the email' });
+      }
+      emails = selectedEmails.filter(Boolean);
+    } else {
+      return res.json({ success: false, message: 'Invalid recipient type' });
+    }
+
+    if (emails.length === 0) {
+      return res.json({ success: false, message: 'No recipients found for this selection' });
+    }
+
+    // Send emails
+    let sentCount = 0;
+    for (const email of emails) {
+      const success = await sendCustomHtmlEmail(email, subject, body);
+      if (success) {
+        sentCount++;
+      }
+    }
+
+    res.json({ success: true, message: `Successfully broadcasted email to ${sentCount} out of ${emails.length} recipients.` });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
 export {
   loginAdmin,
   appointmentsAdmin,
@@ -608,5 +658,6 @@ export {
   clearDataAdmin,
   getEmailTemplates,
   updateEmailTemplate,
-  sendAppointmentReminders
+  sendAppointmentReminders,
+  sendBulkEmailAdmin
 };

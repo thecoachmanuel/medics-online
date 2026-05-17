@@ -29,10 +29,12 @@ import {
   clearDataAdmin,
   getEmailTemplates,
   updateEmailTemplate,
-  sendAppointmentReminders
+  sendAppointmentReminders,
+  sendBulkEmailAdmin
 } from '@/backend/controllers/adminController';
 
 import { changeAvailablity } from '@/backend/controllers/doctorController';
+import { updateCmsData } from '@/backend/controllers/cmsController';
 
 type ActionConfig = {
   controller: any;
@@ -64,7 +66,9 @@ const actionMap: Record<string, ActionConfig> = {
   'clear-data': { controller: clearDataAdmin, auth: withAdminAuth },
   'get-email-templates': { controller: getEmailTemplates, auth: withAdminAuth },
   'update-email-template': { controller: updateEmailTemplate, auth: withAdminAuth },
-  'send-appointment-reminders': { controller: sendAppointmentReminders, auth: withAdminAuth }
+  'send-appointment-reminders': { controller: sendAppointmentReminders, auth: withAdminAuth },
+  'send-bulk-email': { controller: sendBulkEmailAdmin, auth: withAdminAuth },
+  'update-cms': { controller: updateCmsData, auth: withAdminAuth }
 };
 
 async function handleAction(request: NextRequest, context: { params: Promise<{ action: string }> }) {

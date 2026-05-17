@@ -76,6 +76,10 @@ export interface IAdminContext {
   getEmailTemplates: () => Promise<IEmailTemplate[]>;
   updateEmailTemplate: (templateId: string, subject: string, body: string) => Promise<boolean>;
   sendAppointmentReminders: () => Promise<boolean>;
+  cmsData: ICmsData | null;
+  getCmsData: () => Promise<ICmsData | null>;
+  updateCmsData: (data: Partial<ICmsData> & { homeHeaderImageBase64?: string; aboutImageBase64?: string; contactImageBase64?: string }) => Promise<boolean>;
+  sendBulkEmail: (params: { recipientType: string; selectedEmails?: string[]; customEmails?: string; subject: string; body: string }) => Promise<boolean>;
 }
 
 export interface IDoctorDashData {
@@ -133,4 +137,37 @@ export interface IDoctorContext {
   profileData: DoctorProfile | null;
   setProfileData: React.Dispatch<React.SetStateAction<DoctorProfile | null>>;
   getProfileData: () => Promise<void>;
+}
+
+export interface ICmsData {
+  homeHeaderTitle: string;
+  homeHeaderSubtitle: string;
+  homeHeaderImage: string;
+  homeHeaderBtnText: string;
+  homeHeaderBtnLink: string;
+  
+  aboutTitle: string;
+  aboutImage: string;
+  aboutText1: string;
+  aboutText2: string;
+  aboutVisionTitle: string;
+  aboutVisionText: string;
+  
+  chooseUsTitle: string;
+  chooseUsEfficiencyTitle: string;
+  chooseUsEfficiencyText: string;
+  chooseUsConvenienceTitle: string;
+  chooseUsConvenienceText: string;
+  chooseUsPersonalizationTitle: string;
+  chooseUsPersonalizationText: string;
+
+  contactTitle: string;
+  contactImage: string;
+  contactOfficeTitle: string;
+  contactAddress: string;
+  contactPhone: string;
+  contactEmail: string;
+  contactCareerTitle: string;
+  contactCareerText: string;
+  contactExploreBtnText: string;
 }

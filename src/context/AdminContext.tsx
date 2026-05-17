@@ -51,7 +51,8 @@ const AdminContextProvider = (props: AdminContextProviderProps) => {
         getAllPatients(),
         getAllAppointments(),
         getDashData(),
-        getEarnings()
+        getEarnings(),
+        getCmsData()
       ]);
     } else {
       setDoctors([]);
@@ -59,6 +60,7 @@ const AdminContextProvider = (props: AdminContextProviderProps) => {
       setAppointments([]);
       setDashData(null);
       setEarnings(null);
+      setCmsData(null);
     }
   };
 
@@ -419,24 +421,77 @@ const AdminContextProvider = (props: AdminContextProviderProps) => {
     }
   };
 
-  const sendAppointmentReminders = async () => {
+  const [cmsData, setCmsData] = useState<any>(null);
+
+  const getCmsData = async () => {
     try {
-      const data = await smartApi.post('/api/admin/send-appointment-reminders', 
-        {},
-        { headers: { aToken } }
-      ) as any;
-      if (data.success) {
-        toast.success(data.message || 'Reminders sent successfully');
+      const data = await smartApi.post('/api/cms/get', {}) as any;
+      if (data.success && data.cms) {
+        setCmsData(data.cms);
+        return data.cms;
+      }
+      return null;
+    } catch (error) {
+      console.log('Error loading CMS data:', error);
+      return null;
+    }
+  };
+
+  const updateCmsData = async (data: any) => {
+    try {
+      const res = await smartApi.post('/api/admin/update-cms', data, {
+        headers: { aToken }
+      }) as any;
+      if (res.success) {
+        toast.success(res.message || 'CMS updated successfully');
+        setCmsData(res.cms);
         return true;
       } else {
-        toast.error(data.message);
+        toast.error(res.message || 'Failed to update CMS');
         return false;
       }
     } catch (error: any) {
-      toast.error(error.message || 'Failed to send reminders');
+      toast.error(error.message || 'Error updating CMS');
       return false;
     }
   };
+
+  const sendBulkEmail = async (params: any) => {
+    try {
+      const res = await smartApi.post('/api/admin/send-bulk-email', params, {
+        headers: { aToken }
+      }) as any;
+      if (res.success) {
+        toast.success(res.message || 'Bulk email broadcast complete');
+        return true;
+      } else {
+        toast.error(res.message || 'Failed to send bulk email');
+        return false;
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Error sending bulk email');
+      return false;
+    }
+  };
+
+  const sendAppointmentReminders = async () => {
+    try {
+      const data = await smartApi.post('/api/admin/send-appointment-reminders', 
+      {},
+      { headers: { aToken } }
+    ) as any;
+    if (data.success) {
+      toast.success(data.message || 'Reminders sent successfully');
+      return true;
+    } else {
+      toast.error(data.message);
+      return false;
+    }
+  } catch (error: any) {
+    toast.error(error.message || 'Failed to send reminders');
+    return false;
+  }
+};
 
   const value = {
     aToken,
@@ -460,7 +515,11 @@ const AdminContextProvider = (props: AdminContextProviderProps) => {
     getEarnings,
     getEmailTemplates,
     updateEmailTemplate,
-    sendAppointmentReminders
+    sendAppointmentReminders,
+    cmsData,
+    getCmsData,
+    updateCmsData,
+    sendBulkEmail
   };
 
   return <AdminContext.Provider value={value}>{props.children}</AdminContext.Provider>;

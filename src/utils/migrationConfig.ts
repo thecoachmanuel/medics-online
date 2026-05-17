@@ -312,6 +312,24 @@ export const migrationConfig: ApiMigrationConfig = {
     description: 'Admin trigger sending upcoming reminders',
     migrated: true
   },
+  '/api/cms/get': {
+    encrypted: true,
+    priority: 'medium',
+    description: 'Fetch global CMS configuration settings',
+    migrated: true
+  },
+  '/api/admin/update-cms': {
+    encrypted: true,
+    priority: 'medium',
+    description: 'Admin edit and upload CMS configurations',
+    migrated: true
+  },
+  '/api/admin/send-bulk-email': {
+    encrypted: true,
+    priority: 'medium',
+    description: 'Admin broadcast custom/bulk operational emails',
+    migrated: true
+  },
 
   // ALREADY ENCRYPTED: Test endpoints
   '/api/secure/dummy-data': {

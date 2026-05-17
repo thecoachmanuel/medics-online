@@ -13,7 +13,8 @@ import {
   TrendingUp,
   Wallet,
   Banknote,
-  Database
+  Database,
+  Settings
 } from 'lucide-react';
 
 import { DoctorContext } from '@/context/DoctorContext';
@@ -105,8 +106,8 @@ const Sidebar = () => {
             href={'/admin-settings'}
             className={`flex items-center gap-3 py-3.5 px-3 md:px-9 md:min-w-72 cursor-pointer transition-all duration-200 ${pathname === '/admin-settings' ? 'bg-[#F2F3FF] border-r-4 border-primary font-semibold text-primary' : 'hover:bg-gray-50'}`}
           >
-            <Database className={`w-5 h-5 shrink-0 ${pathname === '/admin-settings' ? 'text-primary' : 'text-[#515151]'}`} />
-            <p className="hidden md:block">System Maintenance</p>
+            <Settings className={`w-5 h-5 shrink-0 ${pathname === '/admin-settings' ? 'text-primary' : 'text-[#515151]'}`} />
+            <p className="hidden md:block">Settings & CMS</p>
           </Link>
         </ul>
       )}

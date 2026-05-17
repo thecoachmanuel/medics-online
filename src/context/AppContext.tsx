@@ -51,6 +51,54 @@ const AppContextProvider = (props: AppContextProviderProps) => {
 
   const [userData, setUserData] = useState<IUserData | null>(null);
 
+  const [cmsData, setCmsData] = useState<any>({
+    homeHeaderTitle: 'Connect with Trusted Doctors Online',
+    homeHeaderSubtitle: 'Simply browse through our extensive list of trusted doctors, book appointments, consult via video.',
+    homeHeaderImage: '/assets/header_img.webp',
+    homeHeaderBtnText: 'Book appointment',
+    homeHeaderBtnLink: '/doctors',
+
+    aboutTitle: 'ABOUT US',
+    aboutImage: '/assets/about_image.webp',
+    aboutText1: 'Welcome to MedicsOnline, your trusted partner in managing your healthcare needs conveniently and efficiently. At MedicsOnline, we understand the challenges individuals face when it comes to scheduling doctor appointments and managing their health records.',
+    aboutText2: 'MedicsOnline is committed to excellence in healthcare technology. We continuously strive to enhance our platform, integrating the latest advancements to improve user experience and deliver superior service. Whether you\'re booking your first appointment or managing ongoing care, MedicsOnline is here to support you every step of the way.',
+    aboutVisionTitle: 'Our Vision',
+    aboutVisionText: 'Our vision at MedicsOnline is to create a seamless healthcare experience for every user. We aim to bridge the gap between patients and healthcare providers, making it easier for you to access the care you need, when you need it.',
+
+    chooseUsTitle: 'WHY CHOOSE US',
+    chooseUsEfficiencyTitle: 'EFFICIENCY:',
+    chooseUsEfficiencyText: 'Streamlined appointment scheduling that fits into your busy lifestyle.',
+    chooseUsConvenienceTitle: 'CONVENIENCE:',
+    chooseUsConvenienceText: 'Access to a network of trusted healthcare professionals in your area.',
+    chooseUsPersonalizationTitle: 'PERSONALIZATION:',
+    chooseUsPersonalizationText: 'Tailored recommendations and reminders to help you stay on top of your health.',
+
+    contactTitle: 'CONTACT US',
+    contactImage: '/assets/contact_image.webp',
+    contactOfficeTitle: 'OUR OFFICE',
+    contactAddress: 'Lagos\nNigeria',
+    contactPhone: '+234-703-858-7375',
+    contactEmail: 'medicsonlineng@gmail.com',
+    contactCareerTitle: 'CAREERS AT MedicsOnline',
+    contactCareerText: 'Learn more about our teams and job openings.',
+    contactExploreBtnText: 'Explore Jobs'
+  });
+
+  const loadCmsData = async () => {
+    try {
+      const data = await smartApi.post('/api/cms/get', {}) as any;
+      if (data.success && data.cms) {
+        setCmsData(data.cms);
+      }
+    } catch (error) {
+      console.log('Error loading CMS data:', error);
+    }
+  };
+
+  useEffect(() => {
+    loadCmsData();
+  }, []);
+
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
     if (storedToken) {
@@ -169,7 +217,9 @@ const AppContextProvider = (props: AppContextProviderProps) => {
     currencySymbol,
     slotDateFormat,
     calculateAge,
-    backendUrl
+    backendUrl,
+    cmsData,
+    loadCmsData
   };
 
   return <AppContext.Provider value={value}>{props.children}</AppContext.Provider>;

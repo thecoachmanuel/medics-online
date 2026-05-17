@@ -295,3 +295,109 @@ export const sendNotificationEmail = async (to, templateKey, variables = {}) => 
     return false;
   }
 };
+
+// Generic dispatcher for admin bulk/custom emails with standard responsive design
+export const sendCustomHtmlEmail = async (to, subject, bodyContent) => {
+  try {
+    const resolvedSubject = subject || 'Notification - Medics-Online';
+    const resolvedBody = bodyContent || '';
+
+    const premiumHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${resolvedSubject}</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #f4f5f8;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+    .wrapper {
+      width: 100%;
+      background-color: #f4f5f8;
+      padding: 30px 0;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      border: 1px solid #e8e8ed;
+      overflow: hidden;
+    }
+    .header {
+      background: linear-gradient(135deg, #5f6FFF, #3b4bc4);
+      padding: 30px 20px;
+      text-align: center;
+    }
+    .logo {
+      font-size: 24px;
+      font-weight: 800;
+      color: #ffffff;
+      text-decoration: none;
+      letter-spacing: 1px;
+    }
+    .logo span {
+      color: #38bdf8;
+    }
+    .content {
+      padding: 35px 30px;
+      color: #334155;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+    .footer {
+      background-color: #f8fafc;
+      padding: 20px;
+      text-align: center;
+      border-top: 1px solid #f1f5f9;
+      font-size: 12px;
+      color: #64748b;
+    }
+    .footer a {
+      color: #5f6FFF;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="container">
+      <div class="header">
+        <a href="#" class="logo">MEDICS<span>ONLINE</span></a>
+      </div>
+      <div class="content">
+        ${resolvedBody}
+      </div>
+      <div class="footer">
+        <p>&copy; ${new Date().getFullYear()} Medics-Online. All rights reserved.</p>
+        <p style="margin-top: 5px;">This is a custom operational broadcast from site administration.</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+`;
+
+    const transporterInstance = getTransporter();
+    const mailOptions = {
+      from: `"${process.env.SMTP_FROM_NAME || 'Medics-Online Telehealth'}" <${process.env.SMTP_USER || 'noreply@medicsonline.ng'}>`,
+      to,
+      subject: resolvedSubject,
+      html: premiumHtml
+    };
+
+    const info = await transporterInstance.sendMail(mailOptions);
+    console.log(`✅ Email Service: Custom operational email sent successfully to: ${to} (ID: ${info.messageId})`);
+    return true;
+  } catch (error) {
+    console.error(`❌ Email Service: Failed to dispatch custom email to: ${to}. Error:`, error);
+    return false;
+  }
+};
