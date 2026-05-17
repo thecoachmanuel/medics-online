@@ -9,7 +9,7 @@ import type { IAdminContext } from '@/models/doctor';
 import { smartApi } from '@/utils/smartApi';
 
 const AdminSettings = () => {
-  const { aToken } = useContext(AdminContext) as IAdminContext;
+  const { aToken, loadAdminData } = useContext(AdminContext) as IAdminContext;
 
   const [target, setTarget] = useState<'doctors' | 'appointments' | 'patients'>('appointments');
   const [confirmText, setConfirmText] = useState('');
@@ -43,6 +43,9 @@ const AdminSettings = () => {
       if (data.success) {
         toast.success(data.message || 'Selected data cleared successfully!');
         setConfirmText('');
+        if (loadAdminData) {
+          await loadAdminData();
+        }
       } else {
         toast.error(data.message || 'Failed to clear data');
       }
@@ -73,6 +76,9 @@ const AdminSettings = () => {
 
       if (data.success) {
         toast.success(data.message || 'Sandbox seeded successfully!');
+        if (loadAdminData) {
+          await loadAdminData();
+        }
       } else {
         toast.error(data.message || 'Failed to seed sandbox');
       }
