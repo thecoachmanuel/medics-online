@@ -26,6 +26,7 @@ const DoctorRegister = () => {
     addressLine2: '',
     workingHoursStart: '10:00',
     workingHoursEnd: '22:00',
+    workingHours: [{ start: '09:00', end: '13:00' }, { start: '14:00', end: '18:00' }] as { start: string; end: string }[],
     excludedDays: [] as number[],
     image: null as File | null
   });
@@ -82,6 +83,36 @@ const DoctorRegister = () => {
     });
   };
 
+  const addWorkingHourRange = () => {
+    setFormData(prev => ({
+      ...prev,
+      workingHours: [...prev.workingHours, { start: '09:00', end: '17:00' }]
+    }));
+  };
+
+  const removeWorkingHourRange = (index: number) => {
+    if (formData.workingHours.length <= 1) {
+      toast.warning('You must configure at least one active working hour range.');
+      return;
+    }
+    setFormData(prev => ({
+      ...prev,
+      workingHours: prev.workingHours.filter((_, idx) => idx !== index)
+    }));
+  };
+
+  const updateWorkingHourRange = (index: number, field: 'start' | 'end', value: string) => {
+    setFormData(prev => {
+      const updated = prev.workingHours.map((range, idx) => {
+        if (idx === index) {
+          return { ...range, [field]: value };
+        }
+        return range;
+      });
+      return { ...prev, workingHours: updated };
+    });
+  };
+
   const validateStep = () => {
     if (step === 1) {
       if (!formData.name.trim() || !formData.email.trim() || !formData.password || !formData.confirmPassword) {
@@ -104,6 +135,16 @@ const DoctorRegister = () => {
       if (!formData.speciality || !formData.degree.trim() || !formData.experience || !formData.fees || !formData.about.trim() || !formData.addressLine1.trim()) {
         toast.warning('Please complete all professional and address details');
         return false;
+      }
+    } else if (step === 3) {
+      for (let i = 0; i < formData.workingHours.length; i++) {
+        const range = formData.workingHours[i];
+        const startVal = parseInt(range.start.replace(':', ''), 10);
+        const endVal = parseInt(range.end.replace(':', ''), 10);
+        if (startVal >= endVal) {
+          toast.error(`Time Slot Range #${i + 1} (${range.start} - ${range.end}) is invalid. Start time must be before End time.`);
+          return false;
+        }
       }
     }
     return true;
@@ -152,8 +193,9 @@ const DoctorRegister = () => {
         line1: formData.addressLine1,
         line2: formData.addressLine2
       }));
-      data.append('workingHoursStart', formData.workingHoursStart);
-      data.append('workingHoursEnd', formData.workingHoursEnd);
+      data.append('workingHoursStart', formData.workingHours[0]?.start || '10:00');
+      data.append('workingHoursEnd', formData.workingHours[0]?.end || '22:00');
+      data.append('workingHours', JSON.stringify(formData.workingHours));
       data.append('excludedDays', JSON.stringify(formData.excludedDays));
       
       if (formData.image) {
@@ -510,34 +552,65 @@ const DoctorRegister = () => {
                 </div>
 
                 {/* Hour Ranges */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">Daily Working Hours Start</label>
-                    <select
-                      name="workingHoursStart"
-                      value={formData.workingHoursStart}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border rounded-lg text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary"
+                <div className="pt-2 space-y-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-xs font-semibold text-gray-700">
+                      Configure Multiple Daily Working Hour Slots
+                    </label>
+                    <button
+                      type="button"
+                      onClick={addWorkingHourRange}
+                      className="px-3 py-1.5 bg-primary/10 text-primary hover:bg-primary/20 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer flex items-center gap-1"
                     >
-                      {Array.from({ length: 24 }, (_, i) => {
-                        const hr = i.toString().padStart(2, '0') + ':00';
-                        return <option key={hr} value={hr}>{hr}</option>;
-                      })}
-                    </select>
+                      + Add Time Slot
+                    </button>
                   </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">Daily Working Hours End</label>
-                    <select
-                      name="workingHoursEnd"
-                      value={formData.workingHoursEnd}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border rounded-lg text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary"
-                    >
-                      {Array.from({ length: 24 }, (_, i) => {
-                        const hr = i.toString().padStart(2, '0') + ':00';
-                        return <option key={hr} value={hr}>{hr}</option>;
-                      })}
-                    </select>
+
+                  <div className="space-y-4">
+                    {formData.workingHours.map((range, index) => (
+                      <div key={index} className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-gray-50 border border-gray-100 p-4 rounded-2xl relative">
+                        <div className="w-full sm:w-1/2">
+                          <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                            Slot #{index + 1} Start
+                          </label>
+                          <select
+                            value={range.start}
+                            onChange={(e) => updateWorkingHourRange(index, 'start', e.target.value)}
+                            className="w-full px-3 py-2 border rounded-xl text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary"
+                          >
+                            {Array.from({ length: 24 }, (_, i) => {
+                              const hr = i.toString().padStart(2, '0') + ':00';
+                              return <option key={hr} value={hr}>{hr}</option>;
+                            })}
+                          </select>
+                        </div>
+                        <div className="w-full sm:w-1/2">
+                          <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                            Slot #{index + 1} End
+                          </label>
+                          <select
+                            value={range.end}
+                            onChange={(e) => updateWorkingHourRange(index, 'end', e.target.value)}
+                            className="w-full px-3 py-2 border rounded-xl text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary"
+                          >
+                            {Array.from({ length: 24 }, (_, i) => {
+                              const hr = i.toString().padStart(2, '0') + ':00';
+                              return <option key={hr} value={hr}>{hr}</option>;
+                            })}
+                          </select>
+                        </div>
+                        {formData.workingHours.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeWorkingHourRange(index)}
+                            className="absolute sm:static top-2 right-2 text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-2 rounded-xl transition-all duration-200 cursor-pointer self-end sm:self-center sm:mt-4"
+                            title="Remove Slot"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>

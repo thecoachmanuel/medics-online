@@ -88,6 +88,10 @@ const registerDoctor = async (req, res) => {
       ? (typeof excludedDays === 'string' ? JSON.parse(excludedDays) : excludedDays) 
       : [];
 
+    const parsedWorkingHours = req.body.workingHours
+      ? (typeof req.body.workingHours === 'string' ? JSON.parse(req.body.workingHours) : req.body.workingHours)
+      : [];
+
     const doctorData = {
       name,
       email,
@@ -101,6 +105,7 @@ const registerDoctor = async (req, res) => {
       address: JSON.parse(address),
       workingHoursStart: workingHoursStart || '10:00',
       workingHoursEnd: workingHoursEnd || '22:00',
+      workingHours: parsedWorkingHours,
       excludedDays: parsedExcludedDays,
       date: Date.now(),
       isApproved: false // Doctors registered by themselves need approval
@@ -226,7 +231,7 @@ const doctorProfile = async (req, res) => {
 // API to update doctor profile data from  Doctor Panel
 const updateDoctorProfile = async (req, res) => {
   try {
-    const { docId, fees, address, available, about, workingHoursStart, workingHoursEnd, excludedDays } = req.body;
+    const { docId, fees, address, available, about, workingHoursStart, workingHoursEnd, excludedDays, workingHours } = req.body;
 
     const updateData = {};
     if (fees !== undefined) updateData.fees = fees;
@@ -237,6 +242,9 @@ const updateDoctorProfile = async (req, res) => {
     if (workingHoursEnd !== undefined) updateData.workingHoursEnd = workingHoursEnd;
     if (excludedDays !== undefined) {
       updateData.excludedDays = typeof excludedDays === 'string' ? JSON.parse(excludedDays) : excludedDays;
+    }
+    if (workingHours !== undefined) {
+      updateData.workingHours = typeof workingHours === 'string' ? JSON.parse(workingHours) : workingHours;
     }
 
     await doctorModel.findByIdAndUpdate(docId, updateData);
@@ -342,22 +350,51 @@ const saveConsultation = async (req, res) => {
 const submitKycDoctor = async (req, res) => {
   try {
     const { docId } = req.body;
-    const kycIdDocumentObj = req.body.kycIdDocument;
-    const kycLicenseDocumentObj = req.body.kycLicenseDocument;
+
+    // The smartApi converts FormData files into objects: { type: 'file', name, size, mimeType, data }
+    // After encryption/decryption round-trip, extract files from any possible location
+    let kycIdDocumentObj = req.body.kycIdDocument;
+    let kycLicenseDocumentObj = req.body.kycLicenseDocument;
+
+    // Debug log to identify incoming payload shape
+    console.log('🩺 KYC Payload keys:', Object.keys(req.body));
+    console.log('🩺 kycIdDocument type:', typeof kycIdDocumentObj, kycIdDocumentObj ? 'present' : 'MISSING');
+    console.log('🩺 kycLicenseDocument type:', typeof kycLicenseDocumentObj, kycLicenseDocumentObj ? 'present' : 'MISSING');
+
+    // Handle case where the objects might have been stringified during encryption
+    if (typeof kycIdDocumentObj === 'string') {
+      try { kycIdDocumentObj = JSON.parse(kycIdDocumentObj); } catch(e) { /* not JSON */ }
+    }
+    if (typeof kycLicenseDocumentObj === 'string') {
+      try { kycLicenseDocumentObj = JSON.parse(kycLicenseDocumentObj); } catch(e) { /* not JSON */ }
+    }
 
     if (!kycIdDocumentObj || !kycLicenseDocumentObj) {
+      console.log('❌ KYC files missing. Full body keys:', Object.keys(req.body));
       return res.json({ success: false, message: 'Both ID and License documents are required' });
     }
 
+    // Validate that the file objects have the expected structure
+    if (!kycIdDocumentObj.data || !kycLicenseDocumentObj.data) {
+      console.log('❌ KYC file objects missing data property');
+      console.log('ID doc keys:', Object.keys(kycIdDocumentObj));
+      console.log('License doc keys:', Object.keys(kycLicenseDocumentObj));
+      return res.json({ success: false, message: 'File upload data is incomplete. Please try again.' });
+    }
+
+    const idMimeType = kycIdDocumentObj.mimeType || 'application/octet-stream';
+    const licenseMimeType = kycLicenseDocumentObj.mimeType || 'application/octet-stream';
+
     console.log('🩺 Submitting KYC for doctor:', docId);
+    console.log('🩺 ID mime:', idMimeType, 'License mime:', licenseMimeType);
     
     // Upload both to Cloudinary with auto resource type so PDF and JPG both work perfectly
     const idUpload = await cloudinary.uploader.upload(
-      `data:${kycIdDocumentObj.mimeType};base64,${kycIdDocumentObj.data}`,
+      `data:${idMimeType};base64,${kycIdDocumentObj.data}`,
       { resource_type: 'auto' }
     );
     const licenseUpload = await cloudinary.uploader.upload(
-      `data:${kycLicenseDocumentObj.mimeType};base64,${kycLicenseDocumentObj.data}`,
+      `data:${licenseMimeType};base64,${kycLicenseDocumentObj.data}`,
       { resource_type: 'auto' }
     );
 
@@ -372,7 +409,7 @@ const submitKycDoctor = async (req, res) => {
 
     res.json({ success: true, message: 'KYC documents submitted successfully' });
   } catch (error) {
-    console.log(error);
+    console.log('❌ KYC submission error:', error);
     res.json({ success: false, message: error.message });
   }
 };

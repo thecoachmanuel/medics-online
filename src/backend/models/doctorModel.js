@@ -42,6 +42,10 @@ const doctorSchema = new mongoose.Schema(
     isVerified: { type: Boolean, default: false },
     workingHoursStart: { type: String, default: '10:00' },
     workingHoursEnd: { type: String, default: '22:00' },
+    workingHours: {
+      type: [{ start: { type: String, required: true }, end: { type: String, required: true } }],
+      default: []
+    },
     excludedDays: { type: [Number], default: [] },
     bankName: { type: String, default: '' },
     accountNumber: { type: String, default: '' },

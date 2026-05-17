@@ -82,56 +82,78 @@ const Appointment = () => {
       // Check if day is excluded
       const dayOfWeek = currentDate.getDay();
       if (!excluded.includes(dayOfWeek)) {
-        const endTime = new Date();
-        endTime.setDate(today.getDate() + i);
-        endTime.setHours(endHours, endMinutes, 0, 0);
+        // Retrieve multiple working hour ranges, or fallback to the single range
+        const ranges = docInfo.workingHours && docInfo.workingHours.length > 0
+          ? docInfo.workingHours
+          : [{ start: startStr, end: endStr }];
 
-        if (today.getDate() === currentDate.getDate()) {
-          // If today, make sure we only suggest future slots
-          let currentStartHours = startHours;
-          let currentStartMinutes = startMinutes;
+        for (const range of ranges) {
+          const rStartStr = range.start || '10:00';
+          const rEndStr = range.end || '22:00';
+
+          const rStartHours = parseInt(rStartStr.split(':')[0], 10) || 10;
+          const rStartMinutes = parseInt(rStartStr.split(':')[1], 10) || 0;
+          const rEndHours = parseInt(rEndStr.split(':')[0], 10) || 22;
+          const rEndMinutes = parseInt(rEndStr.split(':')[1], 10) || 0;
+
+          const slotStart = new Date(today);
+          slotStart.setDate(today.getDate() + i);
           
-          const nowHour = today.getHours();
-          const nowMinute = today.getMinutes();
-          
-          if (nowHour > startHours || (nowHour === startHours && nowMinute >= startMinutes)) {
-            currentStartHours = nowHour;
-            if (nowMinute < 30) {
-              currentStartMinutes = 30;
-            } else {
-              currentStartHours += 1;
-              currentStartMinutes = 0;
+          const slotEnd = new Date(today);
+          slotEnd.setDate(today.getDate() + i);
+          slotEnd.setHours(rEndHours, rEndMinutes, 0, 0);
+
+          if (today.getDate() === currentDate.getDate()) {
+            // If today, make sure we only suggest future slots
+            let currentStartHours = rStartHours;
+            let currentStartMinutes = rStartMinutes;
+            
+            const nowHour = today.getHours();
+            const nowMinute = today.getMinutes();
+            
+            if (nowHour > rStartHours || (nowHour === rStartHours && nowMinute >= rStartMinutes)) {
+              currentStartHours = nowHour;
+              if (nowMinute < 30) {
+                currentStartMinutes = 30;
+              } else {
+                currentStartHours += 1;
+                currentStartMinutes = 0;
+              }
             }
+            slotStart.setHours(currentStartHours, currentStartMinutes, 0, 0);
+          } else {
+            slotStart.setHours(rStartHours, rStartMinutes, 0, 0);
           }
-          currentDate.setHours(currentStartHours, currentStartMinutes, 0, 0);
-        } else {
-          currentDate.setHours(startHours, startMinutes, 0, 0);
-        }
 
-        while (currentDate < endTime) {
-          const formattedTime = currentDate.toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit'
-          });
-          const day = currentDate.getDate();
-          const month = currentDate.getMonth() + 1;
-          const year = currentDate.getFullYear();
-          const slotDate = day + '_' + month + '_' + year;
-          const slotTime = formattedTime;
-          const isSlotAvailable =
-            docInfo.slots_booked &&
-            docInfo.slots_booked[slotDate] &&
-            docInfo.slots_booked[slotDate].includes(slotTime)
-              ? false
-              : true;
-          if (isSlotAvailable) {
-            timeSlots.push({
-              datetime: new Date(currentDate),
-              time: formattedTime
+          const runningDate = new Date(slotStart);
+          while (runningDate < slotEnd) {
+            const formattedTime = runningDate.toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit'
             });
+            const day = runningDate.getDate();
+            const month = runningDate.getMonth() + 1;
+            const year = runningDate.getFullYear();
+            const slotDate = day + '_' + month + '_' + year;
+            const slotTime = formattedTime;
+            const isSlotAvailable =
+              docInfo.slots_booked &&
+              docInfo.slots_booked[slotDate] &&
+              docInfo.slots_booked[slotDate].includes(slotTime)
+                ? false
+                : true;
+            if (isSlotAvailable) {
+              timeSlots.push({
+                datetime: new Date(runningDate),
+                time: formattedTime
+              });
+            }
+            runningDate.setMinutes(runningDate.getMinutes() + 30);
           }
-          currentDate.setMinutes(currentDate.getMinutes() + 30);
         }
+        
+        // Sort slots chronologically in case of multiple/overlapping ranges
+        timeSlots.sort((a, b) => a.datetime.getTime() - b.datetime.getTime());
       }
       setDocSlots((prev) => [...prev, timeSlots]);
     }

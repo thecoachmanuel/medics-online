@@ -14,6 +14,7 @@ export interface IDoctorAdmin {
   kycRejectionReason?: string;
   workingHoursStart?: string;
   workingHoursEnd?: string;
+  workingHours?: { start: string; end: string }[];
   excludedDays?: number[];
   bankName?: string;
   accountNumber?: string;
@@ -99,6 +100,7 @@ export interface DoctorProfile {
   kycRejectionReason?: string;
   workingHoursStart?: string;
   workingHoursEnd?: string;
+  workingHours?: { start: string; end: string }[];
   excludedDays?: number[];
   bankName?: string;
   accountNumber?: string;

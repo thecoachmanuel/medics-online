@@ -42,6 +42,7 @@ export interface IDoctorPatient {
   kycRejectionReason?: string;
   workingHoursStart?: string;
   workingHoursEnd?: string;
+  workingHours?: { start: string; end: string }[];
   excludedDays?: number[];
 }
 
