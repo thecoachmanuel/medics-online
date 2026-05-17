@@ -294,6 +294,24 @@ export const migrationConfig: ApiMigrationConfig = {
     description: 'Admin approve or reject payout request',
     migrated: true
   },
+  '/api/admin/get-email-templates': {
+    encrypted: true,
+    priority: 'medium',
+    description: 'Admin fetch all email templates',
+    migrated: true
+  },
+  '/api/admin/update-email-template': {
+    encrypted: true,
+    priority: 'medium',
+    description: 'Admin update dynamic email template',
+    migrated: true
+  },
+  '/api/admin/send-appointment-reminders': {
+    encrypted: true,
+    priority: 'medium',
+    description: 'Admin trigger sending upcoming reminders',
+    migrated: true
+  },
 
   // ALREADY ENCRYPTED: Test endpoints
   '/api/secure/dummy-data': {

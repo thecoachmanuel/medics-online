@@ -383,6 +383,61 @@ const AdminContextProvider = (props: AdminContextProviderProps) => {
     }
   };
 
+  const getEmailTemplates = async () => {
+    try {
+      const data = await smartApi.get('/api/admin/get-email-templates', {
+        headers: { aToken }
+      }) as any;
+      if (data.success) {
+        return data.templates;
+      } else {
+        toast.error(data.message);
+        return [];
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to fetch email templates');
+      return [];
+    }
+  };
+
+  const updateEmailTemplate = async (templateId: string, subject: string, body: string) => {
+    try {
+      const data = await smartApi.post('/api/admin/update-email-template', 
+        { templateId, subject, body },
+        { headers: { aToken } }
+      ) as any;
+      if (data.success) {
+        toast.success(data.message || 'Email template updated successfully');
+        return true;
+      } else {
+        toast.error(data.message);
+        return false;
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to update email template');
+      return false;
+    }
+  };
+
+  const sendAppointmentReminders = async () => {
+    try {
+      const data = await smartApi.post('/api/admin/send-appointment-reminders', 
+        {},
+        { headers: { aToken } }
+      ) as any;
+      if (data.success) {
+        toast.success(data.message || 'Reminders sent successfully');
+        return true;
+      } else {
+        toast.error(data.message);
+        return false;
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to send reminders');
+      return false;
+    }
+  };
+
   const value = {
     aToken,
     setAToken,
@@ -402,7 +457,10 @@ const AdminContextProvider = (props: AdminContextProviderProps) => {
     editPatient,
     dashData,
     earnings,
-    getEarnings
+    getEarnings,
+    getEmailTemplates,
+    updateEmailTemplate,
+    sendAppointmentReminders
   };
 
   return <AdminContext.Provider value={value}>{props.children}</AdminContext.Provider>;

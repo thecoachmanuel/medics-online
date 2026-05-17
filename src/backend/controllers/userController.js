@@ -7,6 +7,7 @@ import appointmentModel from '../models/appointmentModel.js';
 import { v2 as cloudinary } from 'cloudinary';
 import paystack from 'paystack';
 import settingsModel from '../models/settingsModel.js';
+import { sendNotificationEmail } from '../services/emailService.js';
 
 // Gateway Initialize
 const paystackInstance = new paystack(process.env.PAYSTACK_SECRET_KEY);
@@ -189,6 +190,19 @@ const cancelAppointment = async (req, res) => {
     slots_booked[slotDate] = slots_booked[slotDate].filter((e) => e !== slotTime);
 
     await doctorModel.findByIdAndUpdate(docId, { slots_booked });
+
+    // Dispatch cancellation notification emails
+    const userData = await userModel.findById(userId);
+    if (doctorData && userData) {
+      const emailVars = {
+        patientName: userData.name,
+        doctorName: doctorData.name,
+        appointmentDate: slotDate,
+        cancellationReason: 'Cancelled by patient'
+      };
+      sendNotificationEmail(userData.email, 'appointment_cancelled', emailVars);
+      sendNotificationEmail(doctorData.email, 'appointment_cancelled', emailVars);
+    }
 
     res.json({ success: true, message: 'Appointment Cancelled' });
   } catch (error) {
@@ -393,6 +407,23 @@ const verifyPaystack = async (req, res) => {
         await newAppointment.save();
         
         await doctorModel.findByIdAndUpdate(docId, { slots_booked });
+
+        // Dispatch transactional notification emails
+        const emailVars = {
+          patientName: userData.name,
+          doctorName: docData.name,
+          doctorSpeciality: docData.speciality,
+          appointmentDate: slotDate,
+          appointmentTime: slotTime,
+          appointmentFee: amount,
+          appointmentId: newAppointment._id.toString(),
+          invoiceDate: new Date().toLocaleDateString('en-NG', { day: 'numeric', month: 'long', year: 'numeric' }),
+          doctorNetShare,
+          commissionRate
+        };
+        sendNotificationEmail(userData.email, 'booking_confirmation', emailVars);
+        sendNotificationEmail(userData.email, 'booking_invoice', emailVars);
+        sendNotificationEmail(docData.email, 'new_booking_doctor', emailVars);
         
         return res.json({ success: true, message: 'Appointment Booked and Paid', meetingId });
       } else {
@@ -408,6 +439,27 @@ const verifyPaystack = async (req, res) => {
             adminCommission,
             doctorNetShare
           });
+
+          // Dispatch transactional notification emails
+          const docData = await doctorModel.findById(appointment.docId);
+          const userData = await userModel.findById(appointment.userId);
+          if (docData && userData) {
+            const emailVars = {
+              patientName: userData.name,
+              doctorName: docData.name,
+              doctorSpeciality: docData.speciality,
+              appointmentDate: appointment.slotDate,
+              appointmentTime: appointment.slotTime,
+              appointmentFee: appointment.amount,
+              appointmentId: appointment._id.toString(),
+              invoiceDate: new Date().toLocaleDateString('en-NG', { day: 'numeric', month: 'long', year: 'numeric' }),
+              doctorNetShare,
+              commissionRate
+            };
+            sendNotificationEmail(userData.email, 'booking_confirmation', emailVars);
+            sendNotificationEmail(userData.email, 'booking_invoice', emailVars);
+            sendNotificationEmail(docData.email, 'new_booking_doctor', emailVars);
+          }
         } else {
           await appointmentModel.findByIdAndUpdate(appointmentId, { payment: true });
         }

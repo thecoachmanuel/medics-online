@@ -6,6 +6,8 @@ import validator from 'validator';
 import { v2 as cloudinary } from 'cloudinary';
 import settingsModel from '../models/settingsModel.js';
 import payoutModel from '../models/payoutModel.js';
+import userModel from '../models/userModel.js';
+import { sendNotificationEmail } from '../services/emailService.js';
 
 // API for doctor Login
 const loginDoctor = async (req, res) => {
@@ -164,6 +166,20 @@ const appointmentCancel = async (req, res) => {
         suggestedRebookTime,
         cancelledBy: 'doctor'
       });
+
+      // Dispatch cancellation notification emails
+      const userData = await userModel.findById(appointmentData.userId);
+      if (doctorData && userData) {
+        const emailVars = {
+          patientName: userData.name,
+          doctorName: doctorData.name,
+          appointmentDate: slotDate,
+          cancellationReason: cancellationReason + ` (Suggested rebook time: ${suggestedRebookTime})`
+        };
+        sendNotificationEmail(userData.email, 'appointment_cancelled', emailVars);
+        sendNotificationEmail(doctorData.email, 'appointment_cancelled', emailVars);
+      }
+
       return res.json({ success: true, message: 'Appointment Cancelled' });
     }
 

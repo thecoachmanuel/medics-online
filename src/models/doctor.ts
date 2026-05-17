@@ -43,6 +43,16 @@ export interface IDashData {
   latestAppointments: IAppointment[];
 }
 
+export interface IEmailTemplate {
+  _id: string;
+  key: string;
+  name: string;
+  subject: string;
+  body: string;
+  description: string;
+  variables: string[];
+}
+
 export interface IAdminContext {
   aToken: string;
   setAToken: React.Dispatch<React.SetStateAction<string>>;
@@ -63,6 +73,9 @@ export interface IAdminContext {
   dashData: IDashData | null;
   earnings: { total: number; month: number; year: number } | null;
   getEarnings: () => Promise<void>;
+  getEmailTemplates: () => Promise<IEmailTemplate[]>;
+  updateEmailTemplate: (templateId: string, subject: string, body: string) => Promise<boolean>;
+  sendAppointmentReminders: () => Promise<boolean>;
 }
 
 export interface IDoctorDashData {

@@ -45,5 +45,6 @@ export interface IAppointment {
   commissionRate?: number;
   adminCommission?: number;
   doctorNetShare?: number;
+  reminderSent?: boolean;
   date: number;
 }

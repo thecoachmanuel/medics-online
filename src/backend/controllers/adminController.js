@@ -7,6 +7,8 @@ import { v2 as cloudinary } from 'cloudinary';
 import userModel from '../models/userModel.js';
 import settingsModel from '../models/settingsModel.js';
 import payoutModel from '../models/payoutModel.js';
+import emailTemplateModel from '../models/emailTemplateModel.js';
+import { seedEmailTemplates, sendNotificationEmail } from '../services/emailService.js';
 
 // API for admin login
 const loginAdmin = async (req, res) => {
@@ -512,6 +514,77 @@ const clearDataAdmin = async (req, res) => {
   }
 };
 
+// API to get all email templates
+const getEmailTemplates = async (req, res) => {
+  try {
+    await seedEmailTemplates();
+    const templates = await emailTemplateModel.find({});
+    res.json({ success: true, templates });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
+// API to update an email template
+const updateEmailTemplate = async (req, res) => {
+  try {
+    const { templateId, subject, body } = req.body;
+    if (!templateId || !subject || !body) {
+      return res.json({ success: false, message: 'Missing subject or body content' });
+    }
+    await emailTemplateModel.findByIdAndUpdate(templateId, { subject, body });
+    res.json({ success: true, message: 'Email template updated successfully' });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
+// API to trigger manually sending reminders for today/tomorrow
+const sendAppointmentReminders = async (req, res) => {
+  try {
+    const today = new Date();
+    const todayStr = `${today.getDate()}_${today.getMonth() + 1}_${today.getFullYear()}`;
+    
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = `${tomorrow.getDate()}_${tomorrow.getMonth() + 1}_${tomorrow.getFullYear()}`;
+
+    const upcomingAppointments = await appointmentModel.find({
+      payment: true,
+      cancelled: false,
+      isCompleted: false,
+      reminderSent: false,
+      slotDate: { $in: [todayStr, tomorrowStr] }
+    });
+
+    let sentCount = 0;
+    for (const appt of upcomingAppointments) {
+      const docData = await doctorModel.findById(appt.docId);
+      const userData = await userModel.findById(appt.userId);
+      if (docData && userData) {
+        const emailVars = {
+          patientName: userData.name,
+          doctorName: docData.name,
+          appointmentDate: appt.slotDate.replace(/_/g, '/'),
+          appointmentTime: appt.slotTime
+        };
+        await sendNotificationEmail(userData.email, 'appointment_reminder', emailVars);
+        await sendNotificationEmail(docData.email, 'appointment_reminder', emailVars);
+        sentCount++;
+      }
+      appt.reminderSent = true;
+      await appt.save();
+    }
+
+    res.json({ success: true, message: `Successfully dispatched reminders for ${sentCount} appointments.` });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
 export {
   loginAdmin,
   appointmentsAdmin,
@@ -532,5 +605,8 @@ export {
   doctorLeaderboard,
   getPayoutsAdmin,
   reviewPayout,
-  clearDataAdmin
+  clearDataAdmin,
+  getEmailTemplates,
+  updateEmailTemplate,
+  sendAppointmentReminders
 };

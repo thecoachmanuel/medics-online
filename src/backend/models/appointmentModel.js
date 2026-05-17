@@ -29,6 +29,7 @@ const appointmentSchema = new mongoose.Schema({
   commissionRate: { type: Number },
   adminCommission: { type: Number },
   doctorNetShare: { type: Number },
+  reminderSent: { type: Boolean, default: false },
   chatHistory: [
     {
       sender: { type: String },
