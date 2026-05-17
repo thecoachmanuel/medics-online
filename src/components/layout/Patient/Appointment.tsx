@@ -280,7 +280,7 @@ const Appointment = () => {
           />
         </div>
         <div className="flex flex-col flex-1 gap-3">
-          <div className="border border-[#ADADAD] rounded-lg p-8 py-7 bg-white mx-2 sm:mx-0 mt-[-80px] sm:mt-0">
+          <div className="border border-[#ADADAD] rounded-lg p-8 py-7 bg-white mx-2 sm:mx-0 mt-0">
             {/* ----- Doc Info : name, degree, experience ----- */}
 
             <p className="flex items-center gap-2 text-3xl font-medium text-gray-700">
@@ -342,7 +342,7 @@ const Appointment = () => {
             </p>
           </div>
 
-          <div className="border border-[#ADADAD] rounded-lg p-8 py-7 bg-white mx-2 sm:mx-0 mt-[-80px] sm:mt-0">
+          <div className="border border-[#ADADAD] rounded-lg p-8 py-7 bg-white mx-2 sm:mx-0 mt-0">
             {/* ----- Patient Vitals ----- */}
             <div>
               <p className="flex items-center gap-1 text-sm font-medium text-[#262626]">
