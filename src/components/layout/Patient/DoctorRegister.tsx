@@ -3,13 +3,14 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, User, Stethoscope, Clock, ChevronLeft, ChevronRight, FileCheck, HelpCircle } from 'lucide-react';
 
 import { smartApi } from '@/utils/smartApi';
 
 const DoctorRegister = () => {
   const router = useRouter();
   
+  const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     title: 'Dr.',
     name: '',
@@ -23,6 +24,9 @@ const DoctorRegister = () => {
     fees: '',
     addressLine1: '',
     addressLine2: '',
+    workingHoursStart: '10:00',
+    workingHoursEnd: '22:00',
+    excludedDays: [] as number[],
     image: null as File | null
   });
   
@@ -30,6 +34,16 @@ const DoctorRegister = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const weekdays = [
+    { label: 'Sunday', value: 0 },
+    { label: 'Monday', value: 1 },
+    { label: 'Tuesday', value: 2 },
+    { label: 'Wednesday', value: 3 },
+    { label: 'Thursday', value: 4 },
+    { label: 'Friday', value: 5 },
+    { label: 'Saturday', value: 6 }
+  ];
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -47,7 +61,6 @@ const DoctorRegister = () => {
         image: file
       }));
       
-      // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreviewImage(reader.result as string);
@@ -56,29 +69,64 @@ const DoctorRegister = () => {
     }
   };
 
+  const toggleExcludedDay = (dayValue: number) => {
+    setFormData(prev => {
+      const isAlreadyExcluded = prev.excludedDays.includes(dayValue);
+      const updated = isAlreadyExcluded
+        ? prev.excludedDays.filter(d => d !== dayValue)
+        : [...prev.excludedDays, dayValue];
+      return {
+        ...prev,
+        excludedDays: updated
+      };
+    });
+  };
+
+  const validateStep = () => {
+    if (step === 1) {
+      if (!formData.name.trim() || !formData.email.trim() || !formData.password || !formData.confirmPassword) {
+        toast.warning('Please fill in all account credentials');
+        return false;
+      }
+      if (formData.password !== formData.confirmPassword) {
+        toast.error('Passwords do not match');
+        return false;
+      }
+      if (formData.password.length < 8) {
+        toast.error('Password must be at least 8 characters long');
+        return false;
+      }
+      if (!formData.image) {
+        toast.warning('Please upload your profile image');
+        return false;
+      }
+    } else if (step === 2) {
+      if (!formData.speciality || !formData.degree.trim() || !formData.experience || !formData.fees || !formData.about.trim() || !formData.addressLine1.trim()) {
+        toast.warning('Please complete all professional and address details');
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const handleNext = () => {
+    if (validateStep()) {
+      setStep(prev => prev + 1);
+    }
+  };
+
+  const handleBack = () => {
+    setStep(prev => prev - 1);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validation
-    if (formData.password !== formData.confirmPassword) {
-      toast.error('Passwords do not match');
-      return;
-    }
-    
-    if (formData.password.length < 8) {
-      toast.error('Password must be at least 8 characters long');
-      return;
-    }
-    
-    if (!formData.image) {
-      toast.error('Please upload a profile image');
-      return;
-    }
+    if (!validateStep()) return;
     
     setLoading(true);
     
     try {
-      // Prepare form data
       const data = new FormData();
       
       const formatDoctorName = (titleVal: string, nameVal: string) => {
@@ -104,18 +152,22 @@ const DoctorRegister = () => {
         line1: formData.addressLine1,
         line2: formData.addressLine2
       }));
+      data.append('workingHoursStart', formData.workingHoursStart);
+      data.append('workingHoursEnd', formData.workingHoursEnd);
+      data.append('excludedDays', JSON.stringify(formData.excludedDays));
+      
       if (formData.image) {
         data.append('image', formData.image);
       }
       
-      // Submit registration
+      console.log('🩺 Doctor Self-Registration: Submitting multi-step form data');
       const response: any = await smartApi.post('/api/doctor/register', data);
       
       if (response.success) {
         toast.success('Registration successful! Awaiting admin approval.');
         router.push('/login');
       } else {
-        toast.error(response.message);
+        toast.error(response.message || 'Registration failed');
       }
     } catch (error: any) {
       toast.error(error.message || 'Registration failed');
@@ -125,274 +177,415 @@ const DoctorRegister = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-md overflow-hidden">
-        <div className="p-6">
-          <h1 className="text-2xl font-bold text-gray-800 mb-6">Doctor Registration</h1>
-          
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Personal Information */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                <input
-                  type="text"
-                  name="title"
-                  value={formData.title}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="e.g. Dr., Prof."
-                  required
-                />
-              </div>
+    <div className="min-h-[85vh] bg-gray-50/50 py-10 flex items-center justify-center px-4">
+      <div className="max-w-3xl w-full bg-white rounded-2xl border shadow-sm overflow-hidden">
+        
+        {/* Visual Progress Stepper Header */}
+        <div className="bg-gray-50 border-b p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-xl font-bold text-gray-800">Doctor Registration</h1>
+              <p className="text-xs text-gray-500 mt-1">Join Medics-Online to connect with patients globally.</p>
+            </div>
+            <div className="bg-primary/10 text-primary px-3 py-1.5 rounded-full text-xs font-bold">
+              Step {step} of 3
+            </div>
+          </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                  required
-                />
+          {/* Stepper Indicators */}
+          <div className="flex items-center gap-4 mt-6">
+            <div className="flex-1 flex items-center gap-2">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-colors duration-300 ${
+                step >= 1 ? 'bg-primary text-white' : 'bg-gray-200 text-gray-500'
+              }`}>
+                {step > 1 ? '✓' : '1'}
               </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                  required
-                />
+              <span className={`text-xs font-semibold hidden sm:inline ${step >= 1 ? 'text-gray-800' : 'text-gray-400'}`}>
+                Account Info
+              </span>
+              <div className="flex-1 h-0.5 bg-gray-200 rounded">
+                <div className={`h-full bg-primary rounded transition-all duration-300 ${step >= 2 ? 'w-full' : 'w-0'}`} />
               </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    name="password"
-                    value={formData.password}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                  >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
+            </div>
+
+            <div className="flex-1 flex items-center gap-2">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-colors duration-300 ${
+                step >= 2 ? 'bg-primary text-white' : 'bg-gray-200 text-gray-500'
+              }`}>
+                {step > 2 ? '✓' : '2'}
+              </div>
+              <span className={`text-xs font-semibold hidden sm:inline ${step >= 2 ? 'text-gray-800' : 'text-gray-400'}`}>
+                Professional details
+              </span>
+              <div className="flex-1 h-0.5 bg-gray-200 rounded">
+                <div className={`h-full bg-primary rounded transition-all duration-300 ${step >= 3 ? 'w-full' : 'w-0'}`} />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-colors duration-300 ${
+                step === 3 ? 'bg-primary text-white' : 'bg-gray-200 text-gray-500'
+              }`}>
+                3
+              </div>
+              <span className={`text-xs font-semibold hidden sm:inline ${step === 3 ? 'text-gray-800' : 'text-gray-400'}`}>
+                Working Hours
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-6 sm:p-8">
+          <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
+            
+            {/* STEP 1: ACCOUNT CREDENTIALS */}
+            {step === 1 && (
+              <div className="space-y-6 animate-fade-in">
+                <h2 className="text-base font-bold text-gray-800 flex items-center gap-2 mb-4">
+                  <User className="w-5 h-5 text-primary" />
+                  Account Basics & Credentials
+                </h2>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">Prefix / Title</label>
+                    <input
+                      type="text"
+                      name="title"
+                      value={formData.title}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                      placeholder="e.g. Dr., Prof."
+                      required
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">Full Name</label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                      placeholder="Enter full name"
+                      required
+                    />
+                  </div>
                 </div>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
-                <div className="relative">
-                  <input
-                    type={showConfirmPassword ? "text" : "password"}
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                  >
-                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
-              </div>
-            </div>
-            
-            {/* Professional Information */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Speciality</label>
-                <select
-                  name="speciality"
-                  value={formData.speciality}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                  required
-                >
-                  <option value="">Select Speciality</option>
-                  <option value="General physician">General physician</option>
-                  <option value="Gynecologist">Gynecologist</option>
-                  <option value="Dermatologist">Dermatologist</option>
-                  <option value="Pediatricians">Pediatricians</option>
-                  <option value="Neurologist">Neurologist</option>
-                  <option value="Gastroenterologist">Gastroenterologist</option>
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Degree</label>
-                <input
-                  type="text"
-                  name="degree"
-                  value={formData.degree}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="e.g., MBBS, MD"
-                  required
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Years of Experience</label>
-                <select
-                  name="experience"
-                  value={formData.experience}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                  required
-                >
-                  <option value="">Select Years of Experience</option>
-                  <option value="1 Year">1 Year</option>
-                  <option value="2 Years">2 Years</option>
-                  <option value="3 Years">3 Years</option>
-                  <option value="4 Years">4 Years</option>
-                  <option value="5 Years">5 Years</option>
-                  <option value="6 Years">6 Years</option>
-                  <option value="7 Years">7 Years</option>
-                  <option value="8 Years">8 Years</option>
-                  <option value="9 Years">9 Years</option>
-                  <option value="10 Years">10 Years</option>
-                  <option value="11 Years">11 Years</option>
-                  <option value="12 Years">12 Years</option>
-                  <option value="13 Years">13 Years</option>
-                  <option value="14 Years">14 Years</option>
-                  <option value="15 Years">15 Years</option>
-                  <option value="16 Years">16 Years</option>
-                  <option value="17 Years">17 Years</option>
-                  <option value="18 Years">18 Years</option>
-                  <option value="19 Years">19 Years</option>
-                  <option value="20 Years">20 Years</option>
-                  <option value="21 Years">21 Years</option>
-                  <option value="22 Years">22 Years</option>
-                  <option value="23 Years">23 Years</option>
-                  <option value="24 Years">24 Years</option>
-                  <option value="25 Years">25 Years</option>
-                  <option value="26 Years">26 Years</option>
-                  <option value="27 Years">27 Years</option>
-                  <option value="28 Years">28 Years</option>
-                  <option value="29 Years">29 Years</option>
-                  <option value="30 Years">30 Years</option>
-                  <option value="31 Years">31 Years</option>
-                  <option value="32 Years">32 Years</option>
-                  <option value="33 Years">33 Years</option>
-                  <option value="34 Years">34 Years</option>
-                  <option value="35 Years">35 Years</option>
-                  <option value="36 Years">36 Years</option>
-                  <option value="37 Years">37 Years</option>
-                  <option value="38 Years">38 Years</option>
-                  <option value="39 Years">39 Years</option>
-                  <option value="40 Years">40 Years</option>
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Consultation Fees (₦)</label>
-                <input
-                  type="number"
-                  name="fees"
-                  value={formData.fees}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                  required
-                />
-              </div>
-            </div>
-            
-            {/* About */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">About</label>
-              <textarea
-                name="about"
-                value={formData.about}
-                onChange={handleInputChange}
-                rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="Tell us about your experience, qualifications, and what makes you a great doctor..."
-                required
-              />
-            </div>
-            
-            {/* Address */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Address Line 1</label>
-                <input
-                  type="text"
-                  name="addressLine1"
-                  value={formData.addressLine1}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                  required
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Address Line 2</label>
-                <input
-                  type="text"
-                  name="addressLine2"
-                  value={formData.addressLine2}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
-            </div>
-            
-            {/* Profile Image */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Profile Image</label>
-              <div className="flex items-center space-x-6">
-                {previewImage && (
-                  <img 
-                    src={previewImage} 
-                    alt="Preview" 
-                    className="w-24 h-24 rounded-full object-cover border-2 border-gray-300"
-                  />
-                )}
+
                 <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">Email Address</label>
                   <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="block w-full text-sm text-gray-500
-                      file:mr-4 file:py-2 file:px-4
-                      file:rounded-md file:border-0
-                      file:text-sm file:font-semibold
-                      file:bg-primary file:text-white
-                      hover:file:bg-primary/90"
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                    placeholder="name@hospital.com"
+                    required
                   />
-                  <p className="mt-1 text-sm text-gray-500">Upload a clear photo of yourself</p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">Password</label>
+                    <div className="relative">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        name="password"
+                        value={formData.password}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 pr-10 border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                        placeholder="At least 8 chars"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      >
+                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">Confirm Password</label>
+                    <div className="relative">
+                      <input
+                        type={showConfirmPassword ? "text" : "password"}
+                        name="confirmPassword"
+                        value={formData.confirmPassword}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 pr-10 border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                        placeholder="Repeat password"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      >
+                        {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Profile Image Drag Area */}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-2">Doctor Profile Photo</label>
+                  <div className="flex flex-col sm:flex-row items-center gap-4 p-4 border rounded-xl bg-gray-50/50">
+                    <div className="w-20 h-20 rounded-full bg-gray-100 border flex items-center justify-center overflow-hidden shrink-0">
+                      {previewImage ? (
+                        <img src={previewImage} alt="Preview" className="w-full h-full object-cover" />
+                      ) : (
+                        <User className="w-8 h-8 text-gray-400" />
+                      )}
+                    </div>
+                    <div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageChange}
+                        className="block w-full text-xs text-gray-500
+                          file:mr-4 file:py-1.5 file:px-3.5
+                          file:rounded-lg file:border-0
+                          file:text-xs file:font-semibold
+                          file:bg-primary file:text-white
+                          hover:file:bg-primary-dark cursor-pointer"
+                        required
+                      />
+                      <p className="mt-1.5 text-[10px] text-gray-400">Upload a professional headshot photo. Supports JPG, PNG.</p>
+                    </div>
+                  </div>
                 </div>
               </div>
+            )}
+
+            {/* STEP 2: PROFESSIONAL INFORMATION */}
+            {step === 2 && (
+              <div className="space-y-6 animate-fade-in">
+                <h2 className="text-base font-bold text-gray-800 flex items-center gap-2 mb-4">
+                  <Stethoscope className="w-5 h-5 text-primary" />
+                  Professional Qualifications
+                </h2>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">Speciality Field</label>
+                    <select
+                      name="speciality"
+                      value={formData.speciality}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border rounded-lg text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary"
+                      required
+                    >
+                      <option value="">Select Speciality</option>
+                      <option value="General physician">General physician</option>
+                      <option value="Gynecologist">Gynecologist</option>
+                      <option value="Dermatologist">Dermatologist</option>
+                      <option value="Pediatricians">Pediatricians</option>
+                      <option value="Neurologist">Neurologist</option>
+                      <option value="Gastroenterologist">Gastroenterologist</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">Degrees & Credentials</label>
+                    <input
+                      type="text"
+                      name="degree"
+                      value={formData.degree}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                      placeholder="e.g. MBBS, MD, FRCS"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">Years of Experience</label>
+                    <select
+                      name="experience"
+                      value={formData.experience}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border rounded-lg text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary"
+                      required
+                    >
+                      <option value="">Select Experience</option>
+                      {Array.from({ length: 40 }, (_, i) => `${i + 1} Year${i > 0 ? 's' : ''}`).map(exp => (
+                        <option key={exp} value={exp}>{exp}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">Consultation Fees (₦)</label>
+                    <input
+                      type="number"
+                      name="fees"
+                      value={formData.fees}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                      placeholder="e.g. 5000"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">Address Details (Practice Location)</label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <input
+                      type="text"
+                      name="addressLine1"
+                      value={formData.addressLine1}
+                      onChange={handleInputChange}
+                      placeholder="Street address, Clinic name"
+                      className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                      required
+                    />
+                    <input
+                      type="text"
+                      name="addressLine2"
+                      value={formData.addressLine2}
+                      onChange={handleInputChange}
+                      placeholder="Suite, Landmark (Optional)"
+                      className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">Professional Bio (About)</label>
+                  <textarea
+                    name="about"
+                    value={formData.about}
+                    onChange={handleInputChange}
+                    rows={3}
+                    placeholder="Describe your credentials, treatment philosophies, and background..."
+                    className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                    required
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* STEP 3: AVAILABILITY & WORKING HOURS */}
+            {step === 3 && (
+              <div className="space-y-6 animate-fade-in">
+                <h2 className="text-base font-bold text-gray-800 flex items-center gap-2 mb-4">
+                  <Clock className="w-5 h-5 text-primary" />
+                  Custom Time Availability & Days Off
+                </h2>
+                
+                <p className="text-xs text-gray-500 bg-blue-50 border border-blue-100 p-3 rounded-lg">
+                  Define your exact calendar scheduling setup. Patients will only see and book appointments on the hours and days you specify here. You can adjust this configuration anytime from your profile workspace.
+                </p>
+
+                {/* Day Exclusions */}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-2">
+                    Select Excluded Days (Days you will NOT be working)
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {weekdays.map(day => {
+                      const isExcluded = formData.excludedDays.includes(day.value);
+                      return (
+                        <button
+                          key={day.value}
+                          type="button"
+                          onClick={() => toggleExcludedDay(day.value)}
+                          className={`px-4 py-2 rounded-xl text-xs font-semibold border transition-all duration-200 cursor-pointer ${
+                            isExcluded
+                              ? 'bg-red-50 text-red-700 border-red-200 shadow-sm'
+                              : 'bg-white text-gray-600 hover:bg-gray-50 border-gray-200'
+                          }`}
+                        >
+                          {day.label} {isExcluded ? ' (Off)' : ''}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Hour Ranges */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">Daily Working Hours Start</label>
+                    <select
+                      name="workingHoursStart"
+                      value={formData.workingHoursStart}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border rounded-lg text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary"
+                    >
+                      {Array.from({ length: 24 }, (_, i) => {
+                        const hr = i.toString().padStart(2, '0') + ':00';
+                        return <option key={hr} value={hr}>{hr}</option>;
+                      })}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1.5">Daily Working Hours End</label>
+                    <select
+                      name="workingHoursEnd"
+                      value={formData.workingHoursEnd}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border rounded-lg text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary"
+                    >
+                      {Array.from({ length: 24 }, (_, i) => {
+                        const hr = i.toString().padStart(2, '0') + ':00';
+                        return <option key={hr} value={hr}>{hr}</option>;
+                      })}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Stepper Navigation Footer Buttons */}
+            <div className="border-t pt-6 flex items-center justify-between">
+              {step > 1 ? (
+                <button
+                  type="button"
+                  onClick={handleBack}
+                  className="flex items-center gap-1.5 px-4 py-2 border border-gray-200 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  Back
+                </button>
+              ) : (
+                <div />
+              )}
+
+              {step < 3 ? (
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  className="flex items-center gap-1.5 px-5 py-2 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-primary-dark shadow hover:shadow-md transition-all cursor-pointer"
+                >
+                  Next Step
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={loading}
+                  className="flex items-center gap-1.5 px-6 py-2.5 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary-dark shadow hover:shadow-md transition-all cursor-pointer"
+                >
+                  {loading ? (
+                    'Registering...'
+                  ) : (
+                    <>
+                      <FileCheck className="w-4 h-4" />
+                      Complete Registration
+                    </>
+                  )}
+                </button>
+              )}
             </div>
-            
-            {/* Submit Button */}
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                disabled={loading}
-                className={`px-6 py-2 rounded-md text-white font-medium ${
-                  loading ? 'bg-gray-400' : 'bg-primary hover:bg-primary/90'
-                } transition-colors`}
-              >
-                {loading ? 'Registering...' : 'Register as Doctor'}
-              </button>
-            </div>
+
           </form>
         </div>
       </div>
@@ -401,4 +594,3 @@ const DoctorRegister = () => {
 };
 
 export default DoctorRegister;
-

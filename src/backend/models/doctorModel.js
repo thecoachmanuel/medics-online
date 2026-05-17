@@ -39,7 +39,10 @@ const doctorSchema = new mongoose.Schema(
     kycIdDocument: { type: String },
     kycLicenseDocument: { type: String },
     kycRejectionReason: { type: String, default: '' },
-    isVerified: { type: Boolean, default: false }
+    isVerified: { type: Boolean, default: false },
+    workingHoursStart: { type: String, default: '10:00' },
+    workingHoursEnd: { type: String, default: '22:00' },
+    excludedDays: { type: [Number], default: [] }
   },
   { minimize: false }
 );

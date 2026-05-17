@@ -91,7 +91,10 @@ const DoctorProfile = () => {
         address: profileData.address,
         fees: profileData.fees,
         about: profileData.about,
-        available: profileData.available
+        available: profileData.available,
+        workingHoursStart: profileData.workingHoursStart || '10:00',
+        workingHoursEnd: profileData.workingHoursEnd || '22:00',
+        excludedDays: profileData.excludedDays || []
       };
 
       console.log('🩺 Doctor Portal: Attempting encrypted profile update');
@@ -261,6 +264,129 @@ const DoctorProfile = () => {
                 className="cursor-pointer"
               />
               <label htmlFor="" className="cursor-pointer">Available</label>
+            </div>
+
+            {/* ----- Custom Time Availability & Day Exclusions ----- */}
+            <div className="mt-6 pt-6 border-t">
+              <p className="text-gray-700 font-bold text-sm mb-3">Time Availability & Calendar Exclusions</p>
+              
+              {isEdit ? (
+                <div className="space-y-4">
+                  {/* Daily Working Hours */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-600 mb-1">Working Hours Start</label>
+                      <select
+                        value={profileData.workingHoursStart || '10:00'}
+                        onChange={(e) =>
+                          setProfileData((prev) =>
+                            prev
+                              ? {
+                                  ...prev,
+                                  workingHoursStart: e.target.value
+                                }
+                              : null
+                          )
+                        }
+                        className="w-full border rounded p-1.5 text-sm bg-white"
+                      >
+                        {Array.from({ length: 24 }, (_, i) => {
+                          const hr = i.toString().padStart(2, '0') + ':00';
+                          return <option key={hr} value={hr}>{hr}</option>;
+                        })}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-600 mb-1">Working Hours End</label>
+                      <select
+                        value={profileData.workingHoursEnd || '22:00'}
+                        onChange={(e) =>
+                          setProfileData((prev) =>
+                            prev
+                              ? {
+                                  ...prev,
+                                  workingHoursEnd: e.target.value
+                                }
+                              : null
+                          )
+                        }
+                        className="w-full border rounded p-1.5 text-sm bg-white"
+                      >
+                        {Array.from({ length: 24 }, (_, i) => {
+                          const hr = i.toString().padStart(2, '0') + ':00';
+                          return <option key={hr} value={hr}>{hr}</option>;
+                        })}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Day Exclusions Edit */}
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 mb-2">Excluded Days Off</label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {[
+                        { label: 'Sunday', value: 0 },
+                        { label: 'Monday', value: 1 },
+                        { label: 'Tuesday', value: 2 },
+                        { label: 'Wednesday', value: 3 },
+                        { label: 'Thursday', value: 4 },
+                        { label: 'Friday', value: 5 },
+                        { label: 'Saturday', value: 6 }
+                      ].map((day) => {
+                        const isExcluded = (profileData.excludedDays || []).includes(day.value);
+                        return (
+                          <button
+                            key={day.value}
+                            type="button"
+                            onClick={() =>
+                              setProfileData((prev) => {
+                                if (!prev) return null;
+                                const currentExclusions = prev.excludedDays || [];
+                                const updated = currentExclusions.includes(day.value)
+                                  ? currentExclusions.filter((d) => d !== day.value)
+                                  : [...currentExclusions, day.value];
+                                return {
+                                  ...prev,
+                                  excludedDays: updated
+                                };
+                              })
+                            }
+                            className={`px-3 py-1 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
+                              isExcluded
+                                ? 'bg-red-50 text-red-700 border-red-200'
+                                : 'bg-white text-gray-600 hover:bg-gray-50 border-gray-200'
+                            }`}
+                          >
+                            {day.label} {isExcluded ? ' (Off)' : ''}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2 text-sm text-gray-600">
+                  <p>
+                    <span className="font-semibold">Working Hours:</span> {profileData.workingHoursStart || '10:00'} - {profileData.workingHoursEnd || '22:00'}
+                  </p>
+                  <p>
+                    <span className="font-semibold">Excluded Days Off:</span>{' '}
+                    {profileData.excludedDays && profileData.excludedDays.length > 0 ? (
+                      <span className="text-red-600 font-medium">
+                        {profileData.excludedDays
+                          .map((d) => {
+                            const weekdayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                            return weekdayNames[d];
+                          })
+                          .filter(Boolean)
+                          .join(', ')}
+                      </span>
+                    ) : (
+                      <span className="text-green-600 font-medium">Working all week (No exclusions)</span>
+                    )}
+                  </p>
+                </div>
+              )}
             </div>
 
             {isEdit ? (

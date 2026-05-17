@@ -12,6 +12,9 @@ export interface IDoctorAdmin {
   kycIdDocument?: string;
   kycLicenseDocument?: string;
   kycRejectionReason?: string;
+  workingHoursStart?: string;
+  workingHoursEnd?: string;
+  excludedDays?: number[];
 }
 
 export interface IPatientAdmin {
@@ -87,6 +90,9 @@ export interface DoctorProfile {
   kycIdDocument?: string;
   kycLicenseDocument?: string;
   kycRejectionReason?: string;
+  workingHoursStart?: string;
+  workingHoursEnd?: string;
+  excludedDays?: number[];
 }
 
 export interface IDoctorContext {

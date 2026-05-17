@@ -40,6 +40,9 @@ export interface IDoctorPatient {
   kycIdDocument?: string;
   kycLicenseDocument?: string;
   kycRejectionReason?: string;
+  workingHoursStart?: string;
+  workingHoursEnd?: string;
+  excludedDays?: number[];
 }
 
 export interface IPatientAppContext {

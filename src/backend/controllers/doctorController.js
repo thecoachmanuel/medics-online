@@ -37,7 +37,7 @@ const loginDoctor = async (req, res) => {
 // API for doctor registration
 const registerDoctor = async (req, res) => {
   try {
-    const { name, email, password, speciality, degree, experience, about, fees, address } =
+    const { name, email, password, speciality, degree, experience, about, fees, address, workingHoursStart, workingHoursEnd, excludedDays } =
       req.body;
     const imageFile = req.file;
 
@@ -82,6 +82,10 @@ const registerDoctor = async (req, res) => {
     });
     const imageUrl = imageUpload.secure_url;
 
+    const parsedExcludedDays = excludedDays 
+      ? (typeof excludedDays === 'string' ? JSON.parse(excludedDays) : excludedDays) 
+      : [];
+
     const doctorData = {
       name,
       email,
@@ -93,6 +97,9 @@ const registerDoctor = async (req, res) => {
       about,
       fees,
       address: JSON.parse(address),
+      workingHoursStart: workingHoursStart || '10:00',
+      workingHoursEnd: workingHoursEnd || '22:00',
+      excludedDays: parsedExcludedDays,
       date: Date.now(),
       isApproved: false // Doctors registered by themselves need approval
     };
@@ -217,9 +224,20 @@ const doctorProfile = async (req, res) => {
 // API to update doctor profile data from  Doctor Panel
 const updateDoctorProfile = async (req, res) => {
   try {
-    const { docId, fees, address, available } = req.body;
+    const { docId, fees, address, available, about, workingHoursStart, workingHoursEnd, excludedDays } = req.body;
 
-    await doctorModel.findByIdAndUpdate(docId, { fees, address, available });
+    const updateData = {};
+    if (fees !== undefined) updateData.fees = fees;
+    if (address !== undefined) updateData.address = address;
+    if (available !== undefined) updateData.available = available;
+    if (about !== undefined) updateData.about = about;
+    if (workingHoursStart !== undefined) updateData.workingHoursStart = workingHoursStart;
+    if (workingHoursEnd !== undefined) updateData.workingHoursEnd = workingHoursEnd;
+    if (excludedDays !== undefined) {
+      updateData.excludedDays = typeof excludedDays === 'string' ? JSON.parse(excludedDays) : excludedDays;
+    }
+
+    await doctorModel.findByIdAndUpdate(docId, updateData);
 
     res.json({ success: true, message: 'Profile Updated' });
   } catch (error) {

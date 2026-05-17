@@ -62,44 +62,76 @@ const Appointment = () => {
   const getAvailableSolts = () => {
     setDocSlots([]);
     if (!docInfo) return;
+
+    const startStr = docInfo.workingHoursStart || '10:00';
+    const endStr = docInfo.workingHoursEnd || '22:00';
+    const excluded = docInfo.excludedDays || [];
+
+    const startHours = parseInt(startStr.split(':')[0], 10) || 10;
+    const startMinutes = parseInt(startStr.split(':')[1], 10) || 0;
+    const endHours = parseInt(endStr.split(':')[0], 10) || 22;
+    const endMinutes = parseInt(endStr.split(':')[1], 10) || 0;
+
     const today = new Date();
     for (let i = 0; i < 7; i++) {
       const currentDate = new Date(today);
       currentDate.setDate(today.getDate() + i);
-      const endTime = new Date();
-      endTime.setDate(today.getDate() + i);
-      endTime.setHours(22, 0, 0, 0);
-      if (today.getDate() === currentDate.getDate()) {
-        currentDate.setHours(currentDate.getHours() > 10 ? currentDate.getHours() + 1 : 10);
-        currentDate.setMinutes(currentDate.getMinutes() > 30 ? 30 : 0);
-      } else {
-        currentDate.setHours(10);
-        currentDate.setMinutes(0);
-      }
+
       const timeSlots: Slot[] = [];
-      while (currentDate < endTime) {
-        const formattedTime = currentDate.toLocaleTimeString([], {
-          hour: '2-digit',
-          minute: '2-digit'
-        });
-        const day = currentDate.getDate();
-        const month = currentDate.getMonth() + 1;
-        const year = currentDate.getFullYear();
-        const slotDate = day + '_' + month + '_' + year;
-        const slotTime = formattedTime;
-        const isSlotAvailable =
-          docInfo.slots_booked &&
-          docInfo.slots_booked[slotDate] &&
-          docInfo.slots_booked[slotDate].includes(slotTime)
-            ? false
-            : true;
-        if (isSlotAvailable) {
-          timeSlots.push({
-            datetime: new Date(currentDate),
-            time: formattedTime
-          });
+
+      // Check if day is excluded
+      const dayOfWeek = currentDate.getDay();
+      if (!excluded.includes(dayOfWeek)) {
+        const endTime = new Date();
+        endTime.setDate(today.getDate() + i);
+        endTime.setHours(endHours, endMinutes, 0, 0);
+
+        if (today.getDate() === currentDate.getDate()) {
+          // If today, make sure we only suggest future slots
+          let currentStartHours = startHours;
+          let currentStartMinutes = startMinutes;
+          
+          const nowHour = today.getHours();
+          const nowMinute = today.getMinutes();
+          
+          if (nowHour > startHours || (nowHour === startHours && nowMinute >= startMinutes)) {
+            currentStartHours = nowHour;
+            if (nowMinute < 30) {
+              currentStartMinutes = 30;
+            } else {
+              currentStartHours += 1;
+              currentStartMinutes = 0;
+            }
+          }
+          currentDate.setHours(currentStartHours, currentStartMinutes, 0, 0);
+        } else {
+          currentDate.setHours(startHours, startMinutes, 0, 0);
         }
-        currentDate.setMinutes(currentDate.getMinutes() + 30);
+
+        while (currentDate < endTime) {
+          const formattedTime = currentDate.toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+          const day = currentDate.getDate();
+          const month = currentDate.getMonth() + 1;
+          const year = currentDate.getFullYear();
+          const slotDate = day + '_' + month + '_' + year;
+          const slotTime = formattedTime;
+          const isSlotAvailable =
+            docInfo.slots_booked &&
+            docInfo.slots_booked[slotDate] &&
+            docInfo.slots_booked[slotDate].includes(slotTime)
+              ? false
+              : true;
+          if (isSlotAvailable) {
+            timeSlots.push({
+              datetime: new Date(currentDate),
+              time: formattedTime
+            });
+          }
+          currentDate.setMinutes(currentDate.getMinutes() + 30);
+        }
       }
       setDocSlots((prev) => [...prev, timeSlots]);
     }
@@ -108,6 +140,10 @@ const Appointment = () => {
     if (!token || !userData) {
       toast.warning('Login to book appointment');
       return router.push('/login');
+    }
+
+    if (!docSlots[slotIndex] || docSlots[slotIndex].length === 0) {
+      return toast.warning('No available slots on this day');
     }
 
     if (!slotTime) {
@@ -145,6 +181,9 @@ const Appointment = () => {
     if (!token) {
       toast.warning('Login to reschedule appointment');
       return router.push('/login');
+    }
+    if (!docSlots[slotIndex] || docSlots[slotIndex].length === 0) {
+      return toast.warning('No available slots on this day');
     }
     const date = docSlots[slotIndex][0].datetime;
     const day = date.getDate();
@@ -346,29 +385,41 @@ const Appointment = () => {
         <p>Booking slots</p>
         <div className="flex gap-3 items-center w-full overflow-x-scroll mt-4">
           {docSlots.length > 0 &&
-            docSlots.map((item: Slot[], index: number) => (
-              <div
-                onClick={() => setSlotIndex(index)}
-                key={index}
-                className={`text-center py-6 min-w-16 rounded-full cursor-pointer ${slotIndex === index ? 'bg-primary text-white' : 'border border-[#DDDDDD]'}`}
-              >
-                <p>{item[0] && daysOfWeek[item[0].datetime.getDay()]}</p>
-                <p>{item[0] && item[0].datetime.getDate()}</p>
-              </div>
-            ))}
+            docSlots.map((item: Slot[], index: number) => {
+              const dateObj = new Date();
+              dateObj.setDate(dateObj.getDate() + index);
+              const dayName = daysOfWeek[dateObj.getDay()];
+              const dateNum = dateObj.getDate();
+
+              return (
+                <div
+                  onClick={() => setSlotIndex(index)}
+                  key={index}
+                  className={`text-center py-6 min-w-16 rounded-full cursor-pointer ${slotIndex === index ? 'bg-primary text-white' : 'border border-[#DDDDDD]'}`}
+                >
+                  <p>{dayName}</p>
+                  <p>{dateNum}</p>
+                </div>
+              );
+            })}
         </div>
 
         <div className="flex items-center gap-3 w-full overflow-x-scroll mt-4">
-          {docSlots.length > 0 &&
+          {docSlots.length > 0 && docSlots[slotIndex] && docSlots[slotIndex].length > 0 ? (
             docSlots[slotIndex].map((item: Slot, index: number) => (
               <p
                 onClick={() => setSlotTime(item.time)}
                 key={index}
-                className={`text-sm font-light  flex-shrink-0 px-5 py-2 rounded-full cursor-pointer ${item.time === slotTime ? 'bg-primary text-white' : 'text-[#949494] border border-[#B4B4B4]'}`}
+                className={`text-sm font-light flex-shrink-0 px-5 py-2 rounded-full cursor-pointer ${item.time === slotTime ? 'bg-primary text-white' : 'text-[#949494] border border-[#B4B4B4]'}`}
               >
                 {item.time.toLowerCase()}
               </p>
-            ))}
+            ))
+          ) : (
+            <p className="text-sm font-semibold text-red-500 my-2">
+              No working hours or slots available for this day.
+            </p>
+          )}
         </div>
 
         <button
