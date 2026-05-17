@@ -6,6 +6,10 @@ import ClientLayout from "./ClientLayout";
 export const metadata: Metadata = {
   title: "Medics Online",
   description: "Online medical consultation platform",
+  icons: {
+    icon: "/favicon.svg",
+    apple: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
