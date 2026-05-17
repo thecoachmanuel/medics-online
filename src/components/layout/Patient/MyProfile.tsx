@@ -2,6 +2,7 @@
 
 import { useContext, useState } from 'react';
 import { toast } from 'react-toastify';
+import Image from 'next/image';
 
 import { AppContext } from '@/context/AppContext';
 import type { IPatientAppContext, IUserData, ApiResponse } from '@/models/patient';
@@ -85,7 +86,16 @@ const MyProfile = () => {
           />
         </label>
       ) : (
-        <img className="profile-image w-36 h-36 rounded" src={userData.image} alt="Profile" />
+        <div className="relative w-36 h-36 bg-gray-100 rounded overflow-hidden">
+          <Image 
+            className="profile-image object-cover" 
+            src={userData.image} 
+            alt="Profile" 
+            fill
+            sizes="144px"
+            priority
+          />
+        </div>
       )}
 
       {isEdit ? (

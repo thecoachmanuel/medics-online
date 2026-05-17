@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 
 const Banner = () => {
@@ -27,10 +28,12 @@ const Banner = () => {
 
       {/* ------- Right Side ------- */}
       <div className="hidden md:block md:w-1/2 lg:w-[370px] relative">
-        <img
-          className="w-full absolute bottom-0 right-0 max-w-md"
-          src={'/assets/appointment_img.png'}
-          alt=""
+        <Image
+          className="w-full absolute bottom-0 right-0 max-w-md h-auto"
+          src="/assets/appointment_img.webp"
+          alt="Book Appointment"
+          width={370}
+          height={370}
         />
       </div>
     </div>

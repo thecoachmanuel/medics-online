@@ -10,7 +10,7 @@ const Header = () => {
           Connect with Trusted Doctors <br /> Online
         </p>
         <div className="flex flex-col md:flex-row items-center gap-3 text-white text-sm font-light">
-          <Image className="w-28 h-auto" src={'/assets/group_profiles.png'} alt="" width={112} height={40} priority />
+          <Image className="w-28 h-auto" src={'/assets/group_profiles.webp'} alt="" width={112} height={40} priority />
           <p>
             Simply browse through our extensive list of trusted doctors,{' '}
             <br className="hidden sm:block" />book appointments, consult via video.
@@ -28,10 +28,10 @@ const Header = () => {
       <div className="md:w-1/2 relative">
         <Image
           className="w-full md:absolute bottom-0 h-auto rounded-lg"
-          src={'/assets/header_img.png'}
+          src={'/assets/header_img.webp'}
           alt=""
           width={500}
-          height={500}
+          height={333}
           priority
         />
       </div>

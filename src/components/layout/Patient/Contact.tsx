@@ -1,4 +1,6 @@
 
+import Image from 'next/image';
+
 const Contact = () => {
   return (
     <div>
@@ -9,7 +11,7 @@ const Contact = () => {
       </div>
 
       <div className="my-10 flex flex-col justify-center md:flex-row gap-10 mb-28 text-sm">
-        <img className="w-full md:max-w-[360px]" src={'/assets/contact_image.png'} alt="" />
+        <Image className="w-full md:max-w-[360px] h-auto rounded-lg" src="/assets/contact_image.webp" alt="Contact MedicsOnline" width={360} height={360} />
         <div className="flex flex-col justify-center items-start gap-6">
           <p className=" font-semibold text-lg text-gray-600">OUR OFFICE</p>
           <p className=" text-gray-500">
