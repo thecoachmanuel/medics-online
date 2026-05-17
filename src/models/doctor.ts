@@ -62,7 +62,6 @@ export interface IAdminContext {
   dashData: IDashData | null;
   earnings: { total: number; month: number; year: number } | null;
   getEarnings: () => Promise<void>;
-  loadAdminData: () => Promise<void>;
 }
 
 export interface IDoctorDashData {

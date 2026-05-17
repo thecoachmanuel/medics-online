@@ -402,8 +402,7 @@ const AdminContextProvider = (props: AdminContextProviderProps) => {
     editPatient,
     dashData,
     earnings,
-    getEarnings,
-    loadAdminData
+    getEarnings
   };
 
   return <AdminContext.Provider value={value}>{props.children}</AdminContext.Provider>;

@@ -26,8 +26,7 @@ import {
   doctorLeaderboard,
   getPayoutsAdmin,
   reviewPayout,
-  clearDataAdmin,
-  seedDataAdmin
+  clearDataAdmin
 } from '@/backend/controllers/adminController';
 
 import { changeAvailablity } from '@/backend/controllers/doctorController';
@@ -59,8 +58,7 @@ const actionMap: Record<string, ActionConfig> = {
   'doctor-leaderboard': { controller: doctorLeaderboard, auth: withAdminAuth },
   'get-payouts': { controller: getPayoutsAdmin, auth: withAdminAuth },
   'review-payout': { controller: reviewPayout, auth: withAdminAuth },
-  'clear-data': { controller: clearDataAdmin, auth: withAdminAuth },
-  'seed-data': { controller: seedDataAdmin, auth: withAdminAuth }
+  'clear-data': { controller: clearDataAdmin, auth: withAdminAuth }
 };
 
 async function handleAction(request: NextRequest, context: { params: Promise<{ action: string }> }) {
