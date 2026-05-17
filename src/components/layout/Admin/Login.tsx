@@ -24,7 +24,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   const { dToken, setDToken } = useContext(DoctorContext) as IDoctorContext;
-  const { aToken, setAToken } = useContext(AdminContext) as IAdminContext;
+  const { aToken, setAToken, setAdminProfile } = useContext(AdminContext) as any;
 
   useEffect(() => {
     // Speed of light: Prefetch dashboards
@@ -44,11 +44,15 @@ const Login = () => {
     try {
       if (state === 'Admin') {
         console.log('🏥 Admin Login: Using encrypted authentication');
-        const data = await smartApi.post('/api/admin/login', { email, password }) as ApiResponse<{ token: string }>;
+        const data = await smartApi.post('/api/admin/login', { email, password }) as ApiResponse<{ token: string, admin?: any }>;
         if (data.success) {
           setAToken(data.token);
           localStorage.setItem('aToken', data.token);
-          console.log('\u2705 Admin logged in via Smart API');
+          if (data.admin) {
+            localStorage.setItem('adminProfile', JSON.stringify(data.admin));
+            setAdminProfile(data.admin);
+          }
+          console.log('✅ Admin logged in via Smart API');
           setEmail('');
           setPassword('');
           router.push('/admin-dashboard');

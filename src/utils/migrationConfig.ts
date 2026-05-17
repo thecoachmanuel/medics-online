@@ -330,6 +330,30 @@ export const migrationConfig: ApiMigrationConfig = {
     description: 'Admin broadcast custom/bulk operational emails',
     migrated: true
   },
+  '/api/admin/get-admins': {
+    encrypted: true,
+    priority: 'medium',
+    description: 'Admin list staff accounts',
+    migrated: true
+  },
+  '/api/admin/create-admin': {
+    encrypted: true,
+    priority: 'medium',
+    description: 'Admin create new staff account',
+    migrated: true
+  },
+  '/api/admin/update-admin': {
+    encrypted: true,
+    priority: 'medium',
+    description: 'Admin update staff permissions',
+    migrated: true
+  },
+  '/api/admin/delete-admin': {
+    encrypted: true,
+    priority: 'medium',
+    description: 'Admin delete staff account',
+    migrated: true
+  },
 
   // ALREADY ENCRYPTED: Test endpoints
   '/api/secure/dummy-data': {

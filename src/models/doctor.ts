@@ -53,6 +53,23 @@ export interface IEmailTemplate {
   variables: string[];
 }
 
+export interface IRbacAdmin {
+  _id: string;
+  name: string;
+  email: string;
+  role: 'master' | 'staff';
+  isActive: boolean;
+  permissions: {
+    dashboard: boolean;
+    appointments: boolean;
+    doctors: boolean;
+    patients: boolean;
+    payouts: boolean;
+    settings: boolean;
+  };
+  createdAt?: string;
+}
+
 export interface IAdminContext {
   aToken: string;
   setAToken: React.Dispatch<React.SetStateAction<string>>;
@@ -80,6 +97,13 @@ export interface IAdminContext {
   getCmsData: () => Promise<ICmsData | null>;
   updateCmsData: (data: Partial<ICmsData> & { homeHeaderImageBase64?: string; aboutImageBase64?: string; contactImageBase64?: string }) => Promise<boolean>;
   sendBulkEmail: (params: { recipientType: string; selectedEmails?: string[]; customEmails?: string; subject: string; body: string }) => Promise<boolean>;
+  
+  // Dynamic staff administration hooks
+  admins: IRbacAdmin[];
+  getAllAdmins: () => Promise<void>;
+  createAdminStaff: (adminData: { name: string; email: string; password?: string; permissions?: IRbacAdmin['permissions'] }) => Promise<boolean>;
+  updateAdminStaff: (adminId: string, permissions?: IRbacAdmin['permissions'], isActive?: boolean) => Promise<boolean>;
+  deleteAdminStaff: (adminId: string) => Promise<boolean>;
 }
 
 export interface IDoctorDashData {

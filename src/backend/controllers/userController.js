@@ -46,6 +46,22 @@ const registerUser = async (req, res) => {
     const user = await newUser.save();
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
 
+    // Send Welcome Email and Admin Notification (Catch errors to prevent blocking signup)
+    try {
+      await sendNotificationEmail(user.email, 'welcome_patient', {
+        patientName: user.name,
+        patientEmail: user.email
+      });
+      await sendNotificationEmail('medicsonlineng@gmail.com', 'admin_signup_notification', {
+        userName: user.name,
+        userEmail: user.email,
+        userRole: 'Patient',
+        signupTime: new Date().toLocaleString()
+      });
+    } catch (emailErr) {
+      console.error('Welcome/Admin email error on patient registration:', emailErr);
+    }
+
     res.json({ success: true, token });
   } catch (error) {
     console.log(error);

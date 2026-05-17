@@ -17,6 +17,7 @@ import {
   RefreshCw,
   Users,
   Megaphone,
+  Shield,
   Image as ImageIcon,
   Link as LinkIcon,
   Phone,
@@ -39,15 +40,62 @@ const AdminSettings = () => {
     updateCmsData,
     sendBulkEmail,
     doctors,
-    patients
+    patients,
+    admins,
+    getAllAdmins,
+    createAdminStaff,
+    updateAdminStaff,
+    deleteAdminStaff,
+    adminProfile
   } = useContext(AdminContext) as any;
 
-  const [activeTab, setActiveTab] = useState<'cms' | 'emails' | 'broadcast' | 'maintenance'>('cms');
+  const [activeTab, setActiveTab] = useState<'cms' | 'emails' | 'broadcast' | 'maintenance' | 'roles'>('cms');
+  const [previewMode, setPreviewMode] = useState<'edit' | 'visual'>('edit');
+
+  const getCompiledPreview = (htmlString: string) => {
+    let compiled = htmlString;
+    const mockVars: Record<string, string> = {
+      patientName: 'Jane Doe',
+      doctorName: 'Dr. Manuel Smith',
+      appointmentDate: '25th May 2026',
+      appointmentTime: '10:00 AM',
+      doctorNetShare: '16,000',
+      commissionRate: '20',
+      reason: 'Medical record licensing document was unclear.',
+      patientEmail: 'jane.doe@example.com',
+      doctorEmail: 'manuel.smith@example.com',
+      userName: 'John Doe',
+      userEmail: 'john.doe@example.com',
+      userRole: 'Doctor',
+      signupTime: new Date().toLocaleString()
+    };
+    
+    Object.entries(mockVars).forEach(([key, val]) => {
+      compiled = compiled.replace(new RegExp(`{{\\s*${key}\\s*}}`, 'g'), val);
+    });
+    return compiled;
+  };
+
+  // ==========================================
+  // Staff Administration States
+  // ==========================================
+  const [newAdminName, setNewAdminName] = useState('');
+  const [newAdminEmail, setNewAdminEmail] = useState('');
+  const [newAdminPassword, setNewAdminPassword] = useState('');
+  const [newAdminPermissions, setNewAdminPermissions] = useState<any>({
+    dashboard: true,
+    appointments: true,
+    doctors: true,
+    patients: true,
+    payouts: true,
+    settings: false
+  });
+  const [isCreatingAdmin, setIsCreatingAdmin] = useState(false);
 
   // ==========================================
   // 1. CMS Page States & Setup
   // ==========================================
-  const [cmsFields, setCmsFields] = useState<any>({
+  const [cmsFields, setCmsFields] = useState<Record<string, string>>({
     homeHeaderTitle: '',
     homeHeaderSubtitle: '',
     homeHeaderBtnText: '',
@@ -343,6 +391,34 @@ const AdminSettings = () => {
     }
   };
 
+  const handleEnrollAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newAdminName || !newAdminEmail || !newAdminPassword) {
+      return toast.warning('Please fill in name, email, and password fields');
+    }
+    setIsCreatingAdmin(true);
+    const success = await createAdminStaff({
+      name: newAdminName,
+      email: newAdminEmail,
+      password: newAdminPassword,
+      permissions: newAdminPermissions
+    });
+    setIsCreatingAdmin(false);
+    if (success) {
+      setNewAdminName('');
+      setNewAdminEmail('');
+      setNewAdminPassword('');
+      setNewAdminPermissions({
+        dashboard: true,
+        appointments: true,
+        doctors: true,
+        patients: true,
+        payouts: true,
+        settings: false
+      });
+    }
+  };
+
   return (
     <div className="m-5 w-full max-w-5xl">
       <div className="flex items-center gap-2 mb-1">
@@ -359,7 +435,8 @@ const AdminSettings = () => {
           { key: 'cms', label: 'Sleek CMS Manager', icon: Edit3 },
           { key: 'emails', label: 'Email Templates Manager', icon: Mail },
           { key: 'broadcast', label: 'Direct Broadcast Mailer', icon: Megaphone },
-          { key: 'maintenance', label: 'System Maintenance', icon: Database }
+          { key: 'maintenance', label: 'System Maintenance', icon: Database },
+          ...(adminProfile?.role === 'master' ? [{ key: 'roles', label: 'Staff Roles & Access', icon: Shield }] : [])
         ].map((tab) => {
           const IconComponent = tab.icon;
           return (
@@ -921,21 +998,54 @@ const AdminSettings = () => {
 
                       {/* Body */}
                       <div>
-                        <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center justify-between mb-3 border-b pb-2">
                           <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                            Email HTML Body
+                            Email Template Body
                           </label>
-                          <span className="text-[10px] text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full font-mono">
-                            Supports HTML tags
-                          </span>
+                          <div className="flex bg-gray-100 p-0.5 rounded-lg border">
+                            <button
+                              type="button"
+                              onClick={() => setPreviewMode('edit')}
+                              className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all cursor-pointer ${
+                                previewMode === 'edit'
+                                  ? 'bg-white text-primary shadow-sm'
+                                  : 'text-gray-500 hover:text-gray-800'
+                              }`}
+                            >
+                              Normal Text View (Source)
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setPreviewMode('visual')}
+                              className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all cursor-pointer ${
+                                previewMode === 'visual'
+                                  ? 'bg-white text-primary shadow-sm'
+                                  : 'text-gray-500 hover:text-gray-800'
+                              }`}
+                            >
+                              Visual HTML View (Preview)
+                            </button>
+                          </div>
                         </div>
-                        <textarea
-                          value={body}
-                          onChange={(e) => setBody(e.target.value)}
-                          placeholder="HTML template body text..."
-                          className="w-full h-80 px-3 py-2.5 border rounded-lg text-xs font-mono focus:outline-none focus:ring-1 focus:ring-primary leading-relaxed resize-y"
-                          required
-                        />
+
+                        {previewMode === 'edit' ? (
+                          <textarea
+                            value={body}
+                            onChange={(e) => setBody(e.target.value)}
+                            placeholder="HTML template body text..."
+                            className="w-full h-96 px-3 py-2.5 border rounded-lg text-xs font-mono focus:outline-none focus:ring-1 focus:ring-primary leading-relaxed resize-y bg-gray-50"
+                            required
+                          />
+                        ) : (
+                          <div className="border rounded-lg bg-gray-100 p-3 shadow-inner">
+                            <iframe
+                              srcDoc={getCompiledPreview(body)}
+                              className="w-full h-96 border rounded-md bg-white shadow-sm"
+                              sandbox="allow-same-origin"
+                              title="Email Template Render Preview"
+                            />
+                          </div>
+                        )}
                       </div>
 
                       {/* Helper Variables Badge List */}
@@ -1315,6 +1425,231 @@ const AdminSettings = () => {
           </div>
         </div>
       )}
+      {/* ========================================================
+          TAB 5: DYNAMIC ADMIN ROLES & ACCESS CONTROL (RBAC)
+          ======================================================== */}
+      {activeTab === 'roles' && adminProfile?.role === 'master' && (
+        <div className="space-y-6">
+          <div className="bg-gradient-to-r from-primary/10 to-blue-500/10 border border-primary/20 rounded-xl p-5 mb-6 flex items-start gap-4">
+            <Shield className="w-10 h-10 text-primary shrink-0 mt-0.5" />
+            <div>
+              <h3 className="text-sm font-bold text-gray-800">Granular Role-Based Access Control Panel</h3>
+              <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                As the Master Administrator, you have absolute authority to enroll additional system administrators, restrict access permissions on standard directories, or suspend active staff accounts instantly.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Enrollment Form Column */}
+            <div className="lg:col-span-1 bg-white border rounded-xl p-6 shadow-sm h-fit">
+              <h2 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2 border-b pb-2">
+                <Users className="w-4 h-4 text-primary" />
+                Enroll Staff Admin
+              </h2>
+
+              <form onSubmit={handleEnrollAdmin} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                    Full Name
+                  </label>
+                  <input
+                    type="text"
+                    value={newAdminName}
+                    onChange={(e) => setNewAdminName(e.target.value)}
+                    placeholder="E.g. Dr. Manuel"
+                    className="w-full px-3 py-2 border rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    value={newAdminEmail}
+                    onChange={(e) => setNewAdminEmail(e.target.value)}
+                    placeholder="staff@medicsonline.com"
+                    className="w-full px-3 py-2 border rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-primary font-semibold"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                    Access Password
+                  </label>
+                  <input
+                    type="password"
+                    value={newAdminPassword}
+                    onChange={(e) => setNewAdminPassword(e.target.value)}
+                    placeholder="Min 6 characters"
+                    className="w-full px-3 py-2 border rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                    required
+                  />
+                </div>
+
+                {/* Default Access Matrix */}
+                <div className="border-t pt-3">
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                    Grant Dashboard Scopes
+                  </label>
+                  <div className="space-y-2">
+                    {Object.keys(newAdminPermissions).map((scope: string) => (
+                      <label key={scope} className="flex items-center justify-between p-2 rounded hover:bg-gray-50 cursor-pointer border border-gray-100">
+                        <span className="text-xs font-medium text-gray-600 capitalize">
+                          {scope} module
+                        </span>
+                        <input
+                          type="checkbox"
+                          checked={newAdminPermissions[scope]}
+                          onChange={(e) => {
+                            setNewAdminPermissions({
+                              ...newAdminPermissions,
+                              [scope]: e.target.checked
+                            });
+                          }}
+                          className="w-3.5 h-3.5 rounded text-primary focus:ring-primary"
+                        />
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isCreatingAdmin}
+                  className="w-full py-2.5 bg-primary text-white font-semibold rounded-lg text-xs shadow hover:bg-primary-dark transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  {isCreatingAdmin ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      Enrolling Account...
+                    </>
+                  ) : (
+                    <>
+                      <Shield className="w-3.5 h-3.5" />
+                      Enroll Staff Administrator
+                    </>
+                  )}
+                </button>
+              </form>
+            </div>
+
+            {/* List Column */}
+            <div className="lg:col-span-2 bg-white border rounded-xl p-6 shadow-sm">
+              <h2 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2 border-b pb-2">
+                <Shield className="w-4 h-4 text-primary" />
+                Active Administrative Staff Accounts ({admins.length})
+              </h2>
+
+              {admins.length === 0 ? (
+                <div className="text-center py-20 text-xs text-gray-400">
+                  No additional administrative accounts are currently registered.
+                </div>
+              ) : (
+                <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+                  {admins.map((adm: any) => (
+                    <div key={adm._id} className="border rounded-xl p-4 hover:border-primary/40 transition-colors bg-gray-50/50">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="text-xs font-bold text-gray-800">{adm.name}</h3>
+                            <span className="text-[9px] text-gray-400">({adm.email})</span>
+                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${
+                              adm.role === 'master' 
+                                ? 'bg-purple-100 text-purple-700 border border-purple-200' 
+                                : 'bg-blue-100 text-blue-700 border border-blue-200'
+                            }`}>
+                              {adm.role.toUpperCase()}
+                            </span>
+                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${
+                              adm.isActive 
+                                ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' 
+                                : 'bg-red-100 text-red-700 border border-red-200'
+                            }`}>
+                              {adm.isActive ? 'ACTIVE' : 'SUSPENDED'}
+                            </span>
+                          </div>
+                          <p className="text-[10px] text-gray-400 mt-1">
+                            Registered on: {adm.createdAt ? new Date(adm.createdAt).toLocaleString() : 'N/A'}
+                          </p>
+                        </div>
+
+                        {/* Actions (disallow self or master admin modifications) */}
+                        {adm.role !== 'master' && (
+                          <div className="flex items-center gap-2">
+                            {/* Toggle active state */}
+                            <button
+                              type="button"
+                              onClick={() => updateAdminStaff(adm._id, adm.permissions, !adm.isActive)}
+                              className={`px-2 py-1 text-[9px] font-bold rounded border cursor-pointer transition-colors ${
+                                adm.isActive 
+                                  ? 'bg-red-50 hover:bg-red-100 text-red-600 border-red-200' 
+                                  : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border-emerald-200'
+                              }`}
+                            >
+                              {adm.isActive ? 'Suspend' : 'Activate'}
+                            </button>
+
+                            {/* Delete */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (window.confirm(`Are you absolutely sure you want to delete ${adm.name}?`)) {
+                                  deleteAdminStaff(adm._id);
+                                }
+                              }}
+                              className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded border border-gray-150 cursor-pointer"
+                              title="Remove account"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Interactive Scopes */}
+                      <div className="mt-3 border-t pt-3">
+                        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                          Interactive Permissions (Click checkbox to edit instantly):
+                        </p>
+                        <div className="flex flex-wrap gap-3">
+                          {Object.keys(adm.permissions || {}).map((scope: string) => (
+                            <label
+                              key={scope}
+                              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[10px] font-medium transition-all ${
+                                adm.permissions[scope]
+                                  ? 'bg-primary/5 text-primary border-primary/30'
+                                  : 'bg-white text-gray-400 border-gray-100 hover:border-gray-200'
+                              } ${adm.role === 'master' ? 'opacity-70 pointer-events-none' : 'cursor-pointer'}`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={adm.permissions[scope]}
+                                disabled={adm.role === 'master'}
+                                onChange={(e) => {
+                                  const updatedPerms = { ...adm.permissions, [scope]: e.target.checked };
+                                  updateAdminStaff(adm._id, updatedPerms, adm.isActive);
+                                }}
+                                className="w-3 h-3 text-primary border-gray-300 rounded focus:ring-primary pointer-events-none"
+                              />
+                              <span className="capitalize">{scope}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+      [ignoring loop detection]
     </div>
   );
 };

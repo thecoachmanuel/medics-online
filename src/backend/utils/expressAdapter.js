@@ -25,6 +25,8 @@ export const runExpressController = async (controller, request, context) => {
         // Middlewares inject these dynamically:
         userId: request.userId,
         docId: request.docId,
+        admin: request.admin,
+        adminId: request.adminId
       };
 
       // Inject userId/docId into body for legacy controller compatibility

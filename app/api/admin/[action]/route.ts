@@ -30,7 +30,11 @@ import {
   getEmailTemplates,
   updateEmailTemplate,
   sendAppointmentReminders,
-  sendBulkEmailAdmin
+  sendBulkEmailAdmin,
+  getAdmins,
+  createAdmin,
+  updateAdminPermissions,
+  deleteAdmin
 } from '@/backend/controllers/adminController';
 
 import { changeAvailablity } from '@/backend/controllers/doctorController';
@@ -68,7 +72,11 @@ const actionMap: Record<string, ActionConfig> = {
   'update-email-template': { controller: updateEmailTemplate, auth: withAdminAuth },
   'send-appointment-reminders': { controller: sendAppointmentReminders, auth: withAdminAuth },
   'send-bulk-email': { controller: sendBulkEmailAdmin, auth: withAdminAuth },
-  'update-cms': { controller: updateCmsData, auth: withAdminAuth }
+  'update-cms': { controller: updateCmsData, auth: withAdminAuth },
+  'get-admins': { controller: getAdmins, auth: withAdminAuth },
+  'create-admin': { controller: createAdmin, auth: withAdminAuth },
+  'update-admin': { controller: updateAdminPermissions, auth: withAdminAuth },
+  'delete-admin': { controller: deleteAdmin, auth: withAdminAuth }
 };
 
 async function handleAction(request: NextRequest, context: { params: Promise<{ action: string }> }) {

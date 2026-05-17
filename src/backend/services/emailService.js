@@ -153,6 +153,98 @@ const DEFAULT_TEMPLATES = [
   <p style="margin: 5px 0 0 0; font-size: 14px;">❌ <strong>Reason:</strong> {{cancellationReason}}</p>
 </div>
 <p>If you scheduled this booking using Paystack payment, your refund has been processed. You can also rebook easily with other available medical specialists or browse new slots.</p>`
+  },
+  {
+    key: 'welcome_patient',
+    name: 'Welcome Email (New Patient)',
+    subject: 'Welcome to Medics-Online! - Your Health, Anytime, Anywhere',
+    description: 'Sent to a patient instantly when they register an account on the platform.',
+    variables: ['patientName', 'patientEmail'],
+    body: `<p>Dear <strong>{{patientName}}</strong>,</p>
+<p>Welcome to <strong>Medics-Online</strong>! We are thrilled to have you join our premier digital healthcare community.</p>
+<p>With Medics-Online, access to world-class medical specialists is now at your fingertips. Here is what you can do right now from your Patient Portal:</p>
+<div style="background: #f8fafc; border-left: 4px solid #5f6FFF; padding: 15px; margin: 20px 0; border-radius: 6px;">
+  <p style="margin: 0; font-size: 14px;">🔍 <strong>Find Specialists:</strong> Search through certified doctors by speciality, fees, and location.</p>
+  <p style="margin: 8px 0 0 0; font-size: 14px;">📅 <strong>Schedule Instantly:</strong> Pick preferred daily available hours and book appointments with ease.</p>
+  <p style="margin: 8px 0 0 0; font-size: 14px;">💬 <strong>Chat & Consult:</strong> Send secure direct messages and enter live video consulting rooms at scheduled times.</p>
+</div>
+<p>Your registered email is: <strong>{{patientEmail}}</strong>. Keep this email safe as it is your gateway to medical bookings and official invoices.</p>
+<p>If you have any questions or need medical system support, do not hesitate to contact our admin desk.</p>
+<p>To your ultimate health,<br><strong>The Medics-Online Team</strong></p>`
+  },
+  {
+    key: 'welcome_doctor',
+    name: 'Welcome Email (New Doctor)',
+    subject: 'Welcome to Medics-Online! - Your Medical Profile Under Review',
+    description: 'Sent to a doctor instantly upon self-registration, pending administrative review.',
+    variables: ['doctorName', 'doctorEmail'],
+    body: `<p>Dear <strong>{{doctorName}}</strong>,</p>
+<p>Thank you for registering as a medical professional on <strong>Medics-Online</strong>!</p>
+<p>We are dedicated to connecting patients with peerless medical expertise. Because we maintain strict quality standards, your KYC documents and professional medical certifications are currently being reviewed by our administration desk.</p>
+<div style="background: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; border-radius: 6px;">
+  <p style="margin: 0; font-size: 14px;">⏳ <strong>Account Status:</strong> Awaiting Verification & Admin Approval</p>
+  <p style="margin: 5px 0 0 0; font-size: 14px;">📧 <strong>Registered Email:</strong> {{doctorEmail}}</p>
+</div>
+<p>You will receive a notification email immediately once our admin verifies your qualifications and approves your account.</p>
+<p>In the meantime, if you need to submit additional professional details or verify your mobile contacts, please let us know.</p>
+<p>Warm regards,<br><strong>The Medics-Online Administration</strong></p>`
+  },
+  {
+    key: 'doctor_approved',
+    name: 'Account Approved (Doctor)',
+    subject: 'Congratulations! Your Doctor Account Has Been Approved - Medics-Online',
+    description: 'Sent to a doctor when the admin approves their profile, allowing them to login.',
+    variables: ['doctorName'],
+    body: `<p>Dear <strong>{{doctorName}}</strong>,</p>
+<p>We are delighted to inform you that your doctor account has been <strong>successfully verified and approved</strong> by the Medics-Online Administration!</p>
+<div style="background: #f0fdf4; border-left: 4px solid #22c55e; padding: 15px; margin: 20px 0; border-radius: 6px;">
+  <p style="margin: 0; font-size: 14px; color: #166534;">🎉 <strong>Account Status:</strong> Approved & Live!</p>
+  <p style="margin: 5px 0 0 0; font-size: 14px; color: #166534;">💼 <strong>Workspace:</strong> You can now login, receive bookings, and earn payouts.</p>
+</div>
+<p>Here are your next steps to start consulting:</p>
+<ol>
+  <li>Login to your <strong>Doctor Workspace</strong> using your registered credentials.</li>
+  <li>Navigate to your <strong>Profile Panel</strong> and set your daily multiple availability slots.</li>
+  <li>Setup your bank credentials to receive payout earnings instantly after paid appointments.</li>
+</ol>
+<p>Thank you for partnering with us to deliver first-class healthcare across the country!</p>
+<p>Best regards,<br><strong>Medics-Online Team</strong></p>`
+  },
+  {
+    key: 'admin_signup_notification',
+    name: 'Admin SignUp Notification',
+    subject: 'Notification: New User SignUp Alert! - Medics-Online',
+    description: 'Sent instantly to platform master admin medicsonlineng@gmail.com when any doctor/patient signs up.',
+    variables: ['userName', 'userEmail', 'userRole', 'signupTime'],
+    body: `<p>Dear Admin,</p>
+<p>This is an automated system alert notifying you that a new user has successfully registered on <strong>Medics-Online</strong>.</p>
+<div style="border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; margin: 20px 0;">
+  <div style="background: #64748b; color: white; padding: 12px; font-weight: bold; font-size: 14px;">
+    🆕 NEW SIGNUP DETAILS
+  </div>
+  <div style="padding: 15px; background: #ffffff; font-size: 14px;">
+    <table style="width: 100%; border-collapse: collapse;">
+      <tr>
+        <td style="padding: 4px 0; color: #64748b; width: 120px;"><strong>Name:</strong></td>
+        <td style="padding: 4px 0;">{{userName}}</td>
+      </tr>
+      <tr>
+        <td style="padding: 4px 0; color: #64748b;"><strong>Email:</strong></td>
+        <td style="padding: 4px 0;"><a href="mailto:{{userEmail}}">{{userEmail}}</a></td>
+      </tr>
+      <tr>
+        <td style="padding: 4px 0; color: #64748b;"><strong>Role:</strong></td>
+        <td style="padding: 4px 0;"><span style="background: #e2e8f0; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; text-transform: uppercase;">{{userRole}}</span></td>
+      </tr>
+      <tr>
+        <td style="padding: 4px 0; color: #64748b;"><strong>Timestamp:</strong></td>
+        <td style="padding: 4px 0;">{{signupTime}}</td>
+      </tr>
+    </table>
+  </div>
+</div>
+<p>Please log in to your Administration Panel to review this account's credentials, KYC documents, or profiles as needed.</p>
+<p>System Mailer,<br><strong>Medics-Online Core</strong></p>`
   }
 ];
 

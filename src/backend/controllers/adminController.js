@@ -8,42 +8,91 @@ import userModel from '../models/userModel.js';
 import settingsModel from '../models/settingsModel.js';
 import payoutModel from '../models/payoutModel.js';
 import emailTemplateModel from '../models/emailTemplateModel.js';
+import adminModel from '../models/adminModel.js';
 import { seedEmailTemplates, sendNotificationEmail, sendCustomHtmlEmail } from '../services/emailService.js';
+
+// Granular RBAC Permission Gating Helper
+const checkAdminPermission = (req, requiredPermission) => {
+  if (!req.admin) return false;
+  if (req.admin.role === 'master') return true;
+  return req.admin.permissions && req.admin.permissions[requiredPermission] === true;
+};
 
 // API for admin login
 const loginAdmin = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-  // ---------------------------------------------------------
-  // Validate required environment variables (critical on Vercel)
-  // ---------------------------------------------------------
-  const missingVars = [];
-  if (!process.env.ADMIN_EMAIL) missingVars.push('ADMIN_EMAIL');
-  if (!process.env.ADMIN_PASSWORD) missingVars.push('ADMIN_PASSWORD');
-  if (!process.env.JWT_SECRET) missingVars.push('JWT_SECRET');
+    if (!email || !password) {
+      return res.json({ success: false, message: 'Missing credentials' });
+    }
 
-  if (missingVars.length) {
-    console.error('Admin login config error – missing env vars:', missingVars);
-    return res
-      .status(500)
-      .json({
+    // Validate environment setup
+    const missingVars = [];
+    if (!process.env.ADMIN_EMAIL) missingVars.push('ADMIN_EMAIL');
+    if (!process.env.ADMIN_PASSWORD) missingVars.push('ADMIN_PASSWORD');
+    if (!process.env.JWT_SECRET) missingVars.push('JWT_SECRET');
+
+    if (missingVars.length) {
+      console.error('Admin login config error – missing env vars:', missingVars);
+      return res.status(500).json({
         success: false,
         message: `Server configuration error: missing ${missingVars.join(', ')}`,
       });
-  }
+    }
 
-  // ---------------------------------------------------------
-  // Authenticate admin credentials
-  // ---------------------------------------------------------
-  if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
-    // Use a payload object for clarity (keeps token stable)
-    const token = jwt.sign({ email, password }, process.env.JWT_SECRET);
-    return res.json({ success: true, token });
-  }
+    // Dynamic Administrator Lookup
+    let admin = await adminModel.findOne({ email: email.toLowerCase() });
 
-  // Invalid credentials
-  return res.json({ success: false, message: 'Invalid credentials' });
+    // Seeding fallback for master administrator if collection is empty
+    const totalAdmins = await adminModel.countDocuments();
+    if (totalAdmins === 0 && email.toLowerCase() === process.env.ADMIN_EMAIL.toLowerCase()) {
+      const hashedPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD, 10);
+      admin = new adminModel({
+        name: 'Master Admin',
+        email: process.env.ADMIN_EMAIL.toLowerCase(),
+        password: hashedPassword,
+        role: 'master',
+        permissions: {
+          dashboard: true,
+          appointments: true,
+          doctors: true,
+          patients: true,
+          payouts: true,
+          settings: true
+        }
+      });
+      await admin.save();
+      console.log('🌱 Seeded Master Admin dynamically from environment variables.');
+    }
+
+    if (!admin) {
+      return res.json({ success: false, message: 'Invalid credentials' });
+    }
+
+    if (!admin.isActive) {
+      return res.json({ success: false, message: 'Your administrative account is suspended' });
+    }
+
+    // Verify Password Hash
+    const isMatch = await bcrypt.compare(password, admin.password);
+    if (!isMatch) {
+      return res.json({ success: false, message: 'Invalid credentials' });
+    }
+
+    // Generate Dynamic Token
+    const token = jwt.sign({ id: admin._id, email: admin.email, role: admin.role }, process.env.JWT_SECRET);
+    
+    return res.json({
+      success: true,
+      token,
+      admin: {
+        name: admin.name,
+        email: admin.email,
+        role: admin.role,
+        permissions: admin.permissions
+      }
+    });
   } catch (error) {
     console.log(error);
     res.json({ success: false, message: error.message });
@@ -53,6 +102,9 @@ const loginAdmin = async (req, res) => {
 // API to get all appointments list
 const appointmentsAdmin = async (req, res) => {
   try {
+    if (!checkAdminPermission(req, 'appointments')) {
+      return res.json({ success: false, message: 'Forbidden: You do not have permission to view appointments' });
+    }
     const appointments = await appointmentModel.find({});
     res.json({ success: true, appointments });
   } catch (error) {
@@ -64,6 +116,9 @@ const appointmentsAdmin = async (req, res) => {
 // API for appointment cancellation
 const appointmentCancel = async (req, res) => {
   try {
+    if (!checkAdminPermission(req, 'appointments')) {
+      return res.json({ success: false, message: 'Forbidden: You do not have permission to manage appointments' });
+    }
     const { appointmentId } = req.body;
     await appointmentModel.findByIdAndUpdate(appointmentId, { cancelled: true });
 
@@ -77,6 +132,9 @@ const appointmentCancel = async (req, res) => {
 // API for adding Doctor
 const addDoctor = async (req, res) => {
   try {
+    if (!checkAdminPermission(req, 'doctors')) {
+      return res.json({ success: false, message: 'Forbidden: You do not have permission to manage doctors' });
+    }
     const { name, email, password, speciality, degree, experience, about, fees, address, phone } =
       req.body;
     const imageFile = req.file;
@@ -135,6 +193,22 @@ const addDoctor = async (req, res) => {
 
     const newDoctor = new doctorModel(doctorData);
     await newDoctor.save();
+
+    // Send Approved/Welcome Email & Admin notification (Catch errors silently)
+    try {
+      await sendNotificationEmail(newDoctor.email, 'doctor_approved', {
+        doctorName: newDoctor.name
+      });
+      await sendNotificationEmail('medicsonlineng@gmail.com', 'admin_signup_notification', {
+        userName: newDoctor.name,
+        userEmail: newDoctor.email,
+        userRole: 'Doctor (Created by Admin)',
+        signupTime: new Date().toLocaleString()
+      });
+    } catch (emailErr) {
+      console.error('Approved email error on admin doctor registration:', emailErr);
+    }
+
     res.json({ success: true, message: 'Doctor Added' });
   } catch (error) {
     console.log(error);
@@ -145,6 +219,9 @@ const addDoctor = async (req, res) => {
 // API to get all doctors list for admin panel
 const allDoctors = async (req, res) => {
   try {
+    if (!checkAdminPermission(req, 'doctors')) {
+      return res.json({ success: false, message: 'Forbidden: You do not have permission to view doctors' });
+    }
     const doctors = await doctorModel.find({}).select('-password');
     res.json({ success: true, doctors });
   } catch (error) {
@@ -156,6 +233,9 @@ const allDoctors = async (req, res) => {
 // API to get dashboard data for admin panel
 const adminDashboard = async (req, res) => {
   try {
+    if (!checkAdminPermission(req, 'dashboard')) {
+      return res.json({ success: false, message: 'Forbidden: You do not have permission to view the dashboard' });
+    }
     const doctors = await doctorModel.find({});
     const users = await userModel.find({});
     const appointments = await appointmentModel.find({});
@@ -177,6 +257,9 @@ const adminDashboard = async (req, res) => {
 // API to get earnings for admin panel
 const adminEarnings = async (req, res) => {
   try {
+    if (!checkAdminPermission(req, 'payouts')) {
+      return res.json({ success: false, message: 'Forbidden: You do not have permission to view administrative financials' });
+    }
     const appointments = await appointmentModel.find({});
     let earnings = 0;
 
@@ -199,7 +282,17 @@ const approveDoctor = async (req, res) => {
     const { docId } = req.body;
     
     // Update the doctor's approval status
-    await doctorModel.findByIdAndUpdate(docId, { isApproved: true });
+    const doctor = await doctorModel.findByIdAndUpdate(docId, { isApproved: true }, { new: true });
+    
+    if (doctor) {
+      try {
+        await sendNotificationEmail(doctor.email, 'doctor_approved', {
+          doctorName: doctor.name
+        });
+      } catch (emailErr) {
+        console.error('Approved email error on approveDoctor handler:', emailErr);
+      }
+    }
     
     res.json({ success: true, message: 'Doctor approved successfully' });
   } catch (error) {
@@ -211,6 +304,9 @@ const approveDoctor = async (req, res) => {
 // API to reject doctor
 const rejectDoctor = async (req, res) => {
   try {
+    if (!checkAdminPermission(req, 'doctors')) {
+      return res.json({ success: false, message: 'Forbidden: You do not have permission to manage doctors' });
+    }
     const { docId } = req.body;
     
     // Delete the doctor record
@@ -226,6 +322,9 @@ const rejectDoctor = async (req, res) => {
 // API to delete doctor
 const deleteDoctor = async (req, res) => {
   try {
+    if (!checkAdminPermission(req, 'doctors')) {
+      return res.json({ success: false, message: 'Forbidden: You do not have permission to manage doctors' });
+    }
     const { docId } = req.body;
     await doctorModel.findByIdAndDelete(docId);
     res.json({ success: true, message: 'Doctor deleted successfully' });
@@ -238,6 +337,9 @@ const deleteDoctor = async (req, res) => {
 // API to edit doctor profile
 const editDoctor = async (req, res) => {
   try {
+    if (!checkAdminPermission(req, 'doctors')) {
+      return res.json({ success: false, message: 'Forbidden: You do not have permission to manage doctors' });
+    }
     const { docId, name, email, speciality, degree, experience, about, fees, address, phone } = req.body;
     const imageFile = req.file;
 
@@ -279,6 +381,9 @@ const editDoctor = async (req, res) => {
 // API to edit patient profile
 const editPatient = async (req, res) => {
   try {
+    if (!checkAdminPermission(req, 'patients')) {
+      return res.json({ success: false, message: 'Forbidden: You do not have permission to manage patients' });
+    }
     const {
       patientId,
       name,
@@ -325,6 +430,9 @@ if (imageFile) {
 // API to get all patients list for admin panel
 const allPatients = async (req, res) => {
   try {
+    if (!checkAdminPermission(req, 'patients')) {
+      return res.json({ success: false, message: 'Forbidden: You do not have permission to view patients' });
+    }
     const patients = await userModel.find({}).select('-password');
     res.json({ success: true, patients });
   } catch (error) {
@@ -336,6 +444,9 @@ const allPatients = async (req, res) => {
 // API to review and approve/reject doctor KYC documents
 const reviewKyc = async (req, res) => {
   try {
+    if (!checkAdminPermission(req, 'doctors')) {
+      return res.json({ success: false, message: 'Forbidden: You do not have permission to manage doctor KYC documents' });
+    }
     const { docId, action, reason } = req.body;
 
     if (!docId || !action) {
@@ -490,6 +601,10 @@ const reviewPayout = async (req, res) => {
 
 const clearDataAdmin = async (req, res) => {
   try {
+    // Only master admins are allowed to purge the database!
+    if (!req.admin || req.admin.role !== 'master') {
+      return res.json({ success: false, message: 'Forbidden: Only Master Admin can purge database collections' });
+    }
     const { target } = req.body;
     if (!['doctors', 'appointments', 'patients'].includes(target)) {
       return res.json({ success: false, message: 'Invalid clear target' });
@@ -517,6 +632,9 @@ const clearDataAdmin = async (req, res) => {
 // API to get all email templates
 const getEmailTemplates = async (req, res) => {
   try {
+    if (!checkAdminPermission(req, 'settings')) {
+      return res.json({ success: false, message: 'Forbidden: You do not have permission to view settings or templates' });
+    }
     await seedEmailTemplates();
     const templates = await emailTemplateModel.find({});
     res.json({ success: true, templates });
@@ -529,6 +647,9 @@ const getEmailTemplates = async (req, res) => {
 // API to update an email template
 const updateEmailTemplate = async (req, res) => {
   try {
+    if (!checkAdminPermission(req, 'settings')) {
+      return res.json({ success: false, message: 'Forbidden: You do not have permission to modify templates' });
+    }
     const { templateId, subject, body } = req.body;
     if (!templateId || !subject || !body) {
       return res.json({ success: false, message: 'Missing subject or body content' });
@@ -544,6 +665,9 @@ const updateEmailTemplate = async (req, res) => {
 // API to trigger manually sending reminders for today/tomorrow
 const sendAppointmentReminders = async (req, res) => {
   try {
+    if (!checkAdminPermission(req, 'settings')) {
+      return res.json({ success: false, message: 'Forbidden: You do not have permission to trigger notifications' });
+    }
     const today = new Date();
     const todayStr = `${today.getDate()}_${today.getMonth() + 1}_${today.getFullYear()}`;
     
@@ -588,6 +712,9 @@ const sendAppointmentReminders = async (req, res) => {
 // API to send bulk or individual email to patients or doctors
 const sendBulkEmailAdmin = async (req, res) => {
   try {
+    if (!checkAdminPermission(req, 'settings')) {
+      return res.json({ success: false, message: 'Forbidden: You do not have permission to use the broadcaster' });
+    }
     const { recipientType, selectedEmails, customEmails, subject, body } = req.body;
     if (!subject || !body) {
       return res.json({ success: false, message: 'Subject and body content are required' });
@@ -635,6 +762,122 @@ const sendBulkEmailAdmin = async (req, res) => {
   }
 };
 
+// API to list all admin staff accounts (Master Admin restricted)
+const getAdmins = async (req, res) => {
+  try {
+    if (!req.admin || req.admin.role !== 'master') {
+      return res.json({ success: false, message: 'Forbidden: Master Admin access required' });
+    }
+    const admins = await adminModel.find({}).select('-password');
+    res.json({ success: true, admins });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
+// API to create a new admin staff account (Master Admin restricted)
+const createAdmin = async (req, res) => {
+  try {
+    if (!req.admin || req.admin.role !== 'master') {
+      return res.json({ success: false, message: 'Forbidden: Master Admin access required' });
+    }
+    const { name, email, password, permissions } = req.body;
+    
+    if (!name || !email || !password) {
+      return res.json({ success: false, message: 'Missing admin name, email, or password' });
+    }
+
+    if (!validator.isEmail(email)) {
+      return res.json({ success: false, message: 'Please enter a valid email address' });
+    }
+
+    if (password.length < 8) {
+      return res.json({ success: false, message: 'Password must be at least 8 characters long' });
+    }
+
+    const exists = await adminModel.findOne({ email: email.toLowerCase() });
+    if (exists) {
+      return res.json({ success: false, message: 'An administrative account with this email already exists' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newAdmin = new adminModel({
+      name,
+      email: email.toLowerCase(),
+      password: hashedPassword,
+      role: 'staff',
+      permissions: permissions || {
+        dashboard: true,
+        appointments: true,
+        doctors: true,
+        patients: true,
+        payouts: true,
+        settings: true
+      }
+    });
+
+    await newAdmin.save();
+    res.json({ success: true, message: 'New Staff Admin created successfully' });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
+// API to update admin permissions or active status (Master Admin restricted)
+const updateAdminPermissions = async (req, res) => {
+  try {
+    if (!req.admin || req.admin.role !== 'master') {
+      return res.json({ success: false, message: 'Forbidden: Master Admin access required' });
+    }
+    const { adminId, permissions, isActive } = req.body;
+
+    const targetAdmin = await adminModel.findById(adminId);
+    if (!targetAdmin) {
+      return res.json({ success: false, message: 'Admin account not found' });
+    }
+
+    if (targetAdmin.role === 'master') {
+      return res.json({ success: false, message: 'Cannot edit master admin privileges' });
+    }
+
+    if (permissions) targetAdmin.permissions = permissions;
+    if (isActive !== undefined) targetAdmin.isActive = isActive;
+
+    await targetAdmin.save();
+    res.json({ success: true, message: 'Admin permissions updated successfully' });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
+// API to delete admin account (Master Admin restricted)
+const deleteAdmin = async (req, res) => {
+  try {
+    if (!req.admin || req.admin.role !== 'master') {
+      return res.json({ success: false, message: 'Forbidden: Master Admin access required' });
+    }
+    const { adminId } = req.body;
+
+    const targetAdmin = await adminModel.findById(adminId);
+    if (!targetAdmin) {
+      return res.json({ success: false, message: 'Admin account not found' });
+    }
+
+    if (targetAdmin.role === 'master') {
+      return res.json({ success: false, message: 'Cannot delete the master admin account' });
+    }
+
+    await adminModel.findByIdAndDelete(adminId);
+    res.json({ success: true, message: 'Staff Admin removed successfully' });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
 export {
   loginAdmin,
   appointmentsAdmin,
@@ -659,5 +902,9 @@ export {
   getEmailTemplates,
   updateEmailTemplate,
   sendAppointmentReminders,
-  sendBulkEmailAdmin
+  sendBulkEmailAdmin,
+  getAdmins,
+  createAdmin,
+  updateAdminPermissions,
+  deleteAdmin
 };

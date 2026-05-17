@@ -4,7 +4,7 @@ import { createContext, useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import type { ReactNode } from 'react';
 
-import type { IAdminContext } from '@/models/doctor';
+import type { IAdminContext, IRbacAdmin } from '@/models/doctor';
 import { smartApi } from '@/utils/smartApi';
 import type { ApiResponse } from '@/models/patient';
 
@@ -16,17 +16,27 @@ interface AdminContextProviderProps {
 
 const AdminContextProvider = (props: AdminContextProviderProps) => {
   const [aToken, setAToken] = useState('');
+  const [adminProfile, setAdminProfile] = useState<any>(null);
 
   const [appointments, setAppointments] = useState<IAdminContext['appointments']>([]);
   const [doctors, setDoctors] = useState<IAdminContext['doctors']>([]);
   const [patients, setPatients] = useState<IAdminContext['patients']>([]);
   const [dashData, setDashData] = useState<IAdminContext['dashData']>(null);
   const [earnings, setEarnings] = useState<IAdminContext['earnings']>(null);
+  const [admins, setAdmins] = useState<IRbacAdmin[]>([]);
 
   useEffect(() => {
     const storedToken = localStorage.getItem('aToken');
     if (storedToken) {
       setAToken(storedToken);
+    }
+    const storedProfile = localStorage.getItem('adminProfile');
+    if (storedProfile) {
+      try {
+        setAdminProfile(JSON.parse(storedProfile));
+      } catch (e) {
+        localStorage.removeItem('adminProfile');
+      }
     }
     const storedDashData = localStorage.getItem('adminDashData');
     if (storedDashData) {
@@ -52,7 +62,8 @@ const AdminContextProvider = (props: AdminContextProviderProps) => {
         getAllAppointments(),
         getDashData(),
         getEarnings(),
-        getCmsData()
+        getCmsData(),
+        getAllAdmins()
       ]);
     } else {
       setDoctors([]);
@@ -61,6 +72,9 @@ const AdminContextProvider = (props: AdminContextProviderProps) => {
       setDashData(null);
       setEarnings(null);
       setCmsData(null);
+      setAdmins([]);
+      setAdminProfile(null);
+      localStorage.removeItem('adminProfile');
     }
   };
 
@@ -493,6 +507,76 @@ const AdminContextProvider = (props: AdminContextProviderProps) => {
   }
 };
 
+  const getAllAdmins = async () => {
+    try {
+      const data = await smartApi.post('/api/admin/get-admins', {}, {
+        headers: { aToken }
+      }) as any;
+      if (data.success) {
+        setAdmins(data.admins);
+      }
+    } catch (error: any) {
+      console.error('Error fetching admins:', error);
+    }
+  };
+
+  const createAdminStaff = async (adminData: any) => {
+    try {
+      const data = await smartApi.post('/api/admin/create-admin', adminData, {
+        headers: { aToken }
+      }) as any;
+      if (data.success) {
+        toast.success(data.message || 'Staff Admin created successfully');
+        await getAllAdmins();
+        return true;
+      } else {
+        toast.error(data.message || 'Failed to create staff admin');
+        return false;
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Error creating staff admin');
+      return false;
+    }
+  };
+
+  const updateAdminStaff = async (adminId: string, permissions?: any, isActive?: boolean) => {
+    try {
+      const data = await smartApi.post('/api/admin/update-admin', { adminId, permissions, isActive }, {
+        headers: { aToken }
+      }) as any;
+      if (data.success) {
+        toast.success(data.message || 'Permissions updated successfully');
+        await getAllAdmins();
+        return true;
+      } else {
+        toast.error(data.message || 'Failed to update permissions');
+        return false;
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Error updating staff admin');
+      return false;
+    }
+  };
+
+  const deleteAdminStaff = async (adminId: string) => {
+    try {
+      const data = await smartApi.post('/api/admin/delete-admin', { adminId }, {
+        headers: { aToken }
+      }) as any;
+      if (data.success) {
+        toast.success(data.message || 'Staff Admin removed successfully');
+        await getAllAdmins();
+        return true;
+      } else {
+        toast.error(data.message || 'Failed to remove staff admin');
+        return false;
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Error removing staff admin');
+      return false;
+    }
+  };
+
   const value = {
     aToken,
     setAToken,
@@ -519,7 +603,14 @@ const AdminContextProvider = (props: AdminContextProviderProps) => {
     cmsData,
     getCmsData,
     updateCmsData,
-    sendBulkEmail
+    sendBulkEmail,
+    admins,
+    getAllAdmins,
+    createAdminStaff,
+    updateAdminStaff,
+    deleteAdminStaff,
+    adminProfile,
+    setAdminProfile
   };
 
   return <AdminContext.Provider value={value}>{props.children}</AdminContext.Provider>;

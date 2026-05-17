@@ -117,6 +117,23 @@ const registerDoctor = async (req, res) => {
 
     const newDoctor = new doctorModel(doctorData);
     await newDoctor.save();
+
+    // Send Welcome Email and Admin Notification (Catch errors to prevent blocking signup)
+    try {
+      await sendNotificationEmail(newDoctor.email, 'welcome_doctor', {
+        doctorName: newDoctor.name,
+        doctorEmail: newDoctor.email
+      });
+      await sendNotificationEmail('medicsonlineng@gmail.com', 'admin_signup_notification', {
+        userName: newDoctor.name,
+        userEmail: newDoctor.email,
+        userRole: 'Doctor',
+        signupTime: new Date().toLocaleString()
+      });
+    } catch (emailErr) {
+      console.error('Welcome/Admin email error on doctor self-registration:', emailErr);
+    }
+
     res.json({ success: true, message: 'Doctor Registered. Awaiting admin approval.' });
   } catch (error) {
     console.log(error);
