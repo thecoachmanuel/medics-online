@@ -354,6 +354,12 @@ export const migrationConfig: ApiMigrationConfig = {
     description: 'Admin delete staff account',
     migrated: true
   },
+  '/api/admin/profile': {
+    encrypted: true,
+    priority: 'medium',
+    description: 'Admin fetch active profile and permissions',
+    migrated: true
+  },
 
   // ALREADY ENCRYPTED: Test endpoints
   '/api/secure/dummy-data': {

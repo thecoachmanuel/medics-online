@@ -104,6 +104,9 @@ export interface IAdminContext {
   createAdminStaff: (adminData: { name: string; email: string; password?: string; permissions?: IRbacAdmin['permissions'] }) => Promise<boolean>;
   updateAdminStaff: (adminId: string, permissions?: IRbacAdmin['permissions'], isActive?: boolean) => Promise<boolean>;
   deleteAdminStaff: (adminId: string) => Promise<boolean>;
+  adminProfile: any;
+  setAdminProfile: React.Dispatch<React.SetStateAction<any>>;
+  getAdminProfileData: () => Promise<any>;
 }
 
 export interface IDoctorDashData {

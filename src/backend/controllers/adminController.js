@@ -762,6 +762,27 @@ const sendBulkEmailAdmin = async (req, res) => {
   }
 };
 
+// API to get active admin's profile and permissions (Master or staff restricted)
+const getAdminProfile = async (req, res) => {
+  try {
+    if (!req.admin) {
+      return res.json({ success: false, message: 'Admin session not found' });
+    }
+    res.json({
+      success: true,
+      admin: {
+        name: req.admin.name,
+        email: req.admin.email,
+        role: req.admin.role,
+        permissions: req.admin.permissions
+      }
+    });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
 // API to list all admin staff accounts (Master Admin restricted)
 const getAdmins = async (req, res) => {
   try {
@@ -917,6 +938,7 @@ export {
   updateEmailTemplate,
   sendAppointmentReminders,
   sendBulkEmailAdmin,
+  getAdminProfile,
   getAdmins,
   createAdmin,
   updateAdminPermissions,

@@ -54,17 +54,75 @@ const AdminContextProvider = (props: AdminContextProviderProps) => {
     }
   }, [dashData]);
 
+  const getAdminProfileData = async () => {
+    try {
+      if (!aToken) return null;
+      console.log('🏥 Admin Portal: Fetching encrypted admin profile');
+      const data = await smartApi.get('/api/admin/profile', {
+        headers: { aToken }
+      }) as any;
+      if (data.success && data.admin) {
+        setAdminProfile(data.admin);
+        localStorage.setItem('adminProfile', JSON.stringify(data.admin));
+        return data.admin;
+      }
+    } catch (error) {
+      console.error('Failed to load admin profile:', error);
+    }
+    return null;
+  };
+
   const loadAdminData = async () => {
     if (aToken) {
-      await Promise.all([
-        getAllDoctors(),
-        getAllPatients(),
-        getAllAppointments(),
-        getDashData(),
-        getEarnings(),
-        getCmsData(),
-        getAllAdmins()
-      ]);
+      // 1. Sync/fetch the admin profile permissions matrix first
+      const profile = await getAdminProfileData();
+      const permissions = profile?.permissions;
+      const isMaster = profile?.role === 'master';
+
+      const loaders: Promise<any>[] = [];
+
+      // 2. Conditionally invoke loaders based on permissions
+      if (isMaster || permissions?.doctors !== false) {
+        loaders.push(getAllDoctors());
+      } else {
+        setDoctors([]);
+      }
+
+      if (isMaster || permissions?.patients !== false) {
+        loaders.push(getAllPatients());
+      } else {
+        setPatients([]);
+      }
+
+      if (isMaster || permissions?.appointments !== false) {
+        loaders.push(getAllAppointments());
+      } else {
+        setAppointments([]);
+      }
+
+      if (isMaster || permissions?.dashboard !== false) {
+        loaders.push(getDashData());
+        loaders.push(getEarnings());
+      } else {
+        setDashData(null);
+        setEarnings(null);
+      }
+
+      if (isMaster || permissions?.settings !== false) {
+        loaders.push(getCmsData());
+      } else {
+        setCmsData(null);
+      }
+
+      if (isMaster) {
+        loaders.push(getAllAdmins());
+      } else {
+        setAdmins([]);
+      }
+
+      if (loaders.length > 0) {
+        await Promise.all(loaders);
+      }
     } else {
       setDoctors([]);
       setPatients([]);
@@ -610,7 +668,8 @@ const AdminContextProvider = (props: AdminContextProviderProps) => {
     updateAdminStaff,
     deleteAdminStaff,
     adminProfile,
-    setAdminProfile
+    setAdminProfile,
+    getAdminProfileData
   };
 
   return <AdminContext.Provider value={value}>{props.children}</AdminContext.Provider>;

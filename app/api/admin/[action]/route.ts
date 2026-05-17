@@ -34,7 +34,8 @@ import {
   getAdmins,
   createAdmin,
   updateAdminPermissions,
-  deleteAdmin
+  deleteAdmin,
+  getAdminProfile
 } from '@/backend/controllers/adminController';
 
 import { changeAvailablity } from '@/backend/controllers/doctorController';
@@ -76,7 +77,8 @@ const actionMap: Record<string, ActionConfig> = {
   'get-admins': { controller: getAdmins, auth: withAdminAuth },
   'create-admin': { controller: createAdmin, auth: withAdminAuth },
   'update-admin': { controller: updateAdminPermissions, auth: withAdminAuth },
-  'delete-admin': { controller: deleteAdmin, auth: withAdminAuth }
+  'delete-admin': { controller: deleteAdmin, auth: withAdminAuth },
+  'profile': { controller: getAdminProfile, auth: withAdminAuth }
 };
 
 async function handleAction(request: NextRequest, context: { params: Promise<{ action: string }> }) {

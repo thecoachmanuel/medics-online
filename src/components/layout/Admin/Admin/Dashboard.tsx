@@ -48,87 +48,42 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-200 mt-10 overflow-hidden shadow-sm">
-          <div className="flex items-center gap-2.5 px-6 py-4 bg-gray-50 border-b border-gray-200">
-            <img src={'/assets/list_icon.svg'} className="w-5 h-5" alt="" />
-            <p className="font-bold text-gray-800">Latest Bookings</p>
+        <div className="bg-white">
+          <div className="flex items-center gap-2.5 px-4 py-4 mt-10 rounded-t border">
+            <img src={'/assets/list_icon.svg'} alt="" />
+            <p className="font-semibold">Latest Bookings</p>
           </div>
 
-          <div className="overflow-x-auto">
-            <div className="min-w-[800px]">
-              {/* Table Header */}
-              <div className="grid grid-cols-[0.5fr_2.5fr_2.5fr_2.5fr_2fr] gap-4 py-3 px-6 bg-gray-50/50 border-b border-gray-100 text-xs font-bold text-gray-400 uppercase tracking-wider">
-                <p>#</p>
-                <p>Patient</p>
-                <p>Doctor</p>
-                <p>Date & Time</p>
-                <p className="text-right">Action</p>
-              </div>
-              
-              {/* Table Body */}
-              <div className="divide-y divide-gray-100">
-                {dashData.latestAppointments.slice(0, 5).map((item: IAppointment, index: number) => (
-                  <div className="grid grid-cols-[0.5fr_2.5fr_2.5fr_2.5fr_2fr] gap-4 items-center px-6 py-4 hover:bg-gray-50 transition-colors text-sm text-gray-600" key={index}>
-                    <p className="font-semibold text-gray-400">{index + 1}</p>
-                    
-                    {/* Patient info */}
-                    <div className="flex items-center gap-3">
-                      <img className="rounded-full w-9 h-9 object-cover border border-gray-200" src={item.userData.image} alt={item.userData.name} />
-                      <div>
-                        <p className="text-gray-800 font-bold">{item.userData.name}</p>
-                        <p className="text-xs text-gray-400">Patient</p>
-                      </div>
-                    </div>
-
-                    {/* Doctor info */}
-                    <div className="flex items-center gap-3">
-                      <img className="rounded-full w-9 h-9 object-cover border border-gray-200 bg-gray-50" src={item.docData.image} alt={item.docData.name} />
-                      <div>
-                        <p className="text-gray-800 font-bold">{item.docData.name}</p>
-                        <p className="text-xs text-gray-400">Specialist</p>
-                      </div>
-                    </div>
-
-                    {/* Date Time */}
-                    <div>
-                      <p className="font-semibold text-gray-700">{slotDateFormat(item.slotDate)}</p>
-                      <p className="text-xs text-gray-400">{item.slotTime}</p>
-                    </div>
-
-                    {/* Action / Status */}
-                    <div className="flex items-center justify-end gap-3">
-                      {item.cancelled ? (
-                        <span className="px-3 py-1 bg-red-50 text-red-600 rounded-full text-xs font-semibold border border-red-100">
-                          Cancelled
-                        </span>
-                      ) : item.isCompleted ? (
-                        <div className="flex items-center gap-2">
-                          <span className="px-3 py-1 bg-green-50 text-green-600 rounded-full text-xs font-semibold border border-green-100">
-                            Completed
-                          </span>
-                          <button 
-                            onClick={() => setShowRecords(item)}
-                            className="text-xs font-bold text-primary bg-primary/5 hover:bg-primary/10 px-3 py-1.5 rounded-lg border border-primary/10 transition-colors"
-                          >
-                            View Records
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => cancelAppointment(item._id)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-100 rounded-lg text-xs font-bold transition-colors cursor-pointer"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                          Cancel Booking
-                        </button>
-                      )}
-                    </div>
+          <div className="pt-4 border border-t-0">
+            {dashData.latestAppointments.slice(0, 5).map((item: IAppointment, index: number) => (
+              <div className="flex items-center px-6 py-3 gap-3 hover:bg-gray-100" key={index}>
+                <img className="rounded-full w-10 h-10 object-cover border" src={item.docData.image} alt="" />
+                <div className="flex-1 text-sm">
+                  <p className="text-gray-800 font-medium">{item.docData.name}</p>
+                  <p className="text-gray-600 ">Booking on {slotDateFormat(item.slotDate)} at {item.slotTime}</p>
+                </div>
+                {item.cancelled ? (
+                  <p className="text-red-400 text-xs font-medium">Cancelled</p>
+                ) : item.isCompleted ? (
+                  <div className="flex items-center gap-2">
+                    <p className="text-green-500 text-xs font-medium">Completed</p>
+                    <button 
+                      onClick={() => setShowRecords(item)}
+                      className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded border border-blue-100 hover:bg-blue-100 transition-colors"
+                    >
+                      View Records
+                    </button>
                   </div>
-                ))}
+                ) : (
+                  <img
+                    onClick={() => cancelAppointment(item._id)}
+                    className="w-10 cursor-pointer"
+                    src={'/assets/cancel_icon.svg'}
+                    alt=""
+                  />
+                )}
               </div>
-            </div>
+            ))}
           </div>
         </div>
 
