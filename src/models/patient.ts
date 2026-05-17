@@ -25,6 +25,16 @@ export interface IDoctorPatient {
   experience: string;
   about: string;
   fees: number;
+  averageRating?: number;
+  ratingsCount?: number;
+  reviews?: Array<{
+    userId: string;
+    userName: string;
+    userImage?: string;
+    rating: number;
+    comment: string;
+    date: number;
+  }>;
 }
 
 export interface IPatientAppContext {

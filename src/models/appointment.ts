@@ -39,4 +39,8 @@ export interface IAppointment {
   cancellationReason?: string;
   suggestedRebookTime?: string;
   cancelledBy?: string;
+  isRated?: boolean;
+  rating?: number;
+  reviewComment?: string;
+  date: number;
 }

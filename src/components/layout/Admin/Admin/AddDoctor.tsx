@@ -10,6 +10,7 @@ import { smartApi } from '@/utils/smartApi';
 
 const AddDoctor = () => {
   const [docImg, setDocImg] = useState<File | null>(null);
+  const [title, setTitle] = useState<string>('Dr.');
   const [name, setName] = useState<string>('');
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
@@ -34,8 +35,19 @@ const AddDoctor = () => {
 
       const formData = new FormData();
 
+      const formatDoctorName = (titleVal: string, nameVal: string) => {
+        const t = titleVal.trim();
+        const n = nameVal.trim();
+        if (!t) return n;
+        const prefix = t.endsWith(' ') ? t : `${t} `;
+        if (n.startsWith(prefix)) {
+          return n;
+        }
+        return prefix + n;
+      };
+
       formData.append('image', docImg);
-      formData.append('name', name);
+      formData.append('name', formatDoctorName(title, name));
       formData.append('email', email);
       formData.append('password', password);
       formData.append('experience', experience);
@@ -56,6 +68,7 @@ const AddDoctor = () => {
       if (data.success) {
         toast.success(data.message);
         setDocImg(null);
+        setTitle('Dr.');
         setName('');
         setPassword('');
         setEmail('');
@@ -113,6 +126,18 @@ const AddDoctor = () => {
 
         <div className="flex flex-col lg:flex-row items-start gap-10 text-gray-600">
           <div className="w-full lg:flex-1 flex flex-col gap-4">
+            <div className="flex-1 flex flex-col gap-1">
+              <p>Title</p>
+              <input
+                onChange={(e) => setTitle(e.target.value)}
+                value={title}
+                className="border rounded px-3 py-2"
+                type="text"
+                placeholder="Dr., Prof., etc."
+                required
+              />
+            </div>
+
             <div className="flex-1 flex flex-col gap-1">
               <p>Your name</p>
               <input

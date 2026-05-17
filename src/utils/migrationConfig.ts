@@ -55,6 +55,12 @@ export const migrationConfig: ApiMigrationConfig = {
     description: 'Appointment cancellation',
     migrated: true
   },
+  '/api/user/rate-doctor': {
+    encrypted: true,
+    priority: 'medium',
+    description: 'Patient rates and comments on doctor performance',
+    migrated: true
+  },
   '/api/doctor/appointments': {
     encrypted: true, // STEP 5: MIGRATED! ✅
     priority: 'medium',

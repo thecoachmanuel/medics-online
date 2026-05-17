@@ -398,6 +398,89 @@ const verifyPaystack = async (req, res) => {
   }
 };
 
+// API to rate and comment on doctor after completed appointment
+const rateDoctor = async (req, res) => {
+  try {
+    const { userId, appointmentId, rating, comment } = req.body;
+
+    if (!appointmentId || !rating) {
+      return res.json({ success: false, message: 'Missing Details' });
+    }
+
+    const ratingVal = Number(rating);
+    if (isNaN(ratingVal) || ratingVal < 1 || ratingVal > 5) {
+      return res.json({ success: false, message: 'Rating must be a number between 1 and 5' });
+    }
+
+    // Find the appointment
+    const appointment = await appointmentModel.findById(appointmentId);
+    if (!appointment) {
+      return res.json({ success: false, message: 'Appointment not found' });
+    }
+
+    // Check if the appointment belongs to the current user
+    if (appointment.userId !== userId) {
+      return res.json({ success: false, message: 'Unauthorized' });
+    }
+
+    // Check if the appointment is completed
+    if (!appointment.isCompleted) {
+      return res.json({ success: false, message: 'You can only rate a doctor after a completed appointment' });
+    }
+
+    // Check if already rated
+    if (appointment.isRated) {
+      return res.json({ success: false, message: 'You have already rated this appointment' });
+    }
+
+    // Fetch the doctor
+    const doctor = await doctorModel.findById(appointment.docId);
+    if (!doctor) {
+      return res.json({ success: false, message: 'Doctor not found' });
+    }
+
+    // Fetch patient name/image for the review
+    const user = await userModel.findById(userId);
+    const userName = user ? user.name : 'Anonymous Patient';
+    const userImage = user ? user.image : '';
+
+    // Update appointment
+    appointment.isRated = true;
+    appointment.rating = ratingVal;
+    appointment.reviewComment = comment || '';
+    await appointment.save();
+
+    // Add review to doctor
+    const newReview = {
+      userId,
+      userName,
+      userImage,
+      rating: ratingVal,
+      comment: comment || '',
+      date: Date.now()
+    };
+
+    if (!doctor.reviews) {
+      doctor.reviews = [];
+    }
+
+    doctor.reviews.push(newReview);
+
+    // Calculate new averageRating and ratingsCount
+    const totalReviews = doctor.reviews.length;
+    const totalRatingSum = doctor.reviews.reduce((acc, curr) => acc + curr.rating, 0);
+    doctor.averageRating = Number((totalRatingSum / totalReviews).toFixed(1));
+    doctor.ratingsCount = totalReviews;
+
+    await doctor.save();
+
+    res.json({ success: true, message: 'Doctor rated successfully!' });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
 export {
   loginUser,
   registerUser,
@@ -408,5 +491,6 @@ export {
   cancelAppointment,
   rescheduleAppointment,
   paymentPaystack,
-  verifyPaystack
+  verifyPaystack,
+  rateDoctor
 };

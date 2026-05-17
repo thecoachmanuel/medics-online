@@ -11,6 +11,7 @@ const DoctorRegister = () => {
   const router = useRouter();
   
   const [formData, setFormData] = useState({
+    title: 'Dr.',
     name: '',
     email: '',
     password: '',
@@ -79,7 +80,19 @@ const DoctorRegister = () => {
     try {
       // Prepare form data
       const data = new FormData();
-      data.append('name', formData.name);
+      
+      const formatDoctorName = (titleVal: string, nameVal: string) => {
+        const t = titleVal.trim();
+        const n = nameVal.trim();
+        if (!t) return n;
+        const prefix = t.endsWith(' ') ? t : `${t} `;
+        if (n.startsWith(prefix)) {
+          return n;
+        }
+        return prefix + n;
+      };
+
+      data.append('name', formatDoctorName(formData.title, formData.name));
       data.append('email', formData.email);
       data.append('password', formData.password);
       data.append('speciality', formData.speciality);
@@ -91,7 +104,9 @@ const DoctorRegister = () => {
         line1: formData.addressLine1,
         line2: formData.addressLine2
       }));
-      data.append('image', formData.image);
+      if (formData.image) {
+        data.append('image', formData.image);
+      }
       
       // Submit registration
       const response: any = await smartApi.post('/api/doctor/register', data);
@@ -118,6 +133,19 @@ const DoctorRegister = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Personal Information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                <input
+                  type="text"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="e.g. Dr., Prof."
+                  required
+                />
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
                 <input

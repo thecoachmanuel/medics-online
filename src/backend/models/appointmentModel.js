@@ -23,6 +23,9 @@ const appointmentSchema = new mongoose.Schema({
   cancellationReason: { type: String, default: '' },
   suggestedRebookTime: { type: String, default: '' },
   cancelledBy: { type: String, default: '' },
+  isRated: { type: Boolean, default: false },
+  rating: { type: Number },
+  reviewComment: { type: String },
   chatHistory: [
     {
       sender: { type: String },

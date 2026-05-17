@@ -234,6 +234,36 @@ const Appointment = () => {
               </button>
             </div>
 
+            {/* Doctor Average Star Rating */}
+            <div className="flex items-center gap-2 mt-1">
+              <div className="flex items-center gap-0.5">
+                {[1, 2, 3, 4, 5].map((star) => {
+                  const rating = docInfo.averageRating || 0;
+                  const isFilled = star <= Math.round(rating);
+                  return (
+                    <svg
+                      key={star}
+                      className={`h-5 w-5 ${isFilled ? 'text-amber-400 fill-current' : 'text-gray-200'}`}
+                      viewBox="0 0 20 20"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1"
+                    >
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  );
+                })}
+              </div>
+              <span className="text-sm font-semibold text-gray-700">
+                {docInfo.averageRating ? `${docInfo.averageRating} / 5` : 'No reviews yet'}
+              </span>
+              {docInfo.ratingsCount ? (
+                <span className="text-xs text-gray-400 font-medium">
+                  ({docInfo.ratingsCount} {docInfo.ratingsCount === 1 ? 'review' : 'reviews'})
+                </span>
+              ) : null}
+            </div>
+
             {/* ----- Doc About ----- */}
             <div>
               <p className="flex items-center gap-1 text-sm font-medium text-[#262626] mt-3">
@@ -355,6 +385,118 @@ const Appointment = () => {
             rescheduleId ? 'Reschedule appointment' : 'Pay & Book Appointment'
           )}
         </button>
+      </div>
+
+      {/* Reviews & Comments Section */}
+      <div className="mt-12 bg-white rounded-3xl border border-[#ADADAD]/30 p-8 sm:p-10 shadow-sm">
+        <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+          <span>Patient Reviews</span>
+          {docInfo.ratingsCount ? (
+            <span className="text-sm font-semibold px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-100 text-amber-700">
+              {docInfo.averageRating} ★ ({docInfo.ratingsCount})
+            </span>
+          ) : null}
+        </h3>
+
+        {!docInfo.reviews || docInfo.reviews.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center bg-gray-50/50 rounded-2xl border border-dashed border-gray-200">
+            <div className="w-16 h-16 rounded-full bg-amber-50 flex items-center justify-center text-amber-400 mb-3">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+              </svg>
+            </div>
+            <p className="text-gray-600 font-semibold">No patient reviews yet</p>
+            <p className="text-gray-400 text-sm mt-1 max-w-xs">Reviews can only be written by verified patients after a completed appointment.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_2fr] gap-10">
+            {/* Left side: Aggregated rating cards */}
+            <div className="space-y-6">
+              <div className="p-6 bg-gradient-to-br from-amber-50 to-orange-50/30 border border-amber-100 rounded-2xl text-center space-y-2">
+                <p className="text-gray-500 text-sm font-semibold uppercase tracking-wider">Overall Rating</p>
+                <div className="flex items-baseline justify-center gap-1.5">
+                  <span className="text-5xl font-extrabold text-amber-900">{docInfo.averageRating}</span>
+                  <span className="text-gray-400 font-medium">/ 5</span>
+                </div>
+                <div className="flex justify-center gap-0.5">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <svg
+                      key={star}
+                      className={`h-5 w-5 ${star <= Math.round(docInfo.averageRating || 0) ? 'text-amber-400 fill-current' : 'text-gray-200'}`}
+                      viewBox="0 0 20 20"
+                      fill="none"
+                      stroke="currentColor"
+                    >
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500 font-medium mt-1">Based on {docInfo.ratingsCount} verified reviews</p>
+              </div>
+
+              {/* Progress bars chart */}
+              <div className="space-y-3 bg-gray-50/50 p-6 rounded-2xl border border-gray-100">
+                {[5, 4, 3, 2, 1].map((ratingVal) => {
+                  const count = docInfo.reviews?.filter((r) => r.rating === ratingVal).length || 0;
+                  const total = docInfo.reviews?.length || 1;
+                  const pct = Math.round((count / total) * 100);
+                  return (
+                    <div key={ratingVal} className="flex items-center gap-3 text-sm">
+                      <span className="w-3 font-semibold text-gray-600 flex justify-end">{ratingVal}</span>
+                      <span className="text-amber-400">★</span>
+                      <div className="flex-1 h-2.5 bg-gray-200 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-amber-400 rounded-full transition-all duration-500"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                      <span className="w-10 text-gray-400 text-xs font-semibold flex justify-end">{pct}%</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Right side: Reviews list */}
+            <div className="space-y-5 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+              {docInfo.reviews.map((review, rIdx) => {
+                const dateStr = new Date(review.date).toLocaleDateString([], {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric'
+                });
+                return (
+                  <div key={rIdx} className="p-6 bg-white border border-gray-150 rounded-2xl space-y-3 shadow-sm hover:shadow transition-shadow duration-200">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="relative w-10 h-10 rounded-full bg-gradient-to-tr from-primary/10 to-primary/20 flex items-center justify-center text-primary font-bold text-sm shadow-sm overflow-hidden flex-shrink-0">
+                          {review.userImage ? (
+                            <img className="w-full h-full object-cover" src={review.userImage} alt={review.userName} />
+                          ) : (
+                            review.userName.charAt(0).toUpperCase()
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-bold text-gray-800 text-sm">{review.userName}</p>
+                          <p className="text-gray-400 text-xs font-semibold">{dateStr}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-0.5 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-100/50">
+                        <span className="text-amber-800 font-extrabold text-xs">{review.rating}</span>
+                        <span className="text-amber-400 text-sm">★</span>
+                      </div>
+                    </div>
+
+                    <p className="text-gray-600 text-sm leading-relaxed italic">
+                      "{review.comment || 'No written feedback provided, just a star rating.'}"
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Listing Releated Doctors */}

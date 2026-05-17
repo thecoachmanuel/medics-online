@@ -17,7 +17,50 @@ const MyAppointments = () => {
   const [appointments, setAppointments] = useState<IAppointment[]>([]);
   const [payment, setPayment] = useState<string>('');
   const [showRecords, setShowRecords] = useState<IAppointment | null>(null);
+  const [ratingAppointment, setRatingAppointment] = useState<IAppointment | null>(null);
+  const [ratingValue, setRatingValue] = useState<number>(5);
+  const [hoverRating, setHoverRating] = useState<number | null>(null);
+  const [commentText, setCommentText] = useState<string>('');
+  const [isSubmittingRating, setIsSubmittingRating] = useState<boolean>(false);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'upcoming' | 'past' | 'cancelled'>('all');
   const router = useRouter();
+
+  const isSlotPast = (slotDate: string, slotTime: string) => {
+    try {
+      const dateArray = slotDate.split('_');
+      const day = parseInt(dateArray[0]);
+      const month = parseInt(dateArray[1]) - 1;
+      const year = parseInt(dateArray[2]);
+
+      let hours = 0;
+      let minutes = 0;
+      
+      const ampmMatch = slotTime.match(/(AM|PM)/i);
+      const timeParts = slotTime.replace(/(AM|PM)/i, '').trim().split(':');
+      
+      if (timeParts.length >= 2) {
+        hours = parseInt(timeParts[0]);
+        minutes = parseInt(timeParts[1]);
+        if (ampmMatch) {
+          const period = ampmMatch[0].toUpperCase();
+          if (period === 'PM' && hours < 12) hours += 12;
+          if (period === 'AM' && hours === 12) hours = 0;
+        }
+      }
+      const appointmentDate = new Date(year, month, day, hours, minutes);
+      return appointmentDate.getTime() < Date.now();
+    } catch {
+      return false;
+    }
+  };
+
+  const displayedAppointments = appointments.filter((item) => {
+    if (statusFilter === 'all') return true;
+    if (statusFilter === 'cancelled') return item.cancelled;
+    const isPast = item.isCompleted || isSlotPast(item.slotDate, item.slotTime);
+    if (statusFilter === 'past') return isPast;
+    return !item.cancelled && !item.isCompleted && !isPast;
+  });
 
   const months = [
     'Jan',
@@ -124,6 +167,46 @@ const MyAppointments = () => {
     }
   };
 
+  // Function to submit doctor rating & comment Using API
+  const submitDoctorRating = async () => {
+    if (!ratingAppointment) return;
+    setIsSubmittingRating(true);
+    try {
+      console.log('⭐️ Rating Doctor...');
+      const data = await smartApi.post('/api/user/rate-doctor', {
+        appointmentId: ratingAppointment._id,
+        rating: ratingValue,
+        comment: commentText
+      }, {
+        headers: { token }
+      }) as { success: boolean; message?: string };
+
+      if (data.success) {
+        toast.success(data.message || 'Thank you for your rating!');
+        setRatingAppointment(null);
+        setCommentText('');
+        setRatingValue(5);
+        getUserAppointments(); // reload list
+      } else {
+        toast.error(data.message || 'Failed to submit rating');
+      }
+    } catch (error: unknown) {
+      console.error('❌ Rating error:', error);
+      if (
+        error &&
+        typeof error === 'object' &&
+        'message' in error &&
+        typeof (error as { message?: unknown }).message === 'string'
+      ) {
+        toast.error((error as { message: string }).message);
+      } else {
+        toast.error('An error occurred while submitting rating');
+      }
+    } finally {
+      setIsSubmittingRating(false);
+    }
+  };
+
   // Function to cancel appointment Using API
   const cancelAppointment = async (appointmentId: string) => {
     try {
@@ -191,9 +274,41 @@ const MyAppointments = () => {
 
   return (
     <div>
-      <p className="pb-3 mt-12 text-lg font-medium text-gray-600 border-b">My appointments</p>
+      <div className="pb-3 mt-12 border-b">
+        <p className="text-xl font-bold text-gray-800">My Consultations</p>
+        <p className="text-sm text-gray-500 mb-4">View and track your booking schedules</p>
+        
+        {/* Status Tabs */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1.5 scrollbar-thin">
+          {(['all', 'upcoming', 'past', 'cancelled'] as const).map((status) => {
+            const count = appointments.filter((item) => {
+              if (status === 'all') return true;
+              if (status === 'cancelled') return item.cancelled;
+              const isPast = item.isCompleted || isSlotPast(item.slotDate, item.slotTime);
+              if (status === 'past') return isPast;
+              return !item.cancelled && !item.isCompleted && !isPast;
+            }).length;
+
+            const label = status.charAt(0).toUpperCase() + status.slice(1);
+
+            return (
+              <button
+                key={status}
+                onClick={() => setStatusFilter(status)}
+                className={`px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer ${
+                  statusFilter === status
+                    ? 'bg-primary text-white shadow-sm'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900 border border-transparent hover:border-gray-200'
+                }`}
+              >
+                {label} ({count})
+              </button>
+            );
+          })}
+        </div>
+      </div>
       <div className="">
-        {appointments.map((item: IAppointment, index: number) => (
+        {displayedAppointments.map((item: IAppointment, index: number) => (
           <div
             key={index}
             className="grid grid-cols-[1fr_2fr] gap-4 sm:flex sm:gap-6 py-4 border-b"
@@ -379,6 +494,22 @@ const MyAppointments = () => {
                   >
                     View Records
                   </button>
+                  {item.isRated ? (
+                    <div className="flex items-center justify-center gap-1 sm:min-w-48 py-2 text-xs font-semibold text-amber-500 bg-amber-50 border border-amber-200 rounded-lg">
+                      <span>Rated: {item.rating}/5</span>
+                      <span className="text-amber-400">★</span>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setRatingAppointment(item)}
+                      className="sm:min-w-48 py-2 border border-amber-500 rounded text-amber-600 hover:bg-amber-600 hover:text-white transition-all duration-300 flex items-center justify-center gap-1.5 font-medium cursor-pointer"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                      Rate & Review
+                    </button>
+                  )}
                 </div>
               )}
 
@@ -457,6 +588,106 @@ const MyAppointments = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                   </svg>
                   Print Record
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Rating & Review Modal */}
+      {ratingAppointment && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="w-full max-w-lg bg-white rounded-3xl overflow-hidden shadow-2xl transition-all scale-100 hover:scale-[1.01] duration-300">
+            <div className="p-8 space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-500 shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900">Rate & Review Doctor</h2>
+                    <p className="text-gray-500 text-sm">Dr. {ratingAppointment.docData.name}</p>
+                  </div>
+                </div>
+                <button onClick={() => setRatingAppointment(null)} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l18 18" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Stars Selection */}
+              <div className="flex flex-col items-center justify-center py-4 bg-amber-50/50 rounded-2xl border border-amber-100/50 space-y-2">
+                <span className="text-xs font-semibold text-amber-700 uppercase tracking-wider">Tap to select rating</span>
+                <div className="flex items-center gap-1.5">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setRatingValue(star)}
+                      onMouseEnter={() => setHoverRating(star)}
+                      onMouseLeave={() => setHoverRating(null)}
+                      className="p-1 transition-transform hover:scale-125 duration-200 cursor-pointer"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className={`h-9 w-9 ${(hoverRating !== null ? star <= hoverRating : star <= ratingValue) ? 'text-amber-400 fill-current' : 'text-gray-300'}`}
+                        viewBox="0 0 20 20"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1"
+                      >
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    </button>
+                  ))}
+                </div>
+                <span className="text-sm font-bold text-amber-800">
+                  {ratingValue === 5 && 'Excellent (5/5)'}
+                  {ratingValue === 4 && 'Very Good (4/5)'}
+                  {ratingValue === 3 && 'Good (3/5)'}
+                  {ratingValue === 2 && 'Fair (2/5)'}
+                  {ratingValue === 1 && 'Poor (1/5)'}
+                </span>
+              </div>
+
+              {/* Comment field */}
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-700 block">Share your feedback</label>
+                <textarea
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  placeholder="Tell us about your consultation experience..."
+                  rows={4}
+                  className="w-full p-4 border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all placeholder:text-gray-400 bg-gray-50/50"
+                />
+              </div>
+
+              <div className="pt-2 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setRatingAppointment(null)}
+                  className="flex-1 h-12 border border-gray-200 text-gray-700 rounded-2xl font-semibold hover:bg-gray-50 transition-all flex items-center justify-center cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={isSubmittingRating}
+                  onClick={submitDoctorRating}
+                  className={`flex-1 h-12 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer ${isSubmittingRating ? 'opacity-70 cursor-not-allowed' : ''}`}
+                >
+                  {isSubmittingRating ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      Submitting...
+                    </>
+                  ) : (
+                    'Submit Feedback'
+                  )}
                 </button>
               </div>
             </div>

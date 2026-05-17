@@ -15,7 +15,22 @@ const doctorSchema = new mongoose.Schema(
     fees: { type: Number, required: true },
     slots_booked: { type: Object, default: {} },
     address: { type: Object, required: true },
-    date: { type: Number, required: true }
+    date: { type: Number, required: true },
+    averageRating: { type: Number, default: 0 },
+    ratingsCount: { type: Number, default: 0 },
+    reviews: {
+      type: [
+        {
+          userId: { type: String, required: true },
+          userName: { type: String, required: true },
+          userImage: { type: String },
+          rating: { type: Number, required: true },
+          comment: { type: String },
+          date: { type: Number, default: Date.now }
+        }
+      ],
+      default: []
+    }
   },
   { minimize: false }
 );

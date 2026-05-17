@@ -1,7 +1,7 @@
 "use client";
 
 import { useContext, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'react-toastify';
 
 import { DoctorContext } from '@/context/DoctorContext';
@@ -23,6 +23,60 @@ const DoctorAppointments = () => {
   } = useContext(DoctorContext) as IDoctorContext;
   const router = useRouter();
   
+  const searchParams = useSearchParams();
+  const filterParam = searchParams ? searchParams.get('filter') : 'all';
+  const [filterType, setFilterType] = useState<'all' | 'latest'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'upcoming' | 'past' | 'cancelled'>('all');
+
+  useEffect(() => {
+    if (filterParam === 'latest') {
+      setFilterType('latest');
+    } else {
+      setFilterType('all');
+    }
+  }, [filterParam]);
+
+  const isSlotPast = (slotDate: string, slotTime: string) => {
+    try {
+      const dateArray = slotDate.split('_');
+      const day = parseInt(dateArray[0]);
+      const month = parseInt(dateArray[1]) - 1;
+      const year = parseInt(dateArray[2]);
+
+      let hours = 0;
+      let minutes = 0;
+      
+      const ampmMatch = slotTime.match(/(AM|PM)/i);
+      const timeParts = slotTime.replace(/(AM|PM)/i, '').trim().split(':');
+      
+      if (timeParts.length >= 2) {
+        hours = parseInt(timeParts[0]);
+        minutes = parseInt(timeParts[1]);
+        if (ampmMatch) {
+          const period = ampmMatch[0].toUpperCase();
+          if (period === 'PM' && hours < 12) hours += 12;
+          if (period === 'AM' && hours === 12) hours = 0;
+        }
+      }
+      const appointmentDate = new Date(year, month, day, hours, minutes);
+      return appointmentDate.getTime() < Date.now();
+    } catch {
+      return false;
+    }
+  };
+
+  const slicedAppointments = filterType === 'latest'
+    ? [...appointments].sort((a, b) => b.date - a.date).slice(0, 10)
+    : appointments;
+
+  const displayedAppointments = slicedAppointments.filter((item) => {
+    if (statusFilter === 'all') return true;
+    if (statusFilter === 'cancelled') return item.cancelled;
+    const isPast = item.isCompleted || isSlotPast(item.slotDate, item.slotTime);
+    if (statusFilter === 'past') return isPast;
+    return !item.cancelled && !item.isCompleted && !isPast;
+  });
+
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [cancellationReason, setCancellationReason] = useState('');
   const [suggestedRebookTime, setSuggestedRebookTime] = useState('');
@@ -120,7 +174,61 @@ const DoctorAppointments = () => {
 
   return (
     <div className="w-full max-w-6xl m-5 ">
-      <p className="mb-3 text-lg font-medium">All Appointments</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        <div>
+          <p className="text-xl font-bold text-gray-800">
+            {filterType === 'latest' ? 'Latest Bookings' : 'All Bookings'}
+          </p>
+          <p className="text-sm text-gray-500">
+            {filterType === 'latest' ? 'Showing your most recent 10 consultations' : 'Showing all your registered patient consultations'}
+          </p>
+        </div>
+        
+        {/* Toggle Tabs */}
+        <div className="flex bg-gray-100 p-1 rounded-xl border border-gray-200 shadow-sm self-start md:self-auto">
+          <button
+            onClick={() => setFilterType('all')}
+            className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-200 cursor-pointer ${filterType === 'all' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-800'}`}
+          >
+            All Bookings ({appointments.length})
+          </button>
+          <button
+            onClick={() => setFilterType('latest')}
+            className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-200 cursor-pointer ${filterType === 'latest' ? 'bg-white text-primary shadow-sm' : 'text-gray-500 hover:text-gray-800'}`}
+          >
+            Latest Bookings (Last 10)
+          </button>
+        </div>
+      </div>
+
+      {/* Status Sub-Tabs */}
+      <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-1.5 scrollbar-thin">
+        {(['all', 'upcoming', 'past', 'cancelled'] as const).map((status) => {
+          const count = slicedAppointments.filter((item) => {
+            if (status === 'all') return true;
+            if (status === 'cancelled') return item.cancelled;
+            const isPast = item.isCompleted || isSlotPast(item.slotDate, item.slotTime);
+            if (status === 'past') return isPast;
+            return !item.cancelled && !item.isCompleted && !isPast;
+          }).length;
+
+          const label = status.charAt(0).toUpperCase() + status.slice(1);
+
+          return (
+            <button
+              key={status}
+              onClick={() => setStatusFilter(status)}
+              className={`px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer ${
+                statusFilter === status
+                  ? 'bg-primary text-white shadow-sm'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900 border border-transparent hover:border-gray-200'
+              }`}
+            >
+              {label} ({count})
+            </button>
+          );
+        })}
+      </div>
 
       <div className="bg-white border rounded text-sm max-h-[80vh] overflow-y-scroll">
         <div className="max-sm:hidden grid grid-cols-[0.5fr_2fr_0.5fr_1fr_2fr_2fr_1fr_1fr] gap-1 py-3 px-6 border-b">
@@ -133,7 +241,7 @@ const DoctorAppointments = () => {
           <p>Fees</p>
           <p>Action</p>
         </div>
-        {appointments.map((item: IAppointment, index: number) => (
+        {displayedAppointments.map((item: IAppointment, index: number) => (
           <div
             className="flex flex-wrap justify-between max-sm:gap-5 max-sm:text-base sm:grid grid-cols-[0.5fr_2fr_0.5fr_1fr_2fr_2fr_1fr_1fr] gap-1 items-center text-gray-500 py-3 px-6 border-b hover:bg-gray-50"
             key={index}

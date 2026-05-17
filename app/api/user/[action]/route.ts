@@ -16,7 +16,8 @@ import {
   cancelAppointment,
   rescheduleAppointment,
   paymentPaystack,
-  verifyPaystack
+  verifyPaystack,
+  rateDoctor
 } from '@/backend/controllers/userController';
 
 type ActionConfig = {
@@ -34,7 +35,8 @@ const actionMap: Record<string, ActionConfig> = {
   'cancel-appointment': { controller: cancelAppointment, auth: withUserAuth },
   'reschedule-appointment': { controller: rescheduleAppointment, auth: withUserAuth },
   'payment-paystack': { controller: paymentPaystack, auth: withUserAuth },
-  'verify-paystack': { controller: verifyPaystack, auth: withUserAuth }
+  'verify-paystack': { controller: verifyPaystack, auth: withUserAuth },
+  'rate-doctor': { controller: rateDoctor, auth: withUserAuth }
 };
 
 async function handleAction(request: NextRequest, context: { params: Promise<{ action: string }> }) {
