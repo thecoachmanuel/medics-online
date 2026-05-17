@@ -19,6 +19,7 @@ export interface IDoctorAdmin {
   bankName?: string;
   accountNumber?: string;
   accountName?: string;
+  phone?: string;
 }
 
 export interface IPatientAdmin {

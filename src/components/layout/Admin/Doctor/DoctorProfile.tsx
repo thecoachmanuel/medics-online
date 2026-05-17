@@ -148,6 +148,7 @@ const DoctorProfile = () => {
         fees: profileData.fees,
         about: profileData.about,
         available: profileData.available,
+        phone: profileData.phone || '',
         workingHoursStart: profileData.workingHours && profileData.workingHours[0]?.start || '10:00',
         workingHoursEnd: profileData.workingHours && profileData.workingHours[0]?.end || '22:00',
         workingHours: profileData.workingHours || [],
@@ -266,6 +267,31 @@ const DoctorProfile = () => {
                   />
                 ) : (
                   profileData.fees
+                )}
+              </span>
+            </p>
+
+            <p className="text-gray-600 font-medium mt-4">
+              Mobile / Phone:{' '}
+              <span className="text-gray-800">
+                {isEdit ? (
+                  <input
+                    type="tel"
+                    onChange={(e) =>
+                      setProfileData((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              phone: e.target.value
+                            }
+                          : null
+                      )
+                    }
+                    className="border rounded px-2 py-0.5 text-sm outline-primary"
+                    value={profileData.phone || ''}
+                  />
+                ) : (
+                  profileData.phone || 'Not set'
                 )}
               </span>
             </p>

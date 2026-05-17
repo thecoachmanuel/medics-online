@@ -22,6 +22,7 @@ const AddDoctor = () => {
   const [degree, setDegree] = useState<string>('');
   const [address1, setAddress1] = useState<string>('');
   const [address2, setAddress2] = useState<string>('');
+  const [phone, setPhone] = useState<string>('');
 
   const { aToken } = useContext(AdminContext) as IAdminContext;
 
@@ -49,6 +50,7 @@ const AddDoctor = () => {
       formData.append('image', docImg);
       formData.append('name', formatDoctorName(title, name));
       formData.append('email', email);
+      formData.append('phone', phone);
       formData.append('password', password);
       formData.append('experience', experience);
       formData.append('fees', fees);
@@ -72,6 +74,7 @@ const AddDoctor = () => {
         setName('');
         setPassword('');
         setEmail('');
+        setPhone('');
         setAddress1('');
         setAddress2('');
         setDegree('');
@@ -158,6 +161,18 @@ const AddDoctor = () => {
                 className="border rounded px-3 py-2"
                 type="email"
                 placeholder="Email"
+                required
+              />
+            </div>
+
+            <div className="flex-1 flex flex-col gap-1">
+              <p>Mobile / Phone Number</p>
+              <input
+                onChange={(e) => setPhone(e.target.value)}
+                value={phone}
+                className="border rounded px-3 py-2"
+                type="tel"
+                placeholder="Mobile number"
                 required
               />
             </div>

@@ -44,6 +44,7 @@ export interface IDoctorPatient {
   workingHoursEnd?: string;
   workingHours?: { start: string; end: string }[];
   excludedDays?: number[];
+  phone?: string;
 }
 
 export interface IPatientAppContext {

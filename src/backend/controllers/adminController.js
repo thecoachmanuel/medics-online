@@ -75,7 +75,7 @@ const appointmentCancel = async (req, res) => {
 // API for adding Doctor
 const addDoctor = async (req, res) => {
   try {
-    const { name, email, password, speciality, degree, experience, about, fees, address } =
+    const { name, email, password, speciality, degree, experience, about, fees, address, phone } =
       req.body;
     const imageFile = req.file;
 
@@ -89,7 +89,8 @@ const addDoctor = async (req, res) => {
       !experience ||
       !about ||
       !fees ||
-      !address
+      !address ||
+      !phone
     ) {
       return res.json({ success: false, message: 'Missing Details' });
     }
@@ -125,6 +126,7 @@ const addDoctor = async (req, res) => {
       about,
       fees,
       address: JSON.parse(address),
+      phone: phone || '',
       date: Date.now(),
       isApproved: true // Doctors created by admin are auto-approved
     };
@@ -234,7 +236,7 @@ const deleteDoctor = async (req, res) => {
 // API to edit doctor profile
 const editDoctor = async (req, res) => {
   try {
-    const { docId, name, email, speciality, degree, experience, about, fees, address } = req.body;
+    const { docId, name, email, speciality, degree, experience, about, fees, address, phone } = req.body;
     const imageFile = req.file;
 
     if (!docId) {
@@ -255,6 +257,7 @@ const editDoctor = async (req, res) => {
     if (about) updateData.about = about;
     if (fees) updateData.fees = fees;
     if (address) updateData.address = JSON.parse(address);
+    if (phone !== undefined) updateData.phone = phone;
 
     if (imageFile) {
       const imageUpload = await cloudinary.uploader.upload(imageFile.path, {

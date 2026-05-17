@@ -15,6 +15,7 @@ const DoctorRegister = () => {
     title: 'Dr.',
     name: '',
     email: '',
+    phone: '',
     password: '',
     confirmPassword: '',
     speciality: '',
@@ -115,8 +116,8 @@ const DoctorRegister = () => {
 
   const validateStep = () => {
     if (step === 1) {
-      if (!formData.name.trim() || !formData.email.trim() || !formData.password || !formData.confirmPassword) {
-        toast.warning('Please fill in all account credentials');
+      if (!formData.name.trim() || !formData.email.trim() || !formData.phone.trim() || !formData.password || !formData.confirmPassword) {
+        toast.warning('Please fill in all account credentials including phone number');
         return false;
       }
       if (formData.password !== formData.confirmPassword) {
@@ -183,6 +184,7 @@ const DoctorRegister = () => {
 
       data.append('name', formatDoctorName(formData.title, formData.name));
       data.append('email', formData.email);
+      data.append('phone', formData.phone);
       data.append('password', formData.password);
       data.append('speciality', formData.speciality);
       data.append('degree', formData.degree);
@@ -324,6 +326,19 @@ const DoctorRegister = () => {
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary"
                     placeholder="name@hospital.com"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1.5">Mobile / Phone Number</label>
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                    placeholder="e.g. +234 801 234 5678"
                     required
                   />
                 </div>

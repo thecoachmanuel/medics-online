@@ -49,7 +49,8 @@ const doctorSchema = new mongoose.Schema(
     excludedDays: { type: [Number], default: [] },
     bankName: { type: String, default: '' },
     accountNumber: { type: String, default: '' },
-    accountName: { type: String, default: '' }
+    accountName: { type: String, default: '' },
+    phone: { type: String, default: '' }
   },
   { minimize: false }
 );

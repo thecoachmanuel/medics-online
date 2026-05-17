@@ -22,6 +22,7 @@ const EditDoctor = () => {
   const [degree, setDegree] = useState<string>('');
   const [address1, setAddress1] = useState<string>('');
   const [address2, setAddress2] = useState<string>('');
+  const [phone, setPhone] = useState<string>('');
 
   const { doctors, editDoctor } = useContext(AdminContext) as IAdminContext;
 
@@ -39,6 +40,7 @@ const EditDoctor = () => {
         setDegree(doctor.degree);
         setAddress1(doctor.address?.line1 || '');
         setAddress2(doctor.address?.line2 || '');
+        setPhone(doctor.phone || '');
         setImgPreview(doctor.image);
       }
     }
@@ -53,6 +55,7 @@ const EditDoctor = () => {
       formData.append('docId', stringDocId || '');
       formData.append('name', name);
       formData.append('email', email);
+      formData.append('phone', phone);
       formData.append('experience', experience);
       formData.append('fees', fees);
       formData.append('about', about);
@@ -123,6 +126,18 @@ const EditDoctor = () => {
                 className="border rounded px-3 py-2"
                 type="email"
                 placeholder="Email"
+                required
+              />
+            </div>
+
+            <div className="flex-1 flex flex-col gap-1">
+              <p>Mobile / Phone Number</p>
+              <input
+                onChange={(e) => setPhone(e.target.value)}
+                value={phone}
+                className="border rounded px-3 py-2"
+                type="tel"
+                placeholder="Mobile number"
                 required
               />
             </div>

@@ -39,7 +39,7 @@ const loginDoctor = async (req, res) => {
 // API for doctor registration
 const registerDoctor = async (req, res) => {
   try {
-    const { name, email, password, speciality, degree, experience, about, fees, address, workingHoursStart, workingHoursEnd, excludedDays } =
+    const { name, email, password, speciality, degree, experience, about, fees, address, workingHoursStart, workingHoursEnd, excludedDays, phone } =
       req.body;
     const imageFile = req.file;
 
@@ -53,7 +53,8 @@ const registerDoctor = async (req, res) => {
       !experience ||
       !about ||
       !fees ||
-      !address
+      !address ||
+      !phone
     ) {
       return res.json({ success: false, message: 'Missing Details' });
     }
@@ -107,6 +108,7 @@ const registerDoctor = async (req, res) => {
       workingHoursEnd: workingHoursEnd || '22:00',
       workingHours: parsedWorkingHours,
       excludedDays: parsedExcludedDays,
+      phone: phone || '',
       date: Date.now(),
       isApproved: false // Doctors registered by themselves need approval
     };
@@ -241,7 +243,7 @@ const doctorProfile = async (req, res) => {
 // API to update doctor profile data from  Doctor Panel
 const updateDoctorProfile = async (req, res) => {
   try {
-    const { docId, fees, address, available, about, workingHoursStart, workingHoursEnd, excludedDays, workingHours } = req.body;
+    const { docId, fees, address, available, about, workingHoursStart, workingHoursEnd, excludedDays, workingHours, phone } = req.body;
 
     const updateData = {};
     if (fees !== undefined) updateData.fees = fees;
@@ -256,6 +258,7 @@ const updateDoctorProfile = async (req, res) => {
     if (workingHours !== undefined) {
       updateData.workingHours = typeof workingHours === 'string' ? JSON.parse(workingHours) : workingHours;
     }
+    if (phone !== undefined) updateData.phone = phone;
 
     await doctorModel.findByIdAndUpdate(docId, updateData);
 
