@@ -14,6 +14,7 @@ const AdminSettings = () => {
   const [target, setTarget] = useState<'doctors' | 'appointments' | 'patients'>('appointments');
   const [confirmText, setConfirmText] = useState('');
   const [isClearing, setIsClearing] = useState(false);
+  const [isSeeding, setIsSeeding] = useState(false);
 
   const handleClearData = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,6 +50,36 @@ const AdminSettings = () => {
       toast.error(error.message || 'An error occurred while clearing data');
     } finally {
       setIsClearing(false);
+    }
+  };
+
+  const handleSeedData = async () => {
+    if (!aToken) {
+      return toast.error('Unauthorized access');
+    }
+
+    const confirmSeed = window.confirm(
+      "🌱 Are you sure you want to seed the database with real Nigerian doctor data, patients, and initial earnings? This will reset all current records."
+    );
+    if (!confirmSeed) return;
+
+    try {
+      setIsSeeding(true);
+      const data = await smartApi.post(
+        '/api/admin/seed-data',
+        {},
+        { headers: { aToken } }
+      ) as { success: boolean; message: string };
+
+      if (data.success) {
+        toast.success(data.message || 'Sandbox seeded successfully!');
+      } else {
+        toast.error(data.message || 'Failed to seed sandbox');
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'An error occurred while seeding data');
+    } finally {
+      setIsSeeding(false);
     }
   };
 
@@ -162,6 +193,47 @@ const AdminSettings = () => {
             </button>
           </div>
         </form>
+      </div>
+
+      {/* Seeding & Sandbox Card */}
+      <div className="bg-white border rounded-xl p-6 shadow-sm mt-6">
+        <h2 className="text-sm font-bold text-gray-800 mb-2 flex items-center gap-2">
+          <Database className="w-4 h-4 text-primary" />
+          Sandbox & Seeding Tool
+        </h2>
+        <p className="text-xs text-gray-500 mb-4 leading-relaxed">
+          Instantly seed your application with realistic, high-quality Nigerian medical data. 
+          This will register 6 professional Nigerian doctors spanning all major specialties, 
+          populate patients, and generate past and future bookings so your financial dashboards, 
+          leaderboards, and patient calendars come to life instantly.
+        </p>
+        
+        <div className="bg-blue-50/50 border border-blue-100 rounded-lg p-3.5 mb-4 text-xs text-gray-600">
+          🔑 <strong>Sandbox Logins (Password: <span className="text-primary font-bold">password123</span>):</strong>
+          <ul className="list-disc list-inside mt-1.5 space-y-1">
+            <li>Doctor Egemba: <span className="font-semibold text-gray-700">egemba@medicsonline.com</span></li>
+            <li>Doctor Ola Brown: <span className="font-semibold text-gray-700">olabrown@medicsonline.com</span></li>
+            <li>Patient Emeka: <span className="font-semibold text-gray-700">emeka@gmail.com</span></li>
+          </ul>
+        </div>
+
+        <button
+          onClick={handleSeedData}
+          disabled={isSeeding}
+          className="px-6 py-2.5 bg-primary text-white font-semibold rounded-lg shadow hover:bg-opacity-90 transition-all flex items-center gap-2 cursor-pointer text-sm disabled:opacity-60"
+        >
+          {isSeeding ? (
+            <>
+              <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span>
+              Seeding Sandbox...
+            </>
+          ) : (
+            <>
+              <Database className="w-4 h-4" />
+              Seed Real Nigerian Data
+            </>
+          )}
+        </button>
       </div>
     </div>
   );

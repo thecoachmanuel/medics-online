@@ -117,6 +117,12 @@ export const migrationConfig: ApiMigrationConfig = {
     description: 'Admin clear site collections data',
     migrated: true
   },
+  '/api/admin/seed-data': {
+    encrypted: true,
+    priority: 'medium',
+    description: 'Admin seed site Nigerian sandbox data',
+    migrated: true
+  },
 
   // LOW PRIORITY: Public and less sensitive data - STEP 7: MIGRATED! ✅
   '/api/doctor/list': {

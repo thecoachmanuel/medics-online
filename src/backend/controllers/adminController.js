@@ -483,6 +483,219 @@ const reviewPayout = async (req, res) => {
   }
 };
 
+const seedDataAdmin = async (req, res) => {
+  try {
+    await doctorModel.deleteMany({});
+    await userModel.deleteMany({});
+    await appointmentModel.deleteMany({});
+    await payoutModel.deleteMany({});
+
+    const hashedPassword = await bcrypt.hash('password123', 10);
+
+    const doctorsData = [
+      {
+        name: 'Dr. Chinonso Egemba',
+        email: 'egemba@medicsonline.com',
+        password: hashedPassword,
+        speciality: 'General physician',
+        degree: 'MBBS, MWACP',
+        experience: '8 Years',
+        about: 'Experienced General Physician dedicated to proactive healthcare education and evidence-based clinical practice in Nigeria. Providing empathetic primary care to help you lead a healthier life.',
+        fees: 5000,
+        address: { line1: '12 Admiralty Way', line2: 'Lekki Phase 1, Lagos' },
+        image: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&q=80&w=300',
+        workingHours: [{ start: '09:00', end: '13:00' }, { start: '15:00', end: '18:00' }],
+        excludedDays: [0, 6],
+        isVerified: true,
+        kycStatus: 'approved'
+      },
+      {
+        name: 'Dr. Ola Brown',
+        email: 'olabrown@medicsonline.com',
+        password: hashedPassword,
+        speciality: 'Gynecologist',
+        degree: 'MBBS, MSc',
+        experience: '12 Years',
+        about: 'Consultant Gynecologist and emergency transport pioneer. Passionate about female reproductive wellness, prenatal support, and maternal clinical care in West Africa.',
+        fees: 15000,
+        address: { line1: '45 Glover Road', line2: 'Ikoyi, Lagos' },
+        image: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=300',
+        workingHours: [{ start: '10:00', end: '14:00' }, { start: '16:00', end: '20:00' }],
+        excludedDays: [0],
+        isVerified: true,
+        kycStatus: 'approved'
+      },
+      {
+        name: 'Dr. Funmilayo Harvey',
+        email: 'funmi@medicsonline.com',
+        password: hashedPassword,
+        speciality: 'Pediatricians',
+        degree: 'MBBS, FWACP (Pead)',
+        experience: '10 Years',
+        about: 'Consultant Pediatrician specializing in baby immunization schedules, nutrition, and child developmental health. Providing warm healthcare services for families.',
+        fees: 8500,
+        address: { line1: '8 Wuse II Crescent', line2: 'Abuja, FCT' },
+        image: 'https://images.unsplash.com/photo-1594824813573-246434de83fb?auto=format&fit=crop&q=80&w=300',
+        workingHours: [{ start: '08:30', end: '12:30' }, { start: '14:00', end: '17:30' }],
+        excludedDays: [0, 6],
+        isVerified: true,
+        kycStatus: 'approved'
+      },
+      {
+        name: 'Dr. Chioma Nnaji',
+        email: 'chioma@medicsonline.com',
+        password: hashedPassword,
+        speciality: 'Dermatologist',
+        degree: 'MBBS, FMCP (Derm)',
+        experience: '9 Years',
+        about: 'Board-certified Dermatologist focusing on skincare pathology, pigment management, and acne therapy customized for African skin types.',
+        fees: 10000,
+        address: { line1: '18 Isaac John Street', line2: 'Ikeja GRA, Lagos' },
+        image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=300',
+        workingHours: [{ start: '11:00', end: '15:00' }],
+        excludedDays: [0, 6],
+        isVerified: true,
+        kycStatus: 'approved'
+      },
+      {
+        name: 'Dr. Babajide Alao',
+        email: 'alao@medicsonline.com',
+        password: hashedPassword,
+        speciality: 'Neurologist',
+        degree: 'MBBS, FWACP (Neuro)',
+        experience: '15 Years',
+        about: 'Consultant Neurologist specializing in neurodegenerative disorders, stroke therapy, migraines, and cognitive wellness.',
+        fees: 20000,
+        address: { line1: '29 Independence Layout', line2: 'Enugu, Enugu State' },
+        image: 'https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&q=80&w=300',
+        workingHours: [{ start: '09:00', end: '12:00' }, { start: '14:00', end: '17:00' }],
+        excludedDays: [0, 6],
+        isVerified: true,
+        kycStatus: 'approved'
+      },
+      {
+        name: 'Dr. Ikechukwu Okafor',
+        email: 'okafor@medicsonline.com',
+        password: hashedPassword,
+        speciality: 'Gastroenterologist',
+        degree: 'MBBS, FMCP',
+        experience: '11 Years',
+        about: 'Specialist Gastroenterologist expert in inflammatory bowel diseases, liver diagnoses, stomach ulcers, and digestive rehabilitation.',
+        fees: 12500,
+        address: { line1: '15 Trans Amadi Road', line2: 'Port Harcourt, Rivers State' },
+        image: 'https://images.unsplash.com/photo-1614608682850-e0d6ed316d47?auto=format&fit=crop&q=80&w=300',
+        workingHours: [{ start: '10:00', end: '15:00' }],
+        excludedDays: [0],
+        isVerified: true,
+        kycStatus: 'approved'
+      }
+    ];
+
+    const seededDoctors = await doctorModel.insertMany(doctorsData);
+
+    const patientsData = [
+      {
+        name: 'Emeka Nwosu',
+        email: 'emeka@gmail.com',
+        password: hashedPassword,
+        gender: 'Male',
+        dob: '1995-04-12',
+        phone: '+2348031112222',
+        address: { line1: '5 Bode Thomas Street', line2: 'Surulere, Lagos' }
+      },
+      {
+        name: 'Amina Bello',
+        email: 'amina@gmail.com',
+        password: hashedPassword,
+        gender: 'Female',
+        dob: '1998-09-24',
+        phone: '+2348093334444',
+        address: { line1: '14 Gwarinpa Estate', line2: 'Abuja, FCT' }
+      },
+      {
+        name: 'Tunde Bakare',
+        email: 'tunde@gmail.com',
+        password: hashedPassword,
+        gender: 'Male',
+        dob: '1992-11-05',
+        phone: '+2348125556666',
+        address: { line1: '27 Ring Road', line2: 'Ibadan, Oyo State' }
+      }
+    ];
+
+    const seededPatients = await userModel.insertMany(patientsData);
+
+    const today = new Date();
+    const doc1 = seededDoctors[0];
+    const doc2 = seededDoctors[1];
+    const pat1 = seededPatients[0];
+    const pat2 = seededPatients[1];
+
+    const appointmentsData = [
+      {
+        userId: pat1._id,
+        docId: doc1._id,
+        slotDate: `${today.getDate()}_${today.getMonth() + 1}_${today.getFullYear()}`,
+        slotTime: '10:30 AM',
+        amount: doc1.fees,
+        date: today.getTime(),
+        cancelled: false,
+        isPaid: true,
+        isCompleted: true,
+        commissionRate: 20,
+        adminCommission: (doc1.fees * 20) / 100,
+        doctorNetShare: doc1.fees - (doc1.fees * 20) / 100,
+        vitals: { bpm: '76', spo2: '98' }
+      },
+      {
+        userId: pat2._id,
+        docId: doc2._id,
+        slotDate: `${today.getDate()}_${today.getMonth() + 1}_${today.getFullYear()}`,
+        slotTime: '04:30 PM',
+        amount: doc2.fees,
+        date: today.getTime() - 86400000,
+        cancelled: false,
+        isPaid: true,
+        isCompleted: true,
+        commissionRate: 20,
+        adminCommission: (doc2.fees * 20) / 100,
+        doctorNetShare: doc2.fees - (doc2.fees * 20) / 100,
+        vitals: { bpm: '72', spo2: '99' }
+      },
+      {
+        userId: pat1._id,
+        docId: doc2._id,
+        slotDate: `${today.getDate() + 1}_${today.getMonth() + 1}_${today.getFullYear()}`,
+        slotTime: '11:00 AM',
+        amount: doc2.fees,
+        date: today.getTime() + 86400000,
+        cancelled: false,
+        isPaid: true,
+        isCompleted: false,
+        commissionRate: 20,
+        adminCommission: (doc2.fees * 20) / 100,
+        doctorNetShare: doc2.fees - (doc2.fees * 20) / 100,
+        vitals: { bpm: '80', spo2: '97' }
+      }
+    ];
+
+    await appointmentModel.insertMany(appointmentsData);
+
+    const settings = await settingsModel.findOne({});
+    if (!settings) {
+      await settingsModel.create({ commissionRate: 20 });
+    }
+
+    res.json({
+      success: true,
+      message: 'Website seeded successfully with real Nigerian doctor data, patients, and initial earnings!'
+    });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
 const clearDataAdmin = async (req, res) => {
   try {
     const { target } = req.body;
@@ -529,5 +742,6 @@ export {
   doctorLeaderboard,
   getPayoutsAdmin,
   reviewPayout,
-  clearDataAdmin
+  clearDataAdmin,
+  seedDataAdmin
 };
