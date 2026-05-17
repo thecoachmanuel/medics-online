@@ -143,7 +143,7 @@ const AppContextProvider = (props: AppContextProviderProps) => {
   }, [userData, token]);
 
   useEffect(() => {
-    if (doctors && doctors.length > 0) {
+    if (doctors) {
       localStorage.setItem('doctors', JSON.stringify(doctors));
     }
   }, [doctors]);
