@@ -42,5 +42,8 @@ export interface IAppointment {
   isRated?: boolean;
   rating?: number;
   reviewComment?: string;
+  commissionRate?: number;
+  adminCommission?: number;
+  doctorNetShare?: number;
   date: number;
 }

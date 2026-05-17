@@ -6,6 +6,7 @@ import doctorModel from '../models/doctorModel.js';
 import appointmentModel from '../models/appointmentModel.js';
 import { v2 as cloudinary } from 'cloudinary';
 import paystack from 'paystack';
+import settingsModel from '../models/settingsModel.js';
 
 // Gateway Initialize
 const paystackInstance = new paystack(process.env.PAYSTACK_SECRET_KEY);
@@ -339,6 +340,10 @@ const verifyPaystack = async (req, res) => {
     if (transaction.data.status === 'success') {
       const metadata = transaction.data.metadata;
       
+      // Fetch current active commission percentage
+      let setting = await settingsModel.findOne({ key: 'commissionRate' });
+      const commissionRate = setting ? parseInt(setting.value, 10) : 20;
+
       if (metadata.isNewBooking) {
         // CAPTURE ONLY AFTER PAYMENT: Create the appointment now
         const { userId, docId, slotDate, slotTime, vitals } = metadata;
@@ -363,18 +368,25 @@ const verifyPaystack = async (req, res) => {
         const userData = await userModel.findById(userId).select('-password');
         const meetingId = generateMeetingId();
         
+        const amount = docData.fees;
+        const adminCommission = (amount * commissionRate) / 100;
+        const doctorNetShare = amount - adminCommission;
+
         const appointmentData = {
           userId,
           docId,
           userData,
           docData,
-          amount: docData.fees,
+          amount,
           slotTime,
           slotDate,
           date: Date.now(),
           meetingId,
           vitals,
-          payment: true // Mark as paid immediately
+          payment: true, // Mark as paid immediately
+          commissionRate,
+          adminCommission,
+          doctorNetShare
         };
 
         const newAppointment = new appointmentModel(appointmentData);
@@ -386,7 +398,19 @@ const verifyPaystack = async (req, res) => {
       } else {
         // Standard payment update for existing appointment
         const appointmentId = metadata.appointmentId;
-        await appointmentModel.findByIdAndUpdate(appointmentId, { payment: true });
+        const appointment = await appointmentModel.findById(appointmentId);
+        if (appointment) {
+          const adminCommission = (appointment.amount * commissionRate) / 100;
+          const doctorNetShare = appointment.amount - adminCommission;
+          await appointmentModel.findByIdAndUpdate(appointmentId, { 
+            payment: true,
+            commissionRate,
+            adminCommission,
+            doctorNetShare
+          });
+        } else {
+          await appointmentModel.findByIdAndUpdate(appointmentId, { payment: true });
+        }
         res.json({ success: true, message: 'Payment Successful' });
       }
     } else {

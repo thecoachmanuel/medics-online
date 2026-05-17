@@ -26,6 +26,9 @@ const appointmentSchema = new mongoose.Schema({
   isRated: { type: Boolean, default: false },
   rating: { type: Number },
   reviewComment: { type: String },
+  commissionRate: { type: Number },
+  adminCommission: { type: Number },
+  doctorNetShare: { type: Number },
   chatHistory: [
     {
       sender: { type: String },

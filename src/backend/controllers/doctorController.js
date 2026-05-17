@@ -172,14 +172,24 @@ const appointmentCancel = async (req, res) => {
   }
 };
 
-// API to mark appointment accepted for doctor panel
+// API to mark appointment accepted/completed for doctor panel
 const appointmentComplete = async (req, res) => {
   try {
     const { docId, appointmentId } = req.body;
 
     const appointmentData = await appointmentModel.findById(appointmentId);
     if (appointmentData && appointmentData.docId === docId) {
-      await appointmentModel.findByIdAndUpdate(appointmentId, { isCompleted: true });
+      let setting = await settingsModel.findOne({ key: 'commissionRate' });
+      const commissionRate = setting ? parseInt(setting.value, 10) : 20;
+
+      const updateObj = { isCompleted: true };
+      if (appointmentData.commissionRate === undefined || appointmentData.commissionRate === null) {
+        updateObj.commissionRate = commissionRate;
+        updateObj.adminCommission = (appointmentData.amount * commissionRate) / 100;
+        updateObj.doctorNetShare = appointmentData.amount - updateObj.adminCommission;
+      }
+
+      await appointmentModel.findByIdAndUpdate(appointmentId, updateObj);
       return res.json({ success: true, message: 'Appointment Accepted' });
     }
 
@@ -263,26 +273,31 @@ const doctorDashboard = async (req, res) => {
 
     const appointments = await appointmentModel.find({ docId });
 
-    let earnings = 0; // Gross earnings
+    // Fetch active commission percentage
+    let setting = await settingsModel.findOne({ key: 'commissionRate' });
+    const commissionRate = setting ? parseInt(setting.value, 10) : 20;
 
-    appointments.map((item) => {
+    let earnings = 0; // Gross earnings
+    let adminCommission = 0;
+
+    appointments.forEach((item) => {
       if (item.isCompleted || item.payment) {
         earnings += item.amount;
+        if (item.adminCommission !== undefined && item.adminCommission !== null) {
+          adminCommission += item.adminCommission;
+        } else {
+          adminCommission += (item.amount * commissionRate) / 100;
+        }
       }
     });
 
     let patients = [];
-
-    appointments.map((item) => {
+    appointments.forEach((item) => {
       if (!patients.includes(item.userId)) {
         patients.push(item.userId);
       }
     });
 
-    // Commission Calculations
-    let setting = await settingsModel.findOne({ key: 'commissionRate' });
-    const commissionRate = setting ? parseInt(setting.value, 10) : 20;
-    const adminCommission = (earnings * commissionRate) / 100;
     const netShare = earnings - adminCommission;
 
     // Deduct approved and pending payouts
@@ -331,11 +346,22 @@ const saveConsultation = async (req, res) => {
     }
 
     if (appointmentData && appointmentData.docId === docId) {
-      await appointmentModel.findByIdAndUpdate(appointmentData._id, { 
+      let setting = await settingsModel.findOne({ key: 'commissionRate' });
+      const commissionRate = setting ? parseInt(setting.value, 10) : 20;
+
+      const updateObj = { 
         notes, 
         prescription,
         isCompleted: true 
-      });
+      };
+
+      if (appointmentData.commissionRate === undefined || appointmentData.commissionRate === null) {
+        updateObj.commissionRate = commissionRate;
+        updateObj.adminCommission = (appointmentData.amount * commissionRate) / 100;
+        updateObj.doctorNetShare = appointmentData.amount - updateObj.adminCommission;
+      }
+
+      await appointmentModel.findByIdAndUpdate(appointmentData._id, updateObj);
       return res.json({ success: true, message: 'Consultation saved successfully' });
     }
 

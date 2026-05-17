@@ -408,12 +408,18 @@ const doctorLeaderboard = async (req, res) => {
     for (const doc of doctors) {
       const appointments = await appointmentModel.find({ docId: doc._id });
       let grossEarnings = 0;
+      let adminCommission = 0;
+
       appointments.forEach((appt) => {
         if (appt.isCompleted || appt.payment) {
           grossEarnings += appt.amount;
+          if (appt.adminCommission !== undefined && appt.adminCommission !== null) {
+            adminCommission += appt.adminCommission;
+          } else {
+            adminCommission += (appt.amount * commRate) / 100;
+          }
         }
       });
-      const adminCommission = (grossEarnings * commRate) / 100;
       const netShare = grossEarnings - adminCommission;
 
       leaderboardData.push({
