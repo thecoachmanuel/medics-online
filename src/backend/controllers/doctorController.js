@@ -179,7 +179,7 @@ const appointmentComplete = async (req, res) => {
 // API to get all doctors list for Frontend
 const doctorList = async (req, res) => {
   try {
-    const doctors = await doctorModel.find({}).select(['-password', '-email']);
+    const doctors = await doctorModel.find({ isApproved: true }).select(['-password', '-email']);
     res.json({ success: true, doctors });
   } catch (error) {
     console.log(error);
