@@ -313,6 +313,10 @@ const paymentPaystack = async (req, res) => {
       if (!appointmentData || appointmentData.cancelled) {
         return res.json({ success: false, message: 'Appointment Cancelled or not found' });
       }
+      const docData = await doctorModel.findById(appointmentData.docId);
+      if (!docData || !docData.available) {
+        return res.json({ success: false, message: 'Doctor Not Available' });
+      }
       amount = appointmentData.amount;
       email = appointmentData.userData.email;
       metadata = { appointmentId, userId: appointmentData.userId };

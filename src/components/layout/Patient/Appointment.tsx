@@ -164,6 +164,11 @@ const Appointment = () => {
       return router.push('/login');
     }
 
+    if (!docInfo || !docInfo.available) {
+      toast.error('This doctor is currently unavailable for bookings');
+      return;
+    }
+
     if (!docSlots[slotIndex] || docSlots[slotIndex].length === 0) {
       return toast.warning('No available slots on this day');
     }
@@ -203,6 +208,10 @@ const Appointment = () => {
     if (!token) {
       toast.warning('Login to reschedule appointment');
       return router.push('/login');
+    }
+    if (!docInfo || !docInfo.available) {
+      toast.error('This doctor is currently unavailable for bookings');
+      return;
     }
     if (!docSlots[slotIndex] || docSlots[slotIndex].length === 0) {
       return toast.warning('No available slots on this day');
@@ -405,59 +414,73 @@ const Appointment = () => {
       {/* Booking slots */}
       <div className="sm:ml-72 sm:pl-4 mt-8 font-medium text-[#565656]">
         <p>Booking slots</p>
-        <div className="flex gap-3 items-center w-full overflow-x-scroll mt-4">
-          {docSlots.length > 0 &&
-            docSlots.map((item: Slot[], index: number) => {
-              const dateObj = new Date();
-              dateObj.setDate(dateObj.getDate() + index);
-              const dayName = daysOfWeek[dateObj.getDay()];
-              const dateNum = dateObj.getDate();
+        {!docInfo.available ? (
+          <div className="bg-red-50 border border-red-200 text-red-750 p-6 rounded-2xl mt-4 flex items-start gap-4 shadow-sm max-w-3xl">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <div>
+              <p className="font-bold text-gray-900 text-lg">Doctor Currently Unavailable</p>
+              <p className="text-sm text-gray-600 mt-1 leading-relaxed">This doctor is not available for new booking slots at this time. Please check back later or browse other specialists.</p>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="flex gap-3 items-center w-full overflow-x-scroll mt-4">
+              {docSlots.length > 0 &&
+                docSlots.map((item: Slot[], index: number) => {
+                  const dateObj = new Date();
+                  dateObj.setDate(dateObj.getDate() + index);
+                  const dayName = daysOfWeek[dateObj.getDay()];
+                  const dateNum = dateObj.getDate();
 
-              return (
-                <div
-                  onClick={() => setSlotIndex(index)}
-                  key={index}
-                  className={`text-center py-6 min-w-16 rounded-full cursor-pointer ${slotIndex === index ? 'bg-primary text-white' : 'border border-[#DDDDDD]'}`}
-                >
-                  <p>{dayName}</p>
-                  <p>{dateNum}</p>
-                </div>
-              );
-            })}
-        </div>
+                  return (
+                    <div
+                      onClick={() => setSlotIndex(index)}
+                      key={index}
+                      className={`text-center py-6 min-w-16 rounded-full cursor-pointer ${slotIndex === index ? 'bg-primary text-white' : 'border border-[#DDDDDD]'}`}
+                    >
+                      <p>{dayName}</p>
+                      <p>{dateNum}</p>
+                    </div>
+                  );
+                })}
+            </div>
 
-        <div className="flex items-center gap-3 w-full overflow-x-scroll mt-4">
-          {docSlots.length > 0 && docSlots[slotIndex] && docSlots[slotIndex].length > 0 ? (
-            docSlots[slotIndex].map((item: Slot, index: number) => (
-              <p
-                onClick={() => setSlotTime(item.time)}
-                key={index}
-                className={`text-sm font-light flex-shrink-0 px-5 py-2 rounded-full cursor-pointer ${item.time === slotTime ? 'bg-primary text-white' : 'text-[#949494] border border-[#B4B4B4]'}`}
-              >
-                {item.time.toLowerCase()}
-              </p>
-            ))
-          ) : (
-            <p className="text-sm font-semibold text-red-500 my-2">
-              No working hours or slots available for this day.
-            </p>
-          )}
-        </div>
+            <div className="flex items-center gap-3 w-full overflow-x-scroll mt-4">
+              {docSlots.length > 0 && docSlots[slotIndex] && docSlots[slotIndex].length > 0 ? (
+                docSlots[slotIndex].map((item: Slot, index: number) => (
+                  <p
+                    onClick={() => setSlotTime(item.time)}
+                    key={index}
+                    className={`text-sm font-light flex-shrink-0 px-5 py-2 rounded-full cursor-pointer ${item.time === slotTime ? 'bg-primary text-white' : 'text-[#949494] border border-[#B4B4B4]'}`}
+                  >
+                    {item.time.toLowerCase()}
+                  </p>
+                ))
+              ) : (
+                <p className="text-sm font-semibold text-red-500 my-2">
+                  No working hours or slots available for this day.
+                </p>
+              )}
+            </div>
 
-        <button
-          disabled={isBooking}
-          onClick={rescheduleId ? rescheduleAppointment : bookAppointment}
-          className={`bg-primary text-white text-sm font-light px-20 py-3 rounded-full my-6 cursor-pointer flex items-center gap-2 ${isBooking ? 'opacity-70 cursor-not-allowed' : ''}`}
-        >
-          {isBooking ? (
-            <>
-              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-              Redirecting to Payment...
-            </>
-          ) : (
-            rescheduleId ? 'Reschedule appointment' : 'Pay & Book Appointment'
-          )}
-        </button>
+            <button
+              disabled={isBooking}
+              onClick={rescheduleId ? rescheduleAppointment : bookAppointment}
+              className={`bg-primary text-white text-sm font-light px-20 py-3 rounded-full my-6 cursor-pointer flex items-center gap-2 ${isBooking ? 'opacity-70 cursor-not-allowed' : ''}`}
+            >
+              {isBooking ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  Redirecting to Payment...
+                </>
+              ) : (
+                rescheduleId ? 'Reschedule appointment' : 'Pay & Book Appointment'
+              )}
+            </button>
+          </>
+        )}
       </div>
 
       {/* Reviews & Comments Section */}
