@@ -83,6 +83,7 @@ export interface IAdminContext {
   deleteDoctor: (docId: string) => Promise<void>;
   editDoctor: (formData: FormData) => Promise<void>;
   editPatient: (formData: FormData) => Promise<void>;
+  deletePatient: (patientId: string) => Promise<void>;
   appointments: IAppointment[];
   getAllAppointments: () => Promise<void>;
   getDashData: () => Promise<void>;

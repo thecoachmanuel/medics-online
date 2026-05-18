@@ -316,6 +316,26 @@ const AdminContextProvider = (props: AdminContextProviderProps) => {
     }
   };
 
+  // Function to delete patient using API (NOW WITH SMART ENCRYPTION)
+  const deletePatient = async (patientId: string) => {
+    try {
+      console.log('🗑️ DELETE PATIENT! Patient ID:', patientId);
+      const data = await smartApi.post('/api/admin/delete-patient',
+        { patientId },
+        { headers: { aToken } }
+      ) as ApiResponse<object>;
+      if (data.success) {
+        toast.success(data.message);
+        getAllPatients();
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error: unknown) {
+      console.log(error);
+      toast.error('An error occurred while deleting patient');
+    }
+  };
+
   // Getting all appointment data from Database using API
   const getAllAppointments = async () => {
     try {
@@ -652,6 +672,7 @@ const AdminContextProvider = (props: AdminContextProviderProps) => {
     deleteDoctor,
     editDoctor,
     editPatient,
+    deletePatient,
     dashData,
     earnings,
     getEarnings,

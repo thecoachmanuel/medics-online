@@ -913,6 +913,34 @@ const deleteAdmin = async (req, res) => {
   }
 };
 
+// API to delete patient (Master/Staff restricted by patients permission)
+const deletePatient = async (req, res) => {
+  try {
+    if (!checkAdminPermission(req, 'patients')) {
+      return res.json({ success: false, message: 'Forbidden: You do not have permission to manage patients' });
+    }
+    const { patientId } = req.body;
+
+    if (!patientId) {
+      return res.json({ success: false, message: 'Patient ID is required' });
+    }
+
+    // Delete all appointments associated with the user
+    await appointmentModel.deleteMany({ userId: patientId });
+
+    // Delete the user record
+    const deletedUser = await userModel.findByIdAndDelete(patientId);
+    if (!deletedUser) {
+      return res.json({ success: false, message: 'Patient not found' });
+    }
+
+    res.json({ success: true, message: 'Patient and associated appointments deleted successfully' });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
 export {
   loginAdmin,
   appointmentsAdmin,
@@ -942,5 +970,6 @@ export {
   getAdmins,
   createAdmin,
   updateAdminPermissions,
-  deleteAdmin
+  deleteAdmin,
+  deletePatient
 };

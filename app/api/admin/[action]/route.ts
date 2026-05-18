@@ -35,7 +35,8 @@ import {
   createAdmin,
   updateAdminPermissions,
   deleteAdmin,
-  getAdminProfile
+  getAdminProfile,
+  deletePatient
 } from '@/backend/controllers/adminController';
 
 import { changeAvailablity } from '@/backend/controllers/doctorController';
@@ -61,6 +62,7 @@ const actionMap: Record<string, ActionConfig> = {
   'delete-doctor': { controller: deleteDoctor, auth: withAdminAuth },
   'edit-doctor': { controller: editDoctor, auth: withAdminAuth },
   'edit-patient': { controller: editPatient, auth: withAdminAuth },
+  'delete-patient': { controller: deletePatient, auth: withAdminAuth },
   'earnings': { controller: adminEarnings, auth: withAdminAuth },
   'review-kyc': { controller: reviewKyc, auth: withAdminAuth },
   'get-commission-rate': { controller: getCommissionRate, auth: withAdminAuth },

@@ -10,6 +10,7 @@ const PatientsList = () => {
     aToken,
     getAllPatients,
     editPatient,
+    deletePatient,
   } = useContext(AdminContext) as IAdminContext;
 
   const [selectedPatient, setSelectedPatient] = useState<IPatientAdmin | null>(null);
@@ -337,12 +338,29 @@ const PatientsList = () => {
                           </button>
                         </>
                       ) : (
-                        <button
-                          className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-                          onClick={closePatientModal}
-                        >
-                          Close
-                        </button>
+                        <div className="flex gap-3 w-full justify-between">
+                          <button
+                            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg shadow-sm active:scale-95 transition-all duration-200"
+                            onClick={async () => {
+                              if (window.confirm(`Are you sure you want to permanently delete patient "${selectedPatient.name}"? This action will also delete all their registered appointments and cannot be undone.`)) {
+                                try {
+                                  await deletePatient(selectedPatient._id);
+                                  closePatientModal();
+                                } catch (error) {
+                                  console.error('Error during patient deletion:', error);
+                                }
+                              }
+                            }}
+                          >
+                            Delete Patient
+                          </button>
+                          <button
+                            className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 active:scale-95 transition-all duration-200"
+                            onClick={closePatientModal}
+                          >
+                            Close
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>
