@@ -29,9 +29,14 @@ const DoctorsList = () => {
   const [editExperience, setEditExperience] = useState<string>('');
   const [editFees, setEditFees] = useState<string>('');
   const [editAbout, setEditAbout] = useState<string>('');
+  const [editEmail, setEditEmail] = useState<string>('');
+  const [editPhone, setEditPhone] = useState<string>('');
+  const [editAddress1, setEditAddress1] = useState<string>('');
+  const [editAddress2, setEditAddress2] = useState<string>('');
   const [editImage, setEditImage] = useState<File | null>(null);
   const [editImagePreview, setEditImagePreview] = useState<string>('');
   const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
 
   console.log('🔍 DoctorsList: Context values:', {
     doctorsCount: doctors?.length,
@@ -69,6 +74,7 @@ const DoctorsList = () => {
     setEditImage(null);
     setEditImagePreview('');
     setIsEditing(false);
+    setIsSaving(false);
   };
 
   const startEditingDoctor = (doctor: IDoctorAdmin) => {
@@ -80,6 +86,10 @@ const DoctorsList = () => {
     setEditExperience(detailedDoctor.experience);
     setEditFees(detailedDoctor.fees?.toString() || '');
     setEditAbout(detailedDoctor.about);
+    setEditEmail(detailedDoctor.email || '');
+    setEditPhone(detailedDoctor.phone || '');
+    setEditAddress1(detailedDoctor.address?.line1 || '');
+    setEditAddress2(detailedDoctor.address?.line2 || '');
     setEditImage(null);
     setEditImagePreview(detailedDoctor.image || '');
     setIsEditing(true);
@@ -87,15 +97,19 @@ const DoctorsList = () => {
   };
 
   const handleSaveEdit = async () => {
-    if (!selectedDoctor) return;
+    if (!selectedDoctor || isSaving) return;
+    setIsSaving(true);
     const formData = new FormData();
     formData.append('docId', selectedDoctor._id);
     formData.append('name', editName);
+    formData.append('email', editEmail);
+    formData.append('phone', editPhone);
     formData.append('speciality', editSpeciality);
     formData.append('degree', editDegree);
     formData.append('experience', editExperience);
     formData.append('fees', editFees);
     formData.append('about', editAbout);
+    formData.append('address', JSON.stringify({ line1: editAddress1, line2: editAddress2 }));
     
     if (editImage) {
       formData.append('image', editImage);
@@ -103,10 +117,12 @@ const DoctorsList = () => {
 
     try {
       await editDoctor(formData);
+      setIsSaving(false);
       setIsEditing(false);
       closeDoctorModal();
     } catch (error) {
       console.error(error);
+      setIsSaving(false);
     }
   };
 
@@ -353,6 +369,10 @@ const DoctorsList = () => {
                             setEditExperience(selectedDoctor.experience);
                             setEditFees(selectedDoctor.fees?.toString() || '');
                             setEditAbout(selectedDoctor.about);
+                            setEditEmail(selectedDoctor.email || '');
+                            setEditPhone(selectedDoctor.phone || '');
+                            setEditAddress1(selectedDoctor.address?.line1 || '');
+                            setEditAddress2(selectedDoctor.address?.line2 || '');
                             setEditImage(null);
                             setEditImagePreview(selectedDoctor.image || '');
                             setIsEditing(true);
@@ -425,6 +445,63 @@ const DoctorsList = () => {
                       )}
                     </div>
 
+                    {/* Email */}
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-700">Email</h3>
+                      {isEditing ? (
+                        <input
+                          type="email"
+                          value={editEmail}
+                          onChange={(e) => setEditEmail(e.target.value)}
+                          className="w-full border rounded px-2 py-1"
+                        />
+                      ) : (
+                        <p className="text-gray-900">{selectedDoctor.email || 'Not provided'}</p>
+                      )}
+                    </div>
+
+                    {/* Phone Number */}
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-700">Phone Number</h3>
+                      {isEditing ? (
+                        <input
+                          type="tel"
+                          value={editPhone}
+                          onChange={(e) => setEditPhone(e.target.value)}
+                          className="w-full border rounded px-2 py-1"
+                        />
+                      ) : (
+                        <p className="text-gray-900">{selectedDoctor.phone || 'Not provided'}</p>
+                      )}
+                    </div>
+
+                    {/* Address */}
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-700">Address</h3>
+                      {isEditing ? (
+                        <div className="space-y-2">
+                          <input
+                            type="text"
+                            placeholder="Address line 1"
+                            value={editAddress1}
+                            onChange={(e) => setEditAddress1(e.target.value)}
+                            className="w-full border rounded px-2 py-1"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Address line 2"
+                            value={editAddress2}
+                            onChange={(e) => setEditAddress2(e.target.value)}
+                            className="w-full border rounded px-2 py-1"
+                          />
+                        </div>
+                      ) : (
+                        <p className="text-gray-900">
+                          {selectedDoctor.address ? `${selectedDoctor.address.line1}, ${selectedDoctor.address.line2}` : 'Not provided'}
+                        </p>
+                      )}
+                    </div>
+
                     {/* About */}
                     <div>
                       <h3 className="text-lg font-semibold text-gray-700">About</h3>
@@ -444,17 +521,30 @@ const DoctorsList = () => {
                       {isEditing ? (
                         <>
                           <button
-                            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+                            disabled={isSaving}
+                            className={`px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 ${isSaving ? 'opacity-70 cursor-not-allowed' : ''}`}
                             onClick={handleSaveEdit}
                           >
-                            Save
+                            {isSaving ? (
+                              <>
+                                <span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
+                                Saving...
+                              </>
+                            ) : (
+                              'Save'
+                            )}
                           </button>
                           <button
-                            className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                            disabled={isSaving}
+                            className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
                             onClick={() => {
                               setIsEditing(false);
                               setEditImage(null);
                               setEditImagePreview(selectedDoctor.image || '');
+                              setEditEmail(selectedDoctor.email || '');
+                              setEditPhone(selectedDoctor.phone || '');
+                              setEditAddress1(selectedDoctor.address?.line1 || '');
+                              setEditAddress2(selectedDoctor.address?.line2 || '');
                             }}
                           >
                             Cancel
