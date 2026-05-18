@@ -340,7 +340,7 @@ const editDoctor = async (req, res) => {
     if (!checkAdminPermission(req, 'doctors')) {
       return res.json({ success: false, message: 'Forbidden: You do not have permission to manage doctors' });
     }
-    const { docId, name, email, speciality, degree, experience, about, fees, address, phone, image } = req.body;
+    const { docId, name, email, speciality, degree, experience, about, fees, address, phone, image, available } = req.body;
     const imageFile = req.file;
 
     if (!docId) {
@@ -364,6 +364,9 @@ const editDoctor = async (req, res) => {
       updateData.address = typeof address === 'string' ? JSON.parse(address) : address;
     }
     if (phone !== undefined) updateData.phone = phone;
+    if (available !== undefined) {
+      updateData.available = available === 'true' || available === true;
+    }
 
     if (imageFile) {
       const imageUpload = await cloudinary.uploader.upload(imageFile.path, {

@@ -33,6 +33,7 @@ const DoctorsList = () => {
   const [editPhone, setEditPhone] = useState<string>('');
   const [editAddress1, setEditAddress1] = useState<string>('');
   const [editAddress2, setEditAddress2] = useState<string>('');
+  const [editAvailable, setEditAvailable] = useState<boolean>(true);
   const [editImage, setEditImage] = useState<File | null>(null);
   const [editImagePreview, setEditImagePreview] = useState<string>('');
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -90,6 +91,7 @@ const DoctorsList = () => {
     setEditPhone(detailedDoctor.phone || '');
     setEditAddress1(detailedDoctor.address?.line1 || '');
     setEditAddress2(detailedDoctor.address?.line2 || '');
+    setEditAvailable(detailedDoctor.available ?? true);
     setEditImage(null);
     setEditImagePreview(detailedDoctor.image || '');
     setIsEditing(true);
@@ -110,6 +112,7 @@ const DoctorsList = () => {
     formData.append('fees', editFees);
     formData.append('about', editAbout);
     formData.append('address', JSON.stringify({ line1: editAddress1, line2: editAddress2 }));
+    formData.append('available', editAvailable.toString());
     
     if (editImage) {
       formData.append('image', editImage);
@@ -373,6 +376,7 @@ const DoctorsList = () => {
                             setEditPhone(selectedDoctor.phone || '');
                             setEditAddress1(selectedDoctor.address?.line1 || '');
                             setEditAddress2(selectedDoctor.address?.line2 || '');
+                            setEditAvailable(selectedDoctor.available ?? true);
                             setEditImage(null);
                             setEditImagePreview(selectedDoctor.image || '');
                             setIsEditing(true);
@@ -380,6 +384,29 @@ const DoctorsList = () => {
                         >
                           Edit
                         </button>
+                      )}
+                    </div>
+
+                    {/* Availability */}
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-700">Availability</h3>
+                      {isEditing ? (
+                        <div className="flex items-center gap-2 mt-1">
+                          <input
+                            type="checkbox"
+                            checked={editAvailable}
+                            onChange={(e) => setEditAvailable(e.target.checked)}
+                            className="w-4 h-4 cursor-pointer accent-primary"
+                            id="edit-doc-available"
+                          />
+                          <label htmlFor="edit-doc-available" className="text-gray-900 cursor-pointer select-none text-sm">
+                            Available for bookings
+                          </label>
+                        </div>
+                      ) : (
+                        <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold mt-1 ${selectedDoctor.available ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                          {selectedDoctor.available ? 'Available' : 'Unavailable'}
+                        </span>
                       )}
                     </div>
 
@@ -545,6 +572,7 @@ const DoctorsList = () => {
                               setEditPhone(selectedDoctor.phone || '');
                               setEditAddress1(selectedDoctor.address?.line1 || '');
                               setEditAddress2(selectedDoctor.address?.line2 || '');
+                              setEditAvailable(selectedDoctor.available ?? true);
                             }}
                           >
                             Cancel
