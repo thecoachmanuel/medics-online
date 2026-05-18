@@ -209,7 +209,7 @@ const DoctorRegister = () => {
       
       if (response.success) {
         toast.success('Registration successful! Awaiting admin approval.');
-        router.push('/login');
+        router.push('/admin-login?role=doctor');
       } else {
         toast.error(response.message || 'Registration failed');
       }
