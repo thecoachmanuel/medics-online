@@ -27,6 +27,7 @@ const DoctorAppointments = () => {
   const filterParam = searchParams ? searchParams.get('filter') : 'all';
   const [filterType, setFilterType] = useState<'all' | 'latest'>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'upcoming' | 'past' | 'cancelled'>('all');
+  const [showRecords, setShowRecords] = useState<IAppointment | null>(null);
 
   useEffect(() => {
     if (filterParam === 'latest') {
@@ -321,93 +322,14 @@ const DoctorAppointments = () => {
             {item.cancelled ? (
               <p className="text-red-400 text-xs font-medium">Cancelled</p>
             ) : item.isCompleted ? (
-              <div className="flex flex-col gap-1">
-                {item.meetingId && (() => {
-                  const joinStatus = getAppointmentJoinStatus(item.slotDate, item.slotTime);
-                  const getTooltipMessage = () => {
-                    if (joinStatus.reason === 'future') {
-                      // Calculate when meeting becomes available (24 hours before appointment)
-                      const dateArray = item.slotDate.split('_');
-                      const day = parseInt(dateArray[0]);
-                      const month = parseInt(dateArray[1]) - 1;
-                      const year = parseInt(dateArray[2]);
-                      
-                      const timeMatch = item.slotTime.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
-                      if (timeMatch) {
-                        let hours = parseInt(timeMatch[1]);
-                        const minutes = parseInt(timeMatch[2]);
-                        const period = timeMatch[3].toUpperCase();
-                        
-                        if (period === 'AM' && hours === 12) hours = 0;
-                        else if (period === 'PM' && hours !== 12) hours += 12;
-                        
-                        const appointmentDate = new Date(year, month, day, hours, minutes);
-                        const availableDate = new Date(appointmentDate.getTime() - (24 * 60 * 60 * 1000));
-                        
-                        // Format date as "11th June"
-                        const dayWithSuffix = (day: number) => {
-                          if (day > 3 && day < 21) return day + 'th';
-                          switch (day % 10) {
-                            case 1: return day + 'st';
-                            case 2: return day + 'nd';
-                            case 3: return day + 'rd';
-                            default: return day + 'th';
-                          }
-                        };
-                        
-                        const months = ['January', 'February', 'March', 'April', 'May', 'June', 
-                                       'July', 'August', 'September', 'October', 'November', 'December'];
-                        
-                        const formattedDate = `${dayWithSuffix(availableDate.getDate())} ${months[availableDate.getMonth()]}`;
-                        const formattedTime = availableDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                        
-                        return `Available from ${formattedDate} at ${formattedTime}`;
-                      }
-                      return 'Meeting will be available closer to appointment time';
-                    } else if (joinStatus.reason === 'past') {
-                      return 'This meeting is over';
-                    }
-                    return 'Join the meeting';
-                  };
-
-                  const getButtonText = () => {
-                    if (joinStatus.reason === 'past') {
-                      return 'Over';
-                    } else if (joinStatus.reason === 'future') {
-                      return 'Soon';
-                    }
-                    return 'Join';
-                  };
-
-                  const getButtonStyles = () => {
-                    if (joinStatus.reason === 'past') {
-                      return 'bg-gray-300 text-gray-500 cursor-not-allowed';
-                    } else if (joinStatus.reason === 'future') {
-                      return 'bg-orange-200 text-orange-600 cursor-not-allowed';
-                    }
-                    return 'bg-primary text-white hover:bg-primary/90 shadow-md hover:shadow-lg scale-100 hover:scale-[1.05] cursor-pointer border-none font-bold';
-                  };
-
-                  return (
-                    <button
-                      onClick={() => {
-                        console.log('🔘 Join button clicked. ID:', item.meetingId, 'canJoin:', joinStatus.canJoin, 'reason:', joinStatus.reason);
-                        if (joinStatus.canJoin) {
-                          router.push(`/meeting/${item.meetingId}?name=${encodeURIComponent(profileData?.name || 'Doctor')}`);
-                        } else {
-                          toast.info(`Meeting available later: ${joinStatus.reason}`);
-                        }
-                      }}
-                      aria-label={getTooltipMessage()}
-                      className={`px-4 py-2 rounded-lg transition-all duration-300 flex items-center justify-center gap-2 text-sm ${getButtonStyles()}`}
-                      title={getTooltipMessage()}
-                    >
-                      <Video className="w-4 h-4" />
-                      {getButtonText()}
-                    </button>
-                  );
-                })()}
-                <p className="text-green-500 text-xs font-medium">Accepted</p>
+              <div className="flex flex-col gap-1.5 items-center">
+                <button
+                  onClick={() => setShowRecords(item)}
+                  className="px-3 py-1 bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 rounded text-xs font-semibold transition-all cursor-pointer"
+                >
+                  View Records
+                </button>
+                <p className="text-green-500 text-xs font-medium">Completed</p>
               </div>
             ) : (
               <div className="flex flex-col gap-1">
@@ -572,6 +494,42 @@ const DoctorAppointments = () => {
                 className="flex-1 rounded-xl py-2.5 text-sm font-semibold bg-red-500 text-white hover:bg-red-600 transition-colors shadow-md shadow-red-500/10"
               >
                 Confirm Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Consultation Records Modal for Doctor */}
+      {showRecords && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-2xl bg-white rounded-2xl overflow-hidden shadow-2xl border border-gray-100 animate-in zoom-in-95 duration-200">
+            <div className="p-6 border-b flex justify-between items-center bg-gray-50/50">
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">Consultation History</h3>
+                <p className="text-sm text-gray-500 mt-1">Patient: {showRecords.userData.name}</p>
+              </div>
+              <button onClick={() => setShowRecords(null)} className="text-gray-400 hover:text-gray-600 cursor-pointer">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">My Consultation Notes</label>
+                <div className="p-4 bg-gray-50 rounded-lg border border-gray-100 text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+                  {showRecords.notes || 'No notes available.'}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-blue-400 uppercase tracking-wider">Prescribed Medications</label>
+                <div className="p-4 bg-blue-50/60 rounded-lg border border-blue-100 text-sm text-gray-800 font-medium whitespace-pre-wrap leading-relaxed">
+                  {showRecords.prescription || 'No prescription available.'}
+                </div>
+              </div>
+            </div>
+            <div className="p-4 bg-gray-50 border-t flex justify-end">
+              <button onClick={() => setShowRecords(null)} className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors cursor-pointer shadow-sm">
+                Close Review
               </button>
             </div>
           </div>
