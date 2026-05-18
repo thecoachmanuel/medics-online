@@ -53,9 +53,9 @@ const AppContextProvider = (props: AppContextProviderProps) => {
 
   const [cmsData, setCmsData] = useState<any>({
     homeHeaderTitle: 'Connect with Trusted Doctors Online',
-    homeHeaderSubtitle: 'Simply browse through our extensive list of trusted doctors, book appointments, consult via video.',
+    homeHeaderSubtitle: 'Book appointments, consult via video, and manage your healthcare journey all in one secure platform',
     homeHeaderImage: '/assets/header_img.webp',
-    homeHeaderBtnText: 'Book appointment',
+    homeHeaderBtnText: 'Find Doctors',
     homeHeaderBtnLink: '/doctors',
 
     aboutTitle: 'ABOUT US',
@@ -205,7 +205,7 @@ const AppContextProvider = (props: AppContextProviderProps) => {
   }, [token]);
 
   const backendUrl = process.env.NEXT_PUBLIC_API_URL || '';
-  
+
   const value = {
     doctors,
     getDoctosData,
