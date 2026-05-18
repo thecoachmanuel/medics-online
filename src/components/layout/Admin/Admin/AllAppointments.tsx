@@ -21,6 +21,7 @@ const AllAppointments = () => {
   const filterParam = searchParams ? searchParams.get('filter') : 'all';
   const [filterType, setFilterType] = useState<'all' | 'latest'>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'upcoming' | 'past' | 'cancelled'>('all');
+  const [showRecords, setShowRecords] = useState<IAppointment | null>(null);
 
   useEffect(() => {
     if (filterParam === 'latest') {
@@ -366,7 +367,13 @@ const AllAppointments = () => {
                     </button>
                   );
                 })()}
-                <p className="text-green-500 text-xs font-medium">Accepted</p>
+                <p className="text-green-500 text-xs font-medium text-center">Completed</p>
+                <button
+                  onClick={() => setShowRecords(item)}
+                  className="text-[10px] sm:text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded border border-blue-100 hover:bg-blue-100 transition-colors w-full text-center cursor-pointer mt-1 font-semibold"
+                >
+                  View Records
+                </button>
               </div>
             ) : (
               <div className="flex flex-col gap-1">
@@ -476,6 +483,42 @@ const AllAppointments = () => {
           </div>
         ))}
       </div>
+
+      {/* Records Modal for Admin */}
+      {showRecords && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-2xl bg-white rounded-2xl overflow-hidden shadow-xl">
+            <div className="p-6 border-b flex justify-between items-center">
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">Consultation History</h3>
+                <p className="text-sm text-gray-500">Patient: {showRecords.userData.name} | Doctor: {showRecords.docData.name}</p>
+              </div>
+              <button onClick={() => setShowRecords(null)} className="text-gray-400 hover:text-gray-600 cursor-pointer">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-400 uppercase">Doctor's Notes</label>
+                <div className="p-4 bg-gray-50 rounded-lg border border-gray-100 text-sm text-gray-700 whitespace-pre-wrap">
+                  {showRecords.notes || 'No notes available.'}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-blue-400 uppercase">Prescription</label>
+                <div className="p-4 bg-blue-50 rounded-lg border border-blue-100 text-sm text-gray-800 font-medium whitespace-pre-wrap">
+                  {showRecords.prescription || 'No prescription available.'}
+                </div>
+              </div>
+            </div>
+            <div className="p-4 bg-gray-50 border-t flex justify-end">
+              <button onClick={() => setShowRecords(null)} className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors cursor-pointer">
+                Close Review
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
