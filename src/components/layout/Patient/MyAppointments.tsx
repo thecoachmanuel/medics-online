@@ -308,7 +308,32 @@ const MyAppointments = () => {
         </div>
       </div>
       <div className="">
-        {displayedAppointments.map((item: IAppointment, index: number) => (
+        {displayedAppointments.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 px-4 bg-gray-50/50 border border-dashed border-gray-200 rounded-3xl mt-6 text-center">
+            <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <p className="text-lg font-bold text-gray-800">No consultations found</p>
+            <p className="text-sm text-gray-500 max-w-sm mt-1 mb-6">
+              You do not have any scheduled appointments. Book a consultation with one of our trusted healthcare providers today.
+            </p>
+            <button
+              onClick={() => {
+                router.push('/doctors');
+                scrollTo(0, 0);
+              }}
+              className="px-8 py-3 bg-primary text-white font-semibold rounded-full shadow-md hover:bg-primary/90 hover:shadow-lg active:scale-95 transition-all duration-200 cursor-pointer flex items-center gap-2"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+              </svg>
+              Book an Appointment
+            </button>
+          </div>
+        ) : (
+          displayedAppointments.map((item: IAppointment, index: number) => (
           <div
             key={index}
             className="grid grid-cols-[1fr_2fr] gap-4 sm:flex sm:gap-6 py-4 border-b"
@@ -536,7 +561,7 @@ const MyAppointments = () => {
               )}
             </div>
           </div>
-        ))}
+        )))}
       </div>
 
       {/* Records Modal */}

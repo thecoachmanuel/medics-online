@@ -160,9 +160,20 @@ const AppContextProvider = (props: AppContextProviderProps) => {
         console.log('✅ User profile loaded via Smart API');
       } else {
         toast.error(data.message);
+        if (data.message === 'Account not found or deleted' || data.message === 'User not found') {
+          setToken('');
+          localStorage.removeItem('token');
+          setUserData(null);
+        }
       }
     } catch (error: unknown) {
       console.log(error);
+      const msg = error && typeof error === 'object' && 'message' in error ? (error as any).message : '';
+      if (msg === 'Account not found or deleted' || msg === 'User not found') {
+        setToken('');
+        localStorage.removeItem('token');
+        setUserData(null);
+      }
       if (
         error &&
         typeof error === 'object' &&

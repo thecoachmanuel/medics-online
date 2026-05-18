@@ -127,10 +127,25 @@ const DoctorContextProvider = (props: DoctorContextProviderProps) => {
         headers: { dToken } 
       }) as ApiResponse<{ profileData: DoctorProfile }>;
       
-      setProfileData(data.profileData);
-      console.log('\u2705 Doctor profile loaded via Smart API');
+      if (data.success) {
+        setProfileData(data.profileData);
+        console.log('\u2705 Doctor profile loaded via Smart API');
+      } else {
+        toast.error(data.message || 'Failed to load profile');
+        if (data.message === 'Account not found or deleted') {
+          setDToken('');
+          localStorage.removeItem('dToken');
+          setProfileData(null);
+        }
+      }
     } catch (error: unknown) {
       console.error('❌ Doctor profile loading error:', error);
+      const msg = error && typeof error === 'object' && 'message' in error ? (error as any).message : '';
+      if (msg === 'Account not found or deleted') {
+        setDToken('');
+        localStorage.removeItem('dToken');
+        setProfileData(null);
+      }
       if (
         error &&
         typeof error === 'object' &&
