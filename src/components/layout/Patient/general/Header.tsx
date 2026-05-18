@@ -17,7 +17,7 @@ const Header = () => {
         <div className="flex flex-col md:flex-row items-center gap-3 text-white text-sm font-light">
           <Image className="w-28 h-auto" src={'/assets/group_profiles.webp'} alt="" width={112} height={40} priority />
           <p>
-            {cms.homeHeaderSubtitle || 'Simply browse through our extensive list of trusted doctors, book appointments, consult via video.'}
+            {cms.homeHeaderSubtitle || 'Book appointments, consult via video, and manage your healthcare journey all in one secure platform.'}
           </p>
         </div>
         <Link
