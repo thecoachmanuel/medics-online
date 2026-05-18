@@ -13,8 +13,22 @@ const DoctorProfile = () => {
   const { dToken, profileData, setProfileData, getProfileData } = useContext(
     DoctorContext
   ) as IDoctorContext;
-  const { currencySymbol } = useContext(AppContext) as IPatientAppContext;
   const [isEdit, setIsEdit] = useState(false);
+  const [newImage, setNewImage] = useState<File | null>(null);
+  const [newImagePreview, setNewImagePreview] = useState<string | null>(null);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setNewImage(file);
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNewImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   // Function to toggle availability immediately
   const toggleAvailability = async () => {
@@ -143,7 +157,25 @@ const DoctorProfile = () => {
     }
 
     try {
-      const updateData = {
+      let imageData = null;
+      if (newImage) {
+        // Read file as base64
+        const base64Data = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const base64 = (reader.result as string).split(',')[1];
+            resolve(base64);
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(newImage);
+        });
+        imageData = {
+          data: base64Data,
+          mimeType: newImage.type
+        };
+      }
+
+      const updateData: any = {
         address: profileData.address,
         fees: profileData.fees,
         about: profileData.about,
@@ -155,6 +187,10 @@ const DoctorProfile = () => {
         excludedDays: profileData.excludedDays || []
       };
 
+      if (imageData) {
+        updateData.image = imageData;
+      }
+
       console.log('🩺 Doctor Portal: Attempting encrypted profile update');
       const data = await smartApi.post('/api/doctor/update-profile', updateData, {
         headers: { dToken }
@@ -163,6 +199,8 @@ const DoctorProfile = () => {
       if (data.success) {
         toast.success(data.message || 'Profile updated successfully');
         setIsEdit(false);
+        setNewImage(null);
+        setNewImagePreview(null);
         getProfileData();
         console.log('✅ Doctor profile updated via Smart API');
       } else {
@@ -195,12 +233,27 @@ const DoctorProfile = () => {
     profileData && (
       <div>
         <div className="flex flex-col gap-4 m-5">
-          <div>
+          <div className="relative group w-full sm:max-w-64">
             <img
-              className="doctor-profile-image w-full sm:max-w-64 rounded-lg"
-              src={profileData.image}
+              className="doctor-profile-image w-full sm:max-w-64 rounded-lg object-cover"
+              src={newImagePreview || profileData.image}
               alt={`Dr. ${profileData.name}`}
             />
+            {isEdit && (
+              <label className="absolute inset-0 bg-black/50 hover:bg-black/70 flex flex-col items-center justify-center text-white cursor-pointer rounded-lg transition-all gap-1 text-xs font-semibold">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span>Change Photo</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
+              </label>
+            )}
           </div>
 
           <div className="flex-1 border border-stone-100 rounded-lg p-8 py-7 bg-white">
@@ -505,18 +558,31 @@ const DoctorProfile = () => {
               </div>
 
             {isEdit ? (
-              <button
-                onClick={updateProfile}
-                className="px-4 py-1 border border-primary text-sm rounded-full mt-5 hover:bg-primary hover:text-white transition-all cursor-pointer"
-              >
-                Save
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={updateProfile}
+                  className="px-6 py-2 bg-primary text-white text-sm font-semibold rounded-full mt-5 hover:bg-primary/95 transition-all cursor-pointer shadow hover:shadow-md"
+                >
+                  Save Changes
+                </button>
+                <button
+                  onClick={() => {
+                    setIsEdit(false);
+                    setNewImage(null);
+                    setNewImagePreview(null);
+                    getProfileData();
+                  }}
+                  className="px-6 py-2 border border-gray-300 text-gray-700 text-sm font-semibold rounded-full mt-5 hover:bg-gray-50 transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
             ) : (
               <button
-                onClick={() => setIsEdit((prev) => !prev)}
-                className="px-4 py-1 border border-primary text-sm rounded-full mt-5 hover:bg-primary hover:text-white transition-all cursor-pointer"
+                onClick={() => setIsEdit(true)}
+                className="px-6 py-2 border border-primary text-primary text-sm font-semibold rounded-full mt-5 hover:bg-primary hover:text-white transition-all cursor-pointer"
               >
-                Edit
+                Edit Profile
               </button>
             )}
           </div>

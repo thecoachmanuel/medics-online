@@ -276,7 +276,7 @@ const doctorProfile = async (req, res) => {
 // API to update doctor profile data from  Doctor Panel
 const updateDoctorProfile = async (req, res) => {
   try {
-    const { docId, fees, address, available, about, workingHoursStart, workingHoursEnd, excludedDays, workingHours, phone } = req.body;
+    const { docId, fees, address, available, about, workingHoursStart, workingHoursEnd, excludedDays, workingHours, phone, image } = req.body;
 
     const updateData = {};
     if (fees !== undefined) updateData.fees = fees;
@@ -292,6 +292,27 @@ const updateDoctorProfile = async (req, res) => {
       updateData.workingHours = typeof workingHours === 'string' ? JSON.parse(workingHours) : workingHours;
     }
     if (phone !== undefined) updateData.phone = phone;
+
+    // Handle profile picture update if a new image object is provided
+    if (image) {
+      let imageObj = image;
+      if (typeof imageObj === 'string' && imageObj.startsWith('{')) {
+        try { imageObj = JSON.parse(imageObj); } catch (e) { /* not JSON */ }
+      }
+      
+      if (imageObj && typeof imageObj === 'object' && imageObj.data) {
+        const mimeType = imageObj.mimeType || 'image/jpeg';
+        console.log('🩺 Doctor Portal: Uploading new doctor profile picture to Cloudinary, mime:', mimeType);
+        const imageUpload = await cloudinary.uploader.upload(
+          `data:${mimeType};base64,${imageObj.data}`,
+          { resource_type: 'image' }
+        );
+        updateData.image = imageUpload.secure_url;
+        console.log('✅ New profile picture uploaded:', updateData.image);
+      } else if (typeof imageObj === 'string' && imageObj.startsWith('http')) {
+        updateData.image = imageObj;
+      }
+    }
 
     await doctorModel.findByIdAndUpdate(docId, updateData);
 

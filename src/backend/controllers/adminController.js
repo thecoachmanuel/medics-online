@@ -340,7 +340,7 @@ const editDoctor = async (req, res) => {
     if (!checkAdminPermission(req, 'doctors')) {
       return res.json({ success: false, message: 'Forbidden: You do not have permission to manage doctors' });
     }
-    const { docId, name, email, speciality, degree, experience, about, fees, address, phone } = req.body;
+    const { docId, name, email, speciality, degree, experience, about, fees, address, phone, image } = req.body;
     const imageFile = req.file;
 
     if (!docId) {
@@ -360,7 +360,9 @@ const editDoctor = async (req, res) => {
     if (experience) updateData.experience = experience;
     if (about) updateData.about = about;
     if (fees) updateData.fees = fees;
-    if (address) updateData.address = JSON.parse(address);
+    if (address) {
+      updateData.address = typeof address === 'string' ? JSON.parse(address) : address;
+    }
     if (phone !== undefined) updateData.phone = phone;
 
     if (imageFile) {
@@ -368,6 +370,24 @@ const editDoctor = async (req, res) => {
         resource_type: 'image'
       });
       updateData.image = imageUpload.secure_url;
+    } else if (image) {
+      let imageObj = image;
+      if (typeof imageObj === 'string' && imageObj.startsWith('{')) {
+        try { imageObj = JSON.parse(imageObj); } catch (e) { /* not JSON */ }
+      }
+      
+      if (imageObj && typeof imageObj === 'object' && imageObj.data) {
+        const mimeType = imageObj.mimeType || 'image/jpeg';
+        console.log('🩺 Admin Portal: Uploading new doctor profile picture to Cloudinary, mime:', mimeType);
+        const imageUpload = await cloudinary.uploader.upload(
+          `data:${mimeType};base64,${imageObj.data}`,
+          { resource_type: 'image' }
+        );
+        updateData.image = imageUpload.secure_url;
+        console.log('✅ New profile picture uploaded:', updateData.image);
+      } else if (typeof imageObj === 'string' && imageObj.startsWith('http')) {
+        updateData.image = imageObj;
+      }
     }
 
     await doctorModel.findByIdAndUpdate(docId, updateData);
