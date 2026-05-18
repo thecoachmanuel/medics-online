@@ -29,6 +29,8 @@ const DoctorsList = () => {
   const [editExperience, setEditExperience] = useState<string>('');
   const [editFees, setEditFees] = useState<string>('');
   const [editAbout, setEditAbout] = useState<string>('');
+  const [editImage, setEditImage] = useState<File | null>(null);
+  const [editImagePreview, setEditImagePreview] = useState<string>('');
   const [isEditing, setIsEditing] = useState<boolean>(false);
 
   console.log('🔍 DoctorsList: Context values:', {
@@ -56,13 +58,32 @@ const DoctorsList = () => {
   const openDoctorModal = (doctor: IDoctorAdmin) => {
     const detailedDoctor = doctor as unknown as DoctorProfile;
     setSelectedDoctor(detailedDoctor);
+    setEditImage(null);
+    setEditImagePreview(detailedDoctor.image || '');
     setIsModalOpen(true);
   };
 
   const closeDoctorModal = () => {
     setIsModalOpen(false);
     setSelectedDoctor(null);
+    setEditImage(null);
+    setEditImagePreview('');
     setIsEditing(false);
+  };
+
+  const startEditingDoctor = (doctor: IDoctorAdmin) => {
+    const detailedDoctor = doctor as unknown as DoctorProfile;
+    setSelectedDoctor(detailedDoctor);
+    setEditName(detailedDoctor.name);
+    setEditSpeciality(detailedDoctor.speciality);
+    setEditDegree(detailedDoctor.degree);
+    setEditExperience(detailedDoctor.experience);
+    setEditFees(detailedDoctor.fees?.toString() || '');
+    setEditAbout(detailedDoctor.about);
+    setEditImage(null);
+    setEditImagePreview(detailedDoctor.image || '');
+    setIsEditing(true);
+    setIsModalOpen(true);
   };
 
   const handleSaveEdit = async () => {
@@ -75,6 +96,11 @@ const DoctorsList = () => {
     formData.append('experience', editExperience);
     formData.append('fees', editFees);
     formData.append('about', editAbout);
+    
+    if (editImage) {
+      formData.append('image', editImage);
+    }
+
     try {
       await editDoctor(formData);
       setIsEditing(false);
@@ -200,7 +226,7 @@ const DoctorsList = () => {
                         className="text-blue-600 hover:text-blue-800 font-medium"
                         onClick={(e) => {
                           e.stopPropagation();
-                          window.location.href = `/admin/edit-doctor/${item._id}`;
+                          startEditingDoctor(item);
                         }}
                       >
                         Edit
@@ -268,11 +294,38 @@ const DoctorsList = () => {
 
               <div className="flex flex-col md:flex-row gap-6">
                 <div className="md:w-1/3">
-                  <img
-                    className="w-full rounded-lg object-cover"
-                    src={selectedDoctor.image}
-                    alt={selectedDoctor.name}
-                  />
+                  <div className="relative group w-full aspect-square md:aspect-auto">
+                    <img
+                      className="w-full rounded-lg object-cover"
+                      src={editImagePreview || selectedDoctor.image || '/assets/profile_pic.png'}
+                      alt={selectedDoctor.name}
+                    />
+                    {isEditing && (
+                      <label className="absolute inset-0 bg-black/50 hover:bg-black/70 flex flex-col items-center justify-center text-white cursor-pointer rounded-lg transition-all gap-1 text-xs font-semibold">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <span>Change Photo</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files[0]) {
+                              const file = e.target.files[0];
+                              setEditImage(file);
+                              const reader = new FileReader();
+                              reader.onloadend = () => {
+                                setEditImagePreview(reader.result as string);
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                          className="hidden"
+                        />
+                      </label>
+                    )}
+                  </div>
                 </div>
 
                 <div className="md:w-2/3">
@@ -300,6 +353,8 @@ const DoctorsList = () => {
                             setEditExperience(selectedDoctor.experience);
                             setEditFees(selectedDoctor.fees?.toString() || '');
                             setEditAbout(selectedDoctor.about);
+                            setEditImage(null);
+                            setEditImagePreview(selectedDoctor.image || '');
                             setIsEditing(true);
                           }}
                         >
@@ -396,7 +451,11 @@ const DoctorsList = () => {
                           </button>
                           <button
                             className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-                            onClick={() => setIsEditing(false)}
+                            onClick={() => {
+                              setIsEditing(false);
+                              setEditImage(null);
+                              setEditImagePreview(selectedDoctor.image || '');
+                            }}
                           >
                             Cancel
                           </button>

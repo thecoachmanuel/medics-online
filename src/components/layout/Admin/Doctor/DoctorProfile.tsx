@@ -13,6 +13,7 @@ const DoctorProfile = () => {
   const { dToken, profileData, setProfileData, getProfileData } = useContext(
     DoctorContext
   ) as IDoctorContext;
+  const { currencySymbol } = useContext(AppContext) as IPatientAppContext;
   const [isEdit, setIsEdit] = useState(false);
   const [newImage, setNewImage] = useState<File | null>(null);
   const [newImagePreview, setNewImagePreview] = useState<string | null>(null);
