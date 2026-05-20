@@ -56,18 +56,68 @@ class SmartApiService {
   // Helper function to convert File to base64
   private fileToBase64(file: File): Promise<string> {
     return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        if (typeof reader.result === 'string') {
-          // Remove the data URL prefix (e.g., "data:image/png;base64,")
-          const base64Data = reader.result.split(',')[1];
-          resolve(base64Data);
-        } else {
-          reject(new Error('Failed to convert file to base64'));
-        }
+      // Standard read function fallback
+      const readStandard = () => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          if (typeof reader.result === 'string') {
+            // Remove the data URL prefix (e.g., "data:image/png;base64,")
+            const base64Data = reader.result.split(',')[1];
+            resolve(base64Data);
+          } else {
+            reject(new Error('Failed to convert file to base64'));
+          }
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
       };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
+
+      // If it's an image, compress it first to avoid huge payloads and UI freezing during encryption
+      if (file.type.startsWith('image/')) {
+        const img = new Image();
+        const objectUrl = URL.createObjectURL(file);
+        
+        img.onload = () => {
+          URL.revokeObjectURL(objectUrl);
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          
+          // Max dimension
+          const MAX_SIZE = 800;
+          if (width > height && width > MAX_SIZE) {
+            height *= MAX_SIZE / width;
+            width = MAX_SIZE;
+          } else if (height > MAX_SIZE) {
+            width *= MAX_SIZE / height;
+            height = MAX_SIZE;
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+            resolve(dataUrl.split(',')[1]);
+          } else {
+            // Fallback to uncompressed if canvas context fails
+            readStandard();
+          }
+        };
+        
+        img.onerror = () => {
+          URL.revokeObjectURL(objectUrl);
+          readStandard();
+        };
+        
+        img.src = objectUrl;
+        return;
+      }
+
+      // Execute standard read for non-images
+      readStandard();
     });
   }
 
