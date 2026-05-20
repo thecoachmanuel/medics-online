@@ -12,7 +12,7 @@ const Header = () => {
       {/* --------- Header Left --------- */}
       <div className="md:w-1/2 flex flex-col items-start justify-center gap-4 py-10 m-auto md:py-[10vw] md:mb-[-30px]">
         <p className="text-3xl md:text-4xl lg:text-5xl text-white font-semibold leading-tight md:leading-tight lg:leading-tight">
-          {cms.homeHeaderTitle || 'Connect with Trusted Doctors Online'}
+          {cms.homeHeaderTitle || 'Consult with Trusted Doctors Online'}
         </p>
         <div className="flex flex-col md:flex-row items-center gap-3 text-white text-sm font-light">
           <Image className="w-28 h-auto" src={'/assets/group_profiles.webp'} alt="" width={112} height={40} priority />

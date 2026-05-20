@@ -52,7 +52,7 @@ const AppContextProvider = (props: AppContextProviderProps) => {
   const [userData, setUserData] = useState<IUserData | null>(null);
 
   const [cmsData, setCmsData] = useState<any>({
-    homeHeaderTitle: 'Connect with Trusted Doctors Online',
+    homeHeaderTitle: 'Consult with Trusted Doctors Online',
     homeHeaderSubtitle: 'Book appointments, consult via video, and manage your healthcare journey all in one secure platform',
     homeHeaderImage: '/assets/header_img.webp',
     homeHeaderBtnText: 'Find Doctors',
